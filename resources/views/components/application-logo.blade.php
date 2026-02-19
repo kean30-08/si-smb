@@ -1,1 +1,1 @@
-<img src="{{ asset('img/logo_vihara.png') }}" alt="Logo Vihara" class="w-16 h-16">
+<img src="{{ asset('img/logo_smb.png') }}" alt="Logo Vihara" class="w-16 h-16">

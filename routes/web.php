@@ -24,11 +24,31 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     //rute tab lain
-    //agenda
-    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
+    // --- MANAJEMEN AGENDA & JADWAL ---
+    // Rute untuk menampilkan jadwal per tanggal (Group)
+    Route::get('/agenda', [App\Http\Controllers\AgendaController::class, 'index'])->name('agenda.index');
+
+    // Rute khusus untuk Detail, Tambah Detail, dan Broadcast PDF
+    Route::get('/agenda/detail/{tanggal}', [App\Http\Controllers\AgendaController::class, 'showDate'])->name('agenda.showDate');
+    Route::get('/agenda/detail/{tanggal}/tambah', [App\Http\Controllers\AgendaController::class, 'createDetail'])->name('agenda.createDetail');
+    Route::post('/agenda/detail/store', [App\Http\Controllers\AgendaController::class, 'storeDetail'])->name('agenda.storeDetail');
+    Route::post('/agenda/broadcast/{tanggal}', [App\Http\Controllers\AgendaController::class, 'broadcastPdf'])->name('agenda.broadcast');
+
+    // Rute bawaan (Create, Store, Edit, Update, Destroy)
+    Route::get('/agenda/create', [App\Http\Controllers\AgendaController::class, 'create'])->name('agenda.create');
+    Route::post('/agenda', [App\Http\Controllers\AgendaController::class, 'store'])->name('agenda.store');
+    Route::get('/agenda/{agenda}/edit', [App\Http\Controllers\AgendaController::class, 'edit'])->name('agenda.edit');
+    Route::put('/agenda/{agenda}', [App\Http\Controllers\AgendaController::class, 'update'])->name('agenda.update');
+    Route::delete('/agenda/{agenda}', [App\Http\Controllers\AgendaController::class, 'destroy'])->name('agenda.destroy');
 
     //pengajar
     Route::get('/pengajar', [PengajarController::class, 'index'])->name('pengajar.index');
+    Route::get('/pengajar/create', [PengajarController::class, 'create'])->name('pengajar.create');
+    Route::post('/pengajar', [PengajarController::class, 'store'])->name('pengajar.store');
+    Route::get('/pengajar/{pengajar}', [PengajarController::class, 'show'])->name('pengajar.show');
+    Route::get('/pengajar/{pengajar}/edit', [PengajarController::class, 'edit'])->name('pengajar.edit');
+    Route::put('/pengajar/{pengajar}', [PengajarController::class, 'update'])->name('pengajar.update');
+    Route::delete('/pengajar/{pengajar}', [PengajarController::class, 'destroy'])->name('pengajar.destroy');
 
     //siswa
     Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');

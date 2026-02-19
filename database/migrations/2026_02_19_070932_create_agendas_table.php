@@ -20,7 +20,7 @@ return new class extends Migration
         $table->text('deskripsi_rundown')->nullable(); // Untuk menyimpan rundown kegiatan
         
         // Status untuk membedakan jadwal masa depan dan yang sudah selesai
-        $table->enum('status', ['akan datang', 'selesai', 'batal'])->default('akan datang'); 
+        $table->enum('status', ['akan datang', 'sedang berlangsung', 'selesai', 'batal'])->default('akan datang');
         
         $table->timestamps();
     });
