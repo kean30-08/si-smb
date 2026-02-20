@@ -34,5 +34,39 @@
                 {{ $slot }}
             </main>
         </div>
-    </body>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000, // Hilang otomatis dalam 4 detik
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        // Menangkap Session 'success' dari Controller
+        @if(session('success'))
+            Toast.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: "{{ session('success') }}" // <-- GUNAKAN KUTIP DUA DI SINI
+            });
+        @endif
+
+        // Menangkap Session 'error' dari Controller
+        @if(session('error'))
+            Toast.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: "{{ session('error') }}" // <-- GUNAKAN KUTIP DUA DI SINI
+            });
+        @endif
+    </script>
+</body>
 </html>
+

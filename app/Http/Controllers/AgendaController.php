@@ -120,38 +120,52 @@ public function store(Request $request)
     // Tambahkan variabel $tanggal di dalam kurung
     public function broadcastPdf($tanggal) 
     {
-        // 1. Ambil jadwal HANYA untuk tanggal yang dipilih
-        $agendas = Agenda::where('tanggal', $tanggal)
-                        ->orderBy('waktu_mulai', 'asc')
-                        ->get();
+        // Beri waktu loading maksimal 5 menit agar tidak putus di tengah jalan
+        set_time_limit(300); 
+
+        $agendas = \App\Models\Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
 
         if ($agendas->isEmpty()) {
-            return back()->with('error', 'Tidak ada data jadwal pada tanggal tersebut.');
+            return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal pada tanggal tersebut.');
         }
 
-        // 2. Buat file PDF (Kirimkan variabel tanggal juga agar bisa dicetak di PDF)
-        $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
-        $pdfContent = $pdf->output();
+        // --- SISTEM PELINDUNG ERROR (TRY-CATCH) ---
+        try {
+            // Proses buat PDF
+            $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
+            $pdfContent = $pdf->output();
 
-        // 3. Ambil email orang tua
-        $emails = Siswa::whereNotNull('email_orang_tua')
-                       ->where('email_orang_tua', '!=', '')
-                       ->distinct() 
-                       ->pluck('email_orang_tua');
+            // Cari email HANYA untuk siswa yang masih Aktif
+            $emails = \App\Models\Siswa::where('status', 'aktif')
+                           ->whereNotNull('email_orang_tua')
+                           ->where('email_orang_tua', '!=', '')
+                           ->distinct() 
+                           ->pluck('email_orang_tua')
+                           ->unique();
+                           
 
-        if ($emails->isEmpty()) {
-            return back()->with('error', 'Tidak ada data email orang tua yang tersimpan di sistem.');
+            if ($emails->isEmpty()) {
+                return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data email orang tua yang tersimpan.');
+            }
+
+            // Proses kirim
+            foreach ($emails as $email) {
+                Mail::to($email)->send(new \App\Mail\BroadcastAgendaMail($pdfContent));
+                
+                sleep(1);
+            }
+
+            // Jika semua lancar, kembali bawa pesan sukses
+            return redirect()->route('agenda.showDate', $tanggal)
+                             ->with('success', 'Jadwal berhasil dikirim ke ' . $emails->count() . ' email orang tua!');
+
+        } catch (\Exception $e) {
+            // JIKA TERJADI ERROR APAPUN (Koneksi putus, timeout, dll), tangkap di sini!
+            // Alih-alih layar putih 500, kita kembalikan ke halaman dengan Pop-up merah
+            return redirect()->route('agenda.showDate', $tanggal)
+                             ->with('error', 'Gagal mengirim email: ' . $e->getMessage());
         }
-
-        // 4. Kirim email
-        foreach ($emails as $email) {
-            Mail::to($email)->send(new BroadcastAgendaMail($pdfContent));
-        }
-
-        return redirect()->route('agenda.showDate', $tanggal)
-                         ->with('success', 'Rundown acara tanggal ' . \Carbon\Carbon::parse($tanggal)->format('d F Y') . ' berhasil dikirim ke ' . $emails->count() . ' email orang tua!');
     }
-
     // Menampilkan form tambah acara untuk tanggal spesifik
     public function createDetail($tanggal)
     {
