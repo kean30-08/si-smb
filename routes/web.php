@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function () {
 
     //materi
     Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
+    Route::resource('materi', App\Http\Controllers\MateriController::class);
 
     //laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
