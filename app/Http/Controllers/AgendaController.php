@@ -166,6 +166,26 @@ public function store(Request $request)
                              ->with('error', 'Gagal mengirim email: ' . $e->getMessage());
         }
     }
+    
+    // Fungsi untuk mengunduh PDF secara langsung (tanpa kirim email)
+    public function downloadPdf($tanggal)
+    {
+        $agendas = \App\Models\Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
+
+        if ($agendas->isEmpty()) {
+            return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal pada tanggal tersebut untuk didownload.');
+        }
+
+        // Buat PDF menggunakan template yang sudah ada
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
+        
+        // Buat nama file yang rapi (Contoh: Rundown_Kegiatan_19_Feb_2026.pdf)
+        $fileName = 'Rundown_Kegiatan_' . \Carbon\Carbon::parse($tanggal)->format('d_M_Y') . '.pdf';
+        
+        // Gunakan perintah ->download() agar browser langsung mengunduhnya
+        return $pdf->download($fileName);
+    }
+
     // Menampilkan form tambah acara untuk tanggal spesifik
     public function createDetail($tanggal)
     {

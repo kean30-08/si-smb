@@ -11,7 +11,7 @@ use App\Http\Controllers\LaporanController;
 
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
@@ -24,15 +24,24 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     //rute tab lain
-    // --- MANAJEMEN AGENDA & JADWAL ---
     // Rute untuk menampilkan jadwal per tanggal (Group)
     Route::get('/agenda', [App\Http\Controllers\AgendaController::class, 'index'])->name('agenda.index');
+
+    //absensi
+    Route::get('/absensi/scanner', [App\Http\Controllers\AbsensiController::class, 'scanner'])->name('absensi.scanner');
+    Route::post('/absensi/scan-proses', [App\Http\Controllers\AbsensiController::class, 'prosesScan'])->name('absensi.prosesScan');
+    // Nanti untuk halaman admin mengelola data absen manual
+    Route::get('/absensi', [App\Http\Controllers\AbsensiController::class, 'index'])->name('absensi.index');
+    // Rute untuk mengubah status absen secara manual (Izin/Sakit/Hadir/Alpa)
+    Route::post('/absensi/manual', [App\Http\Controllers\AbsensiController::class, 'updateManual'])->name('absensi.manual');
 
     // Rute khusus untuk Detail, Tambah Detail, dan Broadcast PDF
     Route::get('/agenda/detail/{tanggal}', [App\Http\Controllers\AgendaController::class, 'showDate'])->name('agenda.showDate');
     Route::get('/agenda/detail/{tanggal}/tambah', [App\Http\Controllers\AgendaController::class, 'createDetail'])->name('agenda.createDetail');
     Route::post('/agenda/detail/store', [App\Http\Controllers\AgendaController::class, 'storeDetail'])->name('agenda.storeDetail');
     Route::post('/agenda/broadcast/{tanggal}', [App\Http\Controllers\AgendaController::class, 'broadcastPdf'])->name('agenda.broadcast');
+    // Rute untuk mengunduh PDF ke perangkat (Download Manual)
+    Route::get('/agenda/download/{tanggal}', [App\Http\Controllers\AgendaController::class, 'downloadPdf'])->name('agenda.download');
 
     // Rute bawaan (Create, Store, Edit, Update, Destroy)
     Route::get('/agenda/create', [App\Http\Controllers\AgendaController::class, 'create'])->name('agenda.create');
@@ -72,7 +81,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('materi', App\Http\Controllers\MateriController::class);
 
     //laporan
-    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan', [App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
+    Route::post('/laporan/cetak-siswa', [App\Http\Controllers\LaporanController::class, 'cetakSiswa'])->name('laporan.cetakSiswa');
+    Route::post('/laporan/cetak-agenda', [App\Http\Controllers\LaporanController::class, 'cetakAgenda'])->name('laporan.cetakAgenda');
 });
 
 require __DIR__.'/auth.php';
