@@ -25,7 +25,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Filter Kelas</label>
                             <select name="kelas_id" class="border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" onchange="this.form.submit()">
-                                <option value="">-- Semua Kelas --</option>
+                                <option value="">Semua Kelas</option>
                                 @foreach($kelas as $k)
                                     <option value="{{ $k->id }}" {{ $kelas_id == $k->id ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
                                 @endforeach

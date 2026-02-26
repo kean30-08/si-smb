@@ -50,6 +50,20 @@ Route::middleware('auth')->group(function () {
     Route::put('/agenda/{agenda}', [App\Http\Controllers\AgendaController::class, 'update'])->name('agenda.update');
     Route::delete('/agenda/{agenda}', [App\Http\Controllers\AgendaController::class, 'destroy'])->name('agenda.destroy');
 
+    
+});
+
+// ==========================================================
+// RUTE KHUSUS ADMIN (PENGAJAR DITOLAK MASUK)
+// ==========================================================
+Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(function () {
+    
+    // Master Data
+    Route::resource('siswa', App\Http\Controllers\SiswaController::class);
+    Route::resource('pengajar', App\Http\Controllers\PengajarController::class);
+    Route::resource('kelas', App\Http\Controllers\KelasController::class);
+    Route::resource('materi', App\Http\Controllers\MateriController::class);
+    
     //pengajar
     Route::get('/pengajar', [PengajarController::class, 'index'])->name('pengajar.index');
     Route::get('/pengajar/create', [PengajarController::class, 'create'])->name('pengajar.create');
@@ -84,6 +98,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan', [App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
     Route::post('/laporan/cetak-siswa', [App\Http\Controllers\LaporanController::class, 'cetakSiswa'])->name('laporan.cetakSiswa');
     Route::post('/laporan/cetak-agenda', [App\Http\Controllers\LaporanController::class, 'cetakAgenda'])->name('laporan.cetakAgenda');
+
 });
+
 
 require __DIR__.'/auth.php';

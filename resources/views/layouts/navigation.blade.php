@@ -11,34 +11,49 @@
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+    
+                    @php
+                        // Cek apakah user yang login ini adalah Admin (tidak ada di tabel pengajar)
+                        $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+                    @endphp
+
+                    {{-- MENU UNTUK SEMUA (Admin & Pengajar) --}}
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-
+                    
                     <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
                         {{ __('Agenda') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
-                        {{ __('Pengajar') }}
+                    <x-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
+                        {{ __('Absensi') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
-                        {{ __('Siswa') }}
-                    </x-nav-link>
-                    
-                    <x-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
-                        {{ __('Kelas') }}
-                    </x-nav-link>
+                    {{-- MENU KHUSUS ADMIN --}}
+                    @if($isAdmin)
+                        <x-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
+                            {{ __('Pengajar') }}
+                        </x-nav-link>
 
-                    <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
-                        {{ __('Materi') }}
-                    </x-nav-link>
+                        <x-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
+                            {{ __('Siswa') }}
+                        </x-nav-link>
 
-                    <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                        {{ __('Laporan') }}
-                    </x-nav-link>
+                        <x-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
+                            {{ __('Kelas') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
+                            {{ __('Materi') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                            {{ __('Laporan') }}
+                        </x-nav-link>
+                    @endif
+
                 </div>
             </div>
 
@@ -93,6 +108,10 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
+                {{ __('Absensi') }}
             </x-responsive-nav-link>
         </div>
 
