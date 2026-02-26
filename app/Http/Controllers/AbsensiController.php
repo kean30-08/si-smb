@@ -11,31 +11,66 @@ use Carbon\Carbon;
 class AbsensiController extends Controller
 {
     // Menampilkan Halaman Kelola Absensi untuk Admin
+    // Menampilkan Halaman Kelola Absensi (Siswa & Pengajar dalam 1 Page)
     public function index(Request $request)
     {
-        // Default ke hari ini jika admin belum memilih tanggal
         $tanggal = $request->input('tanggal', Carbon::now()->toDateString());
         $kelas_id = $request->input('kelas_id');
+        $type = $request->input('type', 'siswa'); // Default tab yang terbuka adalah 'siswa'
 
         $kelas = \App\Models\Kelas::all();
-        
-        // Cari ada agenda apa saja di tanggal yang dipilih
         $agendas = Agenda::where('tanggal', $tanggal)->get();
         $agenda_ids = $agendas->pluck('id')->toArray();
 
-        // Ambil data siswa (difilter per kelas) dan batasi 8 per halaman
-        $siswas = Siswa::with('kelas')
-            ->when($kelas_id, function($q, $kelas_id) {
-                return $q->where('kelas_id', $kelas_id);
-            })
-            ->orderBy('nama_lengkap', 'asc')
-            ->paginate(8) // <-- BATASI 8 DATA PER HALAMAN
-            ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id]); // <-- Agar filter tidak reset saat pindah halaman
+        // JIKA TAB SISWA YANG AKTIF
+        if ($type == 'siswa') {
+            $siswas = Siswa::with('kelas')
+                ->when($kelas_id, function($q, $kelas_id) { return $q->where('kelas_id', $kelas_id); })
+                ->orderBy('nama_lengkap', 'asc')
+                ->paginate(8)
+                ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'type' => 'siswa']);
+            
+            $absensis = Absensi::whereIn('agenda_id', $agenda_ids)->get();
+            
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'siswas', 'absensis', 'type'));
+        
+        // JIKA TAB PENGAJAR YANG AKTIF
+        } else {
+            $pengajars = \App\Models\Pengajar::orderBy('nama_lengkap', 'asc')
+                ->paginate(8)
+                ->appends(['tanggal' => $tanggal, 'type' => 'pengajar']);
+                
+            $absensiPengajars = \App\Models\AbsensiPengajar::whereIn('agenda_id', $agenda_ids)->get();
+            
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'pengajars', 'absensiPengajars', 'type'));
+        }
+    }
 
-        // Ambil seluruh data absensi pada tanggal tersebut
-        $absensis = Absensi::whereIn('agenda_id', $agenda_ids)->get();
+    // Memproses Absensi Manual KHUSUS PENGAJAR
+    public function updateManualPengajar(Request $request)
+    {
+        $request->validate([
+            'pengajar_id' => 'required',
+            'tanggal' => 'required|date',
+            'status' => 'required|in:hadir,izin,sakit,alpa'
+        ]);
 
-        return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'siswas', 'absensis'));
+        $agendas = Agenda::where('tanggal', $request->tanggal)->get();
+
+        if ($agendas->isEmpty()) {
+            return back()->with('error', 'Tidak ada jadwal pada tanggal tersebut.');
+        }
+
+        foreach ($agendas as $agenda) {
+            $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
+
+            \App\Models\AbsensiPengajar::updateOrCreate(
+                ['agenda_id' => $agenda->id, 'pengajar_id' => $request->pengajar_id],
+                ['status_kehadiran' => $request->status, 'waktu_hadir' => $waktu]
+            );
+        }
+
+        return back()->with('success', 'Status kehadiran Pengajar berhasil diperbarui!');
     }
 
     // 1. Menampilkan Halaman Kamera Scanner untuk Pengajar

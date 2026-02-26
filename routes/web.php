@@ -34,6 +34,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/absensi', [App\Http\Controllers\AbsensiController::class, 'index'])->name('absensi.index');
     // Rute untuk mengubah status absen secara manual (Izin/Sakit/Hadir/Alpa)
     Route::post('/absensi/manual', [App\Http\Controllers\AbsensiController::class, 'updateManual'])->name('absensi.manual');
+    // Rute memproses absensi manual Pengajar
+    Route::post('/absensi/manual-pengajar', [App\Http\Controllers\AbsensiController::class, 'updateManualPengajar'])->name('absensi.manualPengajar');
 
     // Rute khusus untuk Detail, Tambah Detail, dan Broadcast PDF
     Route::get('/agenda/detail/{tanggal}', [App\Http\Controllers\AgendaController::class, 'showDate'])->name('agenda.showDate');
@@ -96,8 +98,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 
     //laporan
     Route::get('/laporan', [App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
-    Route::post('/laporan/cetak-siswa', [App\Http\Controllers\LaporanController::class, 'cetakSiswa'])->name('laporan.cetakSiswa');
+    Route::post('/laporan/cetak-kehadiran-siswa', [App\Http\Controllers\LaporanController::class, 'cetakKehadiranSiswa'])->name('laporan.cetakKehadiranSiswa');
     Route::post('/laporan/cetak-agenda', [App\Http\Controllers\LaporanController::class, 'cetakAgenda'])->name('laporan.cetakAgenda');
+    Route::post('/laporan/cetak-pengajar', [App\Http\Controllers\LaporanController::class, 'cetakPengajar'])->name('laporan.cetakPengajar');
 
 });
 
