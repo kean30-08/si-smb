@@ -12,11 +12,13 @@ class AbsensiController extends Controller
 {
     // Menampilkan Halaman Kelola Absensi untuk Admin
     // Menampilkan Halaman Kelola Absensi (Siswa & Pengajar dalam 1 Page)
+    // Menampilkan Halaman Kelola Absensi (Siswa & Pengajar dalam 1 Page)
     public function index(Request $request)
     {
         $tanggal = $request->input('tanggal', Carbon::now()->toDateString());
         $kelas_id = $request->input('kelas_id');
         $type = $request->input('type', 'siswa'); // Default tab yang terbuka adalah 'siswa'
+        $search = $request->input('search'); // Menangkap kata kunci pencarian
 
         $kelas = \App\Models\Kelas::all();
         $agendas = Agenda::where('tanggal', $tanggal)->get();
@@ -25,24 +27,37 @@ class AbsensiController extends Controller
         // JIKA TAB SISWA YANG AKTIF
         if ($type == 'siswa') {
             $siswas = Siswa::with('kelas')
-                ->when($kelas_id, function($q, $kelas_id) { return $q->where('kelas_id', $kelas_id); })
+                ->when($kelas_id, function($q, $kelas_id) { 
+                    return $q->where('kelas_id', $kelas_id); 
+                })
+                // Logika Pencarian Nama / NIS Siswa
+                ->when($search, function($q, $search) {
+                    return $q->where('nama_lengkap', 'like', "%{$search}%")
+                             ->orWhere('id', 'like', "%{$search}%")
+                             ->orWhere('nis', 'like', "%{$search}%");
+                })
                 ->orderBy('nama_lengkap', 'asc')
                 ->paginate(8)
-                ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'type' => 'siswa']);
+                // Pastikan filter search ikut tersimpan saat pindah halaman (pagination)
+                ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'type' => 'siswa', 'search' => $search]);
             
             $absensis = Absensi::whereIn('agenda_id', $agenda_ids)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'siswas', 'absensis', 'type'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'siswas', 'absensis', 'type', 'search'));
         
         // JIKA TAB PENGAJAR YANG AKTIF
         } else {
             $pengajars = \App\Models\Pengajar::orderBy('nama_lengkap', 'asc')
+                // Logika Pencarian Nama Pengajar
+                ->when($search, function($q, $search) {
+                    return $q->where('nama_lengkap', 'like', "%{$search}%");
+                })
                 ->paginate(8)
-                ->appends(['tanggal' => $tanggal, 'type' => 'pengajar']);
+                ->appends(['tanggal' => $tanggal, 'type' => 'pengajar', 'search' => $search]);
                 
             $absensiPengajars = \App\Models\AbsensiPengajar::whereIn('agenda_id', $agenda_ids)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'pengajars', 'absensiPengajars', 'type'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'pengajars', 'absensiPengajars', 'type', 'search'));
         }
     }
 

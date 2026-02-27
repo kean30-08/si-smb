@@ -35,9 +35,10 @@
 
                 <div class="p-6 text-gray-900">
 
-                    {{-- Form Filter Tanggal (Berbagi untuk kedua tab) --}}
-                    <form action="{{ route('absensi.index') }}" method="GET" class="mb-6 flex flex-col md:flex-row gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    {{-- Form Filter Tanggal, Kelas & Pencarian --}}
+                    <form action="{{ route('absensi.index') }}" method="GET" class="mb-6 flex flex-col md:flex-row gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 items-end">
                         <input type="hidden" name="type" value="{{ $type }}">
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Tanggal</label>
                             <input type="date" name="tanggal" value="{{ $tanggal }}" class="border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" onchange="this.form.submit()">
@@ -53,6 +54,29 @@
                                 @endforeach
                             </select>
                         </div>
+                        @endif
+
+                        {{-- SEARCH BAR (Kolom Pencarian) --}}
+                        <div class="flex-1 w-full md:w-auto mt-2 md:mt-0">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Cari {{ $type == 'siswa' ? 'Siswa' : 'Pengajar' }}
+                            </label>
+                            <div class="flex">
+                                <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Ketik nama..." class="w-full border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-r-md font-medium transition duration-150 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+                                    Cari
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {{-- Tombol Reset Pencarian (Akan muncul jika sedang mencari sesuatu) --}}
+                        @if(!empty($search))
+                            <div class="flex justify-end">
+                                <a href="{{ route('absensi.index', ['type' => $type, 'tanggal' => $tanggal, 'kelas_id' => $kelas_id]) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition duration-150 border border-indigo-600">
+                                    Reset
+                                </a>
+                            </div>
                         @endif
                     </form>
 

@@ -10,7 +10,7 @@
             
             {{-- FILTER DATA DI ATAS --}}
             <div class="mb-6 flex justify-start ">
-                <form action="{{ route('dashboard') }}" method="GET" class="flex items-center bg-white p-2 rounded-lg shadow-sm border-l-4 border-red-500">
+                <form action="{{ route('dashboard') }}" method="GET" class="flex items-center bg-white p-2 rounded-lg shadow-sm border-l-4 border-indigo-500">
                     <label class="mr-3 ml-2 text-sm font-bold text-gray-700">Filter Data:</label>
                     <select name="rentang" onchange="this.form.submit()" class="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer bg-indigo-50 text-indigo-800 font-semibold border-none py-1.5 pl-3 pr-8">
                         <option value="1" {{ $rentang_bulan == 1 ? 'selected' : '' }}>1 Bulan Terakhir</option>
@@ -150,47 +150,38 @@
                 type: 'bar',
                 data: {
                     labels: labels,
-                    // Sekarang kita definisikan 4 Dataset bertumpuk (Stacked)
+                    
                     datasets: [
                         {
                             label: 'Hadir',
                             data: dataHadir,
-                            // Warna Hijau (Sesuai Permintaan)
-                            backgroundColor: 'rgba(34, 197, 94, 0.7)', 
-                            borderColor: 'rgba(34, 197, 94, 1)',
-                            borderWidth: 1,
-                            borderRadius: { topLeft: 4, topRight: 4 }, // Radius hanya pada segmen paling bawah
-                            stack: 'stack1' // Wajib sama untuk menumpuk
+                            backgroundColor: 'rgba(34, 197, 94, 0.9)', // Opacity dinaikkan jadi 0.9 agar lebih solid
+                            borderWidth: 0, // Garis tepi dihilangkan
+                            stack: 'stack1'
                         },
                         {
                             label: 'Sakit',
                             data: dataSakit,
-                            // Warna Kuning (Sesuai Permintaan)
-                            backgroundColor: 'rgba(234, 179, 8, 0.7)',
-                            borderColor: 'rgba(234, 179, 8, 1)',
-                            borderWidth: 1,
+                            backgroundColor: 'rgba(234, 179, 8, 0.9)',
+                            borderWidth: 0,
                             stack: 'stack1'
                         },
                         {
                             label: 'Izin',
                             data: dataIzin,
-                            // Warna Biru (Sesuai Permintaan)
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1,
+                            backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                            borderWidth: 0,
                             stack: 'stack1'
                         },
                         {
                             label: 'Alpa',
                             data: dataAlpa,
-                            // Warna Merah (Sesuai Permintaan)
-                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                            borderColor: 'rgba(239, 68, 68, 1)',
-                            borderWidth: 1,
-                            borderRadius: { topLeft: 4, topRight: 4 }, // Radius pada segmen paling atas
+                            backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                            borderWidth: 0,
                             stack: 'stack1'
                         }
                     ]
+                    
                 },
                 options: {
                     responsive: true,
