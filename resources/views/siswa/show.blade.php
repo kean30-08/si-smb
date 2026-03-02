@@ -44,7 +44,7 @@
                             <p class="text-lg font-medium uppercase text-blue-600">{{ $siswa->status }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 font-semibold">Total Poin Keaktifan</p>
+                            <p class="text-sm text-gray-500 font-semibold">Total Poin</p>
                             <p class="text-lg font-bold text-orange-500">{{ $siswa->total_poin }} Poin</p>
                         </div>
                     </div>

@@ -66,7 +66,7 @@ class DashboardController extends Controller
         $total_sakit_period = array_sum($data_sakit);
         $total_alpa_period = array_sum($data_alpa);
 
-        // 3. LEADERBOARD SISWA TELADAN
+        // 3. LEADERBOARD SISWA TELADAN DENGAN SISTEM POIN & KEDISIPLINAN WAKTU
         $siswas = Siswa::with('kelas')->where('status', 'aktif')->get();
 
         foreach ($siswas as $siswa) {
@@ -79,20 +79,45 @@ class DashboardController extends Controller
                 ->groupBy(function($item) { return $item->agenda->tanggal; });
 
             $hadir = 0; $izin = 0; $sakit = 0;
+            $total_detik_kedatangan = 0; // Untuk menghitung rata-rata kedatangan
+            $jumlah_scan = 0;
             
             foreach ($absensi_hari_ini as $tanggal => $records) {
                 $status = $records->first()->status_kehadiran;
-                if ($status == 'hadir') $hadir++;
+                $waktu_hadir = $records->first()->waktu_hadir;
+
+                if ($status == 'hadir') {
+                    $hadir++;
+                    // Jika ada jam kehadirannya, ubah ke detik dari tengah malam
+                    if ($waktu_hadir) {
+                        $total_detik_kedatangan += Carbon::parse($waktu_hadir)->secondsSinceMidnight();
+                        $jumlah_scan++;
+                    }
+                }
                 elseif ($status == 'izin') $izin++;
                 elseif ($status == 'sakit') $sakit++;
             }
 
             $siswa->poin_keaktifan = ($hadir * 100) + ($izin * 10) + ($sakit * 10);
             $siswa->persentase = $total_jadwal_period > 0 ? round(($hadir / $total_jadwal_period) * 100) : 0;
+            
+            // Hitung rata-rata waktu kedatangan (semakin kecil angkanya, semakin pagi dia datang)
+            // Jika dia tidak pernah hadir/scan, beri angka sangat besar agar ditaruh di bawah
+            $siswa->rata_rata_waktu_hadir = $jumlah_scan > 0 ? ($total_detik_kedatangan / $jumlah_scan) : 9999999; 
         }
 
+        // URUTKAN SISWA (SORTING CANGGIH)
         $top_siswas = $siswas->sort(function ($a, $b) {
-            if ($a->poin_keaktifan == $b->poin_keaktifan) return strcmp($a->nama_lengkap, $b->nama_lengkap);
+            // Jika Poin Keaktifan SAMA PERSIS (Misal sama-sama 500)
+            if ($a->poin_keaktifan == $b->poin_keaktifan) {
+                // TIE-BREAKER: Siapa yang rata-rata kedatangannya lebih PAGI (detik lebih kecil)?
+                if ($a->rata_rata_waktu_hadir == $b->rata_rata_waktu_hadir) {
+                    // Jika datangnya juga sama-sama persis di detik yang sama (sangat jarang), baru pakai Abjad
+                    return strcmp($a->nama_lengkap, $b->nama_lengkap);
+                }
+                return $a->rata_rata_waktu_hadir <=> $b->rata_rata_waktu_hadir; // Sortir dari yang terkecil (Paling pagi)
+            }
+            // Jika poin beda, urutkan murni dari Poin Tertinggi
             return $b->poin_keaktifan <=> $a->poin_keaktifan;
         })->take(5)->values();
 
