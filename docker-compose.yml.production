@@ -1,14 +1,13 @@
-version: '3.8'
-
 services:
   app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: laravel_app
-    restart: unless-stopped
-    networks:
-      - laravel
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile
+  container_name: laravel_app
+  env_file:
+    - .env
+  networks:
+    - laravel
 
   nginx:
     image: nginx:latest
