@@ -7,6 +7,10 @@
         th, td { border: 1px solid #000; padding: 5px; text-align: center; } 
         th { background-color: #f2f2f2; } 
         .left { text-align: left; }
+        
+        /* Tambahan style untuk baris total (Konsisten dengan laporan siswa) */
+        .row-total { background-color: #e6e6e6; font-weight: bold; }
+        .text-right { text-align: right; padding-right: 10px; }
     </style>
 </head>
 <body>
@@ -27,7 +31,8 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($pengajars as $index => $p)
+            {{-- Menggunakan forelse agar lebih aman jika data kosong --}}
+            @forelse ($pengajars as $index => $p)
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td class="left">{{ $p->nama_lengkap }}</td>
@@ -38,8 +43,46 @@
                 <td>{{ $p->total_alpa }}</td>
                 <td><strong>{{ $p->persentase }}%</strong></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="8">Tidak ada data pengajar/pengurus pada periode ini.</td>
+            </tr>
+            @endforelse
         </tbody>
+
+        {{-- BAGIAN REKAPITULASI TOTAL & RATA-RATA --}}
+        @if($pengajars->count() > 0)
+        <tfoot>
+            
+            {{-- BARIS 1: TOTAL KESELURUHAN --}}
+            <tr class="row-total">
+                <td colspan="3" class="text-right">TOTAL KESELURUHAN</td>
+                <td>{{ $pengajars->sum('total_hadir') }}</td>
+                <td>{{ $pengajars->sum('total_izin') }}</td>
+                <td>{{ $pengajars->sum('total_sakit') }}</td>
+                <td>{{ $pengajars->sum('total_alpa') }}</td>
+                <td>-</td> {{-- Strip, karena total persentase tidak relevan --}}
+            </tr>
+            
+            {{-- BARIS 2: RATA-RATA --}}
+            <tr class="row-total">
+                <td colspan="3" class="text-right">RATA-RATA</td>
+                {{-- 
+                    Kita gunakan (float) untuk mencegah Error 500 (null reference)
+                    Lalu dibulatkan 1 angka di belakang koma menggunakan round(..., 1)
+                --}}
+                <td>{{ round((float) $pengajars->avg('total_hadir'), 1) }}</td>
+                <td>{{ round((float) $pengajars->avg('total_izin'), 1) }}</td>
+                <td>{{ round((float) $pengajars->avg('total_sakit'), 1) }}</td>
+                <td>{{ round((float) $pengajars->avg('total_alpa'), 1) }}</td>
+                
+                {{-- Rata-rata persentase dibulatkan utuh tanpa koma --}}
+                <td>{{ round((float) $pengajars->avg('persentase')) }}%</td>
+            </tr>
+            
+        </tfoot>
+        @endif
+
     </table>
 </body>
 </html>

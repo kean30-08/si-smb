@@ -1,6 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Tambah Kelas Baru') }}</h2>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Tambah Kelas Baru') }}</h2>
+            <div class="w-full sm:w-auto flex">
+                <a href="{{ route('kelas.index') }}" class="w-full sm:w-auto text-center bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded shadow transition">
+                    Kembali
+                </a>
+            </div>
+        </div>
+        
     </x-slot>
 
     <div class="py-12">
@@ -13,7 +21,7 @@
                             <label class="block font-medium text-sm text-gray-700">Nama Kelas</label>
                             <input type="text" name="nama_kelas" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required placeholder="Contoh: Kelas 5 SD">
                         </div>
-                        <button type="submit" class="bg-gray-800 text-white font-bold py-2 px-4 rounded">Simpan</button>
+                        <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded">Simpan</button>
                     </form>
                 </div>
             </div>

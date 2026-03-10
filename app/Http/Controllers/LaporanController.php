@@ -22,6 +22,8 @@ class LaporanController extends Controller
     // 1. LAPORAN REKAPITULASI KEAKTIFAN SISWA (APRESIASI)
     public function cetakKehadiranSiswa(Request $request)
     {
+        ini_set('memory_limit', '256M');
+        
         $mulai = $request->tanggal_mulai;
         $selesai = $request->tanggal_selesai;
         $kelas_id = $request->kelas_id;

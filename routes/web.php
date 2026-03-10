@@ -83,6 +83,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::put('/siswa/{siswa}', [SiswaController::class, 'update'])->name('siswa.update');
     Route::delete('/siswa/{siswa}', [SiswaController::class, 'destroy'])->name('siswa.destroy');
     Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
+    Route::get('/siswa/{siswa}/cetak-kartu', [SiswaController::class, 'cetakKartu'])->name('siswa.cetakKartu');
 
     //kelas
     Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');

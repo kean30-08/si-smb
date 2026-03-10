@@ -92,8 +92,8 @@
 
                         {{-- Tombol Simpan --}}
                         <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('siswa.index') }}" class="text-gray-600 underline mr-4 hover:text-gray-900">Batal</a>
-                            <button type="submit" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                            <a href="{{ route('siswa.index') }}" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 mr-2 rounded transition">Batal</a>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
                                 Simpan Data
                             </button>
                         </div>

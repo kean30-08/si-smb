@@ -81,7 +81,7 @@
                         </div>
 
                         <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('pengajar.index') }}" class="text-gray-600 underline mr-4">Batal</a>
+                            <a href="{{ route('pengajar.index') }}" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 mr-2 rounded transition">Batal</a>
                             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
                                 Update Data
                             </button>

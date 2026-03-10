@@ -99,4 +99,12 @@ public function destroy(Siswa $siswa)
     $siswa->delete();
     return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil dihapus!');
 }
+// Fungsi untuk mencetak Kartu Pelajar (ID Card)
+    public function cetakKartu(Siswa $siswa)
+    {
+        // Memastikan relasi kelas terbawa
+        $siswa->load('kelas'); 
+        
+        return view('siswa.cetak_kartu', compact('siswa'));
+    }
 }

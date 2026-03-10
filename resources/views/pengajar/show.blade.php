@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Profil Pengajar') }}: {{ $pengajar->nama_lengkap }}
             </h2>
-            <div class="space-x-2">
-                <a href="{{ route('pengajar.edit', $pengajar->id) }}" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
+            <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
+                <a href="{{ route('pengajar.edit', $pengajar->id) }}" class="w-full sm:w-auto justify-center bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 flex items-center rounded">
                     Edit Data
                 </a>
-                <a href="{{ route('pengajar.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                <a href="{{ route('pengajar.index') }}" class="w-full sm:w-auto justify-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 flex items-center rounded">
                     Kembali
                 </a>
             </div>

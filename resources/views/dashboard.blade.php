@@ -13,7 +13,7 @@
                 <form action="{{ route('dashboard') }}" method="GET" class="flex items-center bg-white p-2 rounded-lg shadow-sm border-l-4 border-indigo-500">
                     <label class="mr-3 ml-2 text-sm font-bold text-gray-700">Filter Data:</label>
                     <select name="rentang" onchange="this.form.submit()" class="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer bg-indigo-50 text-indigo-800 font-semibold border-none py-1.5 pl-3 pr-8">
-                        <option value="1" {{ $rentang_bulan == 1 ? 'selected' : '' }}>1 Bulan Terakhir</option>
+                        <option value="1" {{ $rentang_bulan == 1 ? 'selected' : '' }}>Bulan Ini</option>
                         <option value="2" {{ $rentang_bulan == 2 ? 'selected' : '' }}>2 Bulan Terakhir</option>
                         <option value="3" {{ $rentang_bulan == 3 ? 'selected' : '' }}>3 Bulan Terakhir</option>
                         <option value="4" {{ $rentang_bulan == 4 ? 'selected' : '' }}>4 Bulan Terakhir</option>

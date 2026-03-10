@@ -1,4 +1,55 @@
 <x-app-layout>
+    <style>
+    /* Menargetkan tombol "Request Camera Permissions" dan "Start Scanning" */
+    #reader button {
+        background-color: #4f46e5 !important; /* Warna Biru Indigo Tailwind */
+        color: white !important;
+        padding: 10px 20px !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        cursor: pointer !important;
+        margin: 10px 5px !important;
+        transition: background-color 0.3s ease !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    #reader button:hover {
+        background-color: #4338ca !important; /* Biru yang lebih gelap saat dihover */
+    }
+
+    /* Menargetkan link tulisan "Scan an Image File" / "Scan using camera directly" */
+    #reader a {
+        color: #4f46e5 !important;
+        text-decoration: none !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
+        margin-top: 15px !important;
+        padding: 5px 10px !important;
+        border: 1px solid #e0e7ff !important;
+        border-radius: 6px !important;
+        background-color: #2d10be !important;
+    }
+
+    #reader a:hover {
+        text-decoration: underline !important;
+        background-color: #e0e7ff !important;
+    }
+
+    /* Merapikan kotak pemisah dan tulisan status bawaan */
+    #reader span {
+        font-family: 'Segoe UI', sans-serif !important;
+        color: #4b5563 !important; /* Abu-abu gelap */
+    }
+
+    /* Menyembunyikan border aneh bawaan library */
+    #reader {
+        border: none !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }
+</style>
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -50,7 +101,7 @@
 
     {{-- Script untuk HTML5-QRCode dan Logika AJAX --}}
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
 
     <script>
         // Mencegah scanner mengirim data bertubi-tubi saat 1 barcode ditahan di depan kamera
@@ -118,7 +169,12 @@
         // fps = Kecepatan baca per detik, qrbox = ukuran area fokus kotak di layar
         let html5QrcodeScanner = new Html5QrcodeScanner(
             "reader",
-            { fps: 10, qrbox: {width: 250, height: 250} },
+            { 
+                fps: 10, 
+                qrbox: {width: 250, height: 250},
+                // MANTRA AJAIB: Hanya izinkan akses Kamera, matikan fitur upload file/gambar!
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+            },
             /* verbose= */ false
         );
         

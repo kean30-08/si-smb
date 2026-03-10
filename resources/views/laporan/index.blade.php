@@ -42,7 +42,7 @@
                 {{-- KARTU 2: Statistik Agenda --}}
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border-t-4 border-green-500">
                     <div class="p-6 text-gray-900">
-                        <h3 class="text-lg font-bold mb-2 text-green-700">Laporan Agenda Kegiatan</h3>
+                        <h3 class="text-lg font-bold mb-2 text-green-700">Agenda Kegiatan</h3>
                         <p class="text-xs text-gray-500 mb-4">Mencetak rekapitulasi riwayat kegiatan beserta statistik kehadiran jumlah siswa.</p>
                         
                         <form action="{{ route('laporan.cetakAgenda') }}" method="POST" target="_blank">
@@ -76,7 +76,7 @@
                                 <label class="block text-xs font-bold text-gray-700 mb-1">Sampai Tanggal</label>
                                 <input type="date" name="tanggal_selesai" value="{{ \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}" class="w-full text-sm border-gray-300 rounded" required>
                             </div>
-                            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded text-sm transition mt-[68px]">Cetak PDF Pengurus</button>
+                            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded text-sm transition mt-[68px]">Cetak PDF</button>
                         </form>
                     </div>
                 </div>

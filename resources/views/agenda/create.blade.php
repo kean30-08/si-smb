@@ -59,8 +59,8 @@
                         </button>
 
                         <div class="flex items-center justify-end mt-6 border-t pt-4">
-                            <a href="{{ route('agenda.index') }}" class="text-gray-600 underline mr-4">Batal</a>
-                            <button type="submit" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
+                            <a href="{{ route('agenda.index') }}" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 mr-2 rounded transition">Batal</a>
+                            <button type="submit" class="bg-indigo-800 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition">
                                 Simpan Seluruh Rangkaian
                             </button>
                         </div>
