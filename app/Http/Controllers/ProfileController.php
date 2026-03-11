@@ -34,6 +34,19 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
+        // ==========================================
+        // TAMBAHAN: Simpan data ke tabel pengajars
+        // ==========================================
+        $pengajar = \App\Models\Pengajar::where('user_id', $request->user()->id)->first();
+        
+        if ($pengajar) {
+            $pengajar->update([
+                'nomor_hp' => $request->input('nomor_hp'),
+                'jenis_kelamin' => $request->input('jenis_kelamin'),
+                'alamat' => $request->input('alamat'),
+            ]);
+        }
+
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
