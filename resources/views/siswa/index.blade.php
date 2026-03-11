@@ -5,11 +5,17 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Daftar Siswa') }}
             </h2>
+            @php
+            $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+            @endphp
+
+            @if($isAdmin)
             <div class="w-full sm:w-auto flex">
                 <a href="{{ route('siswa.create') }}" class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
                     + Tambah Siswa
                 </a>
             </div>
+            @endif
         </div>
     </x-slot>
 
@@ -66,7 +72,9 @@
                                     <th scope="col" class="py-3 px-6">NIS</th>
                                     <th scope="col" class="py-3 px-6">Kelas</th>
                                     <th scope="col" class="py-3 px-6 text-center">Status</th>
-                                    <th scope="col" class="py-3 px-6 text-center">Aksi</th>
+                                    @if($isAdmin)
+                                        <th scope="col" class="py-3 px-6 text-center">Aksi</th>
+                                    @endif
                                 </tr>
                             </thead>
                             
@@ -114,6 +122,7 @@
                                     </td>
 
                                     {{-- Kolom Aksi --}}
+                                    @if ($isAdmin)
                                     <td class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4" onclick="event.stopPropagation();">
                                         <div class="flex justify-end md:justify-center space-x-5">
                                             {{-- Tombol Edit --}}
@@ -129,7 +138,8 @@
                                                 </button>
                                             </form>
                                         </div>
-                                    </td>
+                                    </td>   
+                                    @endif
                                 </tr>
                                 @empty
                                 <tr class="block md:table-row bg-white border border-gray-200 rounded-lg p-4">

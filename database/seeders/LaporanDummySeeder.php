@@ -39,7 +39,7 @@ class LaporanDummySeeder extends Seeder
             Pengajar::create([
                 'user_id' => $user->id,
                 'nama_lengkap' => $p['nama'],
-                'nip' => 'NIP' . rand(100000, 999999),
+                // 'nip' => 'NIP' . rand(100000, 999999),
                 'nomor_hp' => $p['hp'],
                 'jenis_kelamin' => $p['jk'], // Sesuai ENUM('L', 'P')
                 'alamat' => 'Jl. Dharma No ' . ($index + 1) . ', Tabanan',

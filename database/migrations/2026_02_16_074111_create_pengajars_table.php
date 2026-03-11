@@ -19,7 +19,7 @@ return new class extends Migration
         
         // Biodata Pengajar
         $table->string('nama_lengkap');
-        $table->string('nip')->nullable(); 
+        // $table->string('nip')->nullable(); 
         $table->string('nomor_hp')->nullable(); // Tetap butuh untuk admin menghubungi guru
         $table->enum('jenis_kelamin', ['L', 'P']);
         $table->text('alamat')->nullable();

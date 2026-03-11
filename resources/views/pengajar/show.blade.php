@@ -4,14 +4,19 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Profil Pengajar') }}: {{ $pengajar->nama_lengkap }}
             </h2>
+            @php
+                $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+            @endphp
             <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
+                @if($isAdmin)
                 <a href="{{ route('pengajar.edit', $pengajar->id) }}" class="w-full sm:w-auto justify-center bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 flex items-center rounded">
                     Edit Data
                 </a>
+                @endif
                 <a href="{{ route('pengajar.index') }}" class="w-full sm:w-auto justify-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 flex items-center rounded">
                     Kembali
                 </a>
-            </div>
+            </div>           
         </div>
     </x-slot>
 
@@ -38,10 +43,10 @@
                             <p class="text-sm text-gray-500 font-semibold">Nama Lengkap</p>
                             <p class="text-lg font-medium">{{ $pengajar->nama_lengkap }}</p>
                         </div>
-                        <div>
+                        {{-- <div>
                             <p class="text-sm text-gray-500 font-semibold">NIP / ID</p>
                             <p class="text-lg font-medium">{{ $pengajar->nip ?? '-' }}</p>
-                        </div>
+                        </div> --}}
                         <div>
                             <p class="text-sm text-gray-500 font-semibold">Jabatan</p>
                             <p class="text-lg font-medium">{{ $pengajar->jabatan }}</p>

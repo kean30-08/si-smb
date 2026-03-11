@@ -16,8 +16,8 @@ class PengajarController extends Controller
         // Mengambil data pengajar beserta data akun (user) miliknya
         $pengajars = Pengajar::with('user')
             ->when($search, function ($query, $search) {
-                return $query->where('nama_lengkap', 'like', "%{$search}%")
-                             ->orWhere('nip', 'like', "%{$search}%");
+                return $query->where('nama_lengkap', 'like', "%{$search}%");
+                             
             })
             ->latest()
             ->paginate(10)
@@ -35,9 +35,13 @@ class PengajarController extends Controller
     {
         $request->validate([
             'nama_lengkap' => 'required',
-            'email' => 'required|email|unique:users,email', // Email gak boleh kembar
-            'password' => 'required|min:6',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6|confirmed',
             'jenis_kelamin' => 'required'
+        ], [
+            'password.confirmed' => 'Password dan Konfirmasi Password tidak cocok!',
+            'email.unique' => 'Email ini sudah terdaftar, silakan gunakan email lain.',
+            'password.min' => 'Password harus minimal 6 karakter.'
         ]);
 
         // 1. Buat Akun User untuk Login
@@ -51,7 +55,7 @@ class PengajarController extends Controller
         Pengajar::create([
             'user_id' => $user->id,
             'nama_lengkap' => $request->nama_lengkap,
-            'nip' => $request->nip,
+            //'nip' => $request->nip,
             'nomor_hp' => $request->nomor_hp,
             'jenis_kelamin' => $request->jenis_kelamin,
             'alamat' => $request->alamat,
@@ -94,7 +98,7 @@ class PengajarController extends Controller
         // 2. Update Biodata Pengajar
         $pengajar->update([
             'nama_lengkap' => $request->nama_lengkap,
-            'nip' => $request->nip,
+            //'nip' => $request->nip,
             'nomor_hp' => $request->nomor_hp,
             'jenis_kelamin' => $request->jenis_kelamin,
             'alamat' => $request->alamat,

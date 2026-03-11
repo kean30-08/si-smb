@@ -31,22 +31,21 @@
                         {{ __('Absensi') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
+                            {{ __('Materi') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
+                        {{ __('Pengajar') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
+                        {{ __('Siswa') }}
+                    </x-nav-link>
                     {{-- MENU KHUSUS ADMIN --}}
                     @if($isAdmin)
-                        <x-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
-                            {{ __('Pengajar') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
-                            {{ __('Siswa') }}
-                        </x-nav-link>
-
                         <x-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
                             {{ __('Kelas') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
-                            {{ __('Materi') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
@@ -133,10 +132,12 @@
             <x-responsive-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
                 {{ __('Materi') }}
             </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                {{ __('Laporan') }}
-            </x-responsive-nav-link>
+            
+            @if ($isAdmin)
+                <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                    {{ __('Laporan') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

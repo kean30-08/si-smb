@@ -9,18 +9,6 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-
-                    {{-- Menampilkan pesan error validasi jika ada --}}
-                    @if ($errors->any())
-                        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                            <ul class="list-disc list-inside">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
                     <form action="{{ route('pengajar.store') }}" method="POST">
                         @csrf
 
@@ -32,14 +20,22 @@
                                 <p class="text-sm text-gray-500">Gunakan email aktif dan password minimal 6 karakter.</p>
                             </div>
 
-                            <div>
+                            {{-- Email dibuat memanjang (col-span-2) agar rapi --}}
+                            <div class="md:col-span-2">
                                 <label class="block font-medium text-sm text-gray-700">Email Login *</label>
                                 <input type="email" name="email" value="{{ old('email') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                             </div>
 
+                            {{-- Password --}}
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Password Login *</label>
                                 <input type="password" name="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required minlength="6">
+                            </div>
+
+                            {{-- Konfirmasi Password (Baru) --}}
+                            <div>
+                                <label class="block font-medium text-sm text-gray-700">Konfirmasi Password *</label>
+                                <input type="password" name="password_confirmation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required minlength="6">
                             </div>
 
                             {{-- Biodata Pengajar --}}
@@ -52,10 +48,11 @@
                                 <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                             </div>
 
-                            <div>
+                            {{-- NIP --}}
+                            {{-- <div>
                                 <label class="block font-medium text-sm text-gray-700">NIP / ID Pengajar</label>
                                 <input type="text" name="nip" value="{{ old('nip') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
+                            </div> --}}
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Jenis Kelamin *</label>
@@ -95,4 +92,19 @@
             </div>
         </div>
     </div>
+
+    @if ($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validasi Gagal!',
+                    // Mengambil error pertama saja agar pop-up tidak terlalu panjang
+                    text: '{{ $errors->first() }}',
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Mengerti'
+                });
+            });
+        </script>
+    @endif
 </x-app-layout>

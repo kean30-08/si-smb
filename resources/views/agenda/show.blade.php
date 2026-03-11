@@ -9,30 +9,35 @@
             {{-- PERBAIKAN TOMBOL: Menggunakan gap-2 flex-col untuk HP, flex-row untuk Layar Besar --}}
             <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
                 
-                {{-- Tombol Download PDF --}}
-                <a href="{{ route('agenda.download', $tanggal) }}" class="w-full sm:w-auto justify-center bg-teal-600 hover:bg-teal-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition" title="Download PDF untuk dibagikan via WhatsApp/Manual">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                    Download PDF
-                </a>
+                @php
+                    $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+                @endphp
 
-                {{-- Tombol Broadcast PDF --}}
-                <form action="{{ route('agenda.broadcast', $tanggal) }}" method="POST" onsubmit="return confirm('Kirim jadwal rundown tanggal ini ke SEMUA email orang tua yang terdaftar?');" class="w-full sm:w-auto m-0">
-                    @csrf
-                    <button type="submit" class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21.2 8.4c.5.3.8.8.8 1.4v10.2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.8c0-.6.3-1.1.8-1.4l8-4.8c.7-.4 1.7-.4 2.4 0l8 4.8Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>
-                        Bagikan via Email
-                    </button>
-                </form>
+                @if($isAdmin)
+                    {{-- Tombol Broadcast PDF --}}                
+                    <form action="{{ route('agenda.broadcast', $tanggal) }}" method="POST" onsubmit="return confirm('Kirim jadwal rundown tanggal ini ke SEMUA email orang tua yang terdaftar?');" class="w-full sm:w-auto m-0">
+                        @csrf
+                        <button type="submit" class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21.2 8.4c.5.3.8.8.8 1.4v10.2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.8c0-.6.3-1.1.8-1.4l8-4.8c.7-.4 1.7-.4 2.4 0l8 4.8Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>
+                            Bagikan via Email
+                        </button>
+                    </form> 
+                @endif
+                
+                    {{-- Tombol Download PDF --}}
+                    <a href="{{ route('agenda.download', $tanggal) }}" class="w-full sm:w-auto justify-center bg-teal-600 hover:bg-teal-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition" title="Download PDF untuk dibagikan via WhatsApp/Manual">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        Download PDF
+                    </a>
+                    {{-- Tombol Tambah Acara Baru --}}
+                    <a href="{{ route('agenda.createDetail', $tanggal) }}" class="w-full sm:w-auto justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
+                        + Tambah Acara
+                    </a>
 
-                {{-- Tombol Tambah Acara Baru --}}
-                <a href="{{ route('agenda.createDetail', $tanggal) }}" class="w-full sm:w-auto justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
-                    + Tambah Acara
-                </a>
-
-                {{-- Tombol Kembali --}}
-                <a href="{{ route('agenda.index') }}" class="w-full sm:w-auto justify-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
-                    &larr; Kembali
-                </a>
+                    {{-- Tombol Kembali --}}
+                    <a href="{{ route('agenda.index') }}" class="w-full sm:w-auto justify-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
+                        &larr; Kembali
+                    </a> 
             </div>
         </div>
     </x-slot>

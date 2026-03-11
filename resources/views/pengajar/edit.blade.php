@@ -50,10 +50,10 @@
                                 <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap', $pengajar->nama_lengkap) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
                             </div>
 
-                            <div>
+                            {{-- <div>
                                 <label class="block font-medium text-sm text-gray-700">NIP / ID Pengajar</label>
                                 <input type="text" name="nip" value="{{ old('nip', $pengajar->nip) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                            </div>
+                            </div> --}}
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Jenis Kelamin *</label>

@@ -5,11 +5,18 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Daftar Pengajar') }}
             </h2>
-            <div class="w-full sm:w-auto flex">
-                <a href="{{ route('pengajar.create') }}" class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                    + Tambah Pengajar
-                </a>
-            </div>
+            @php
+                $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+            @endphp
+
+            @if($isAdmin)
+                <div class="w-full sm:w-auto flex">
+                    <a href="{{ route('pengajar.create') }}" class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                        + Tambah Pengajar
+                    </a>
+                </div>
+            @endif
+            
         </div>
     </x-slot>
 
@@ -20,7 +27,7 @@
 
                     {{-- Form Live Search Saja --}}
                     <form id="searchForm" action="{{ route('pengajar.index') }}" method="GET" class="mb-6 flex w-full">
-                        <input type="text" id="searchInput" name="search" value="{{ request('search') }}" autofocus placeholder="Cari nama atau NIP pengajar..." class="w-full md:w-1/3 border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input type="text" id="searchInput" name="search" value="{{ request('search') }}" autofocus placeholder="Cari nama pengajar..." class="w-full md:w-1/3 border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <button type="submit" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r-md flex items-center justify-center transition" title="Cari">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </button>
@@ -35,10 +42,13 @@
                                 <tr>
                                     <th class="py-3 px-6">No</th>
                                     <th class="py-3 px-6">Nama Lengkap</th>
-                                    <th class="py-3 px-6">NIP</th>
+                                    <th class="py-3 px-6">No HP</th>
+                                    {{-- <th class="py-3 px-6">NIP</th> --}}
                                     <th class="py-3 px-6">Jabatan</th>
                                     <th class="py-3 px-6">Email Login</th>
-                                    <th class="py-3 px-6 text-center">Aksi</th>
+                                    @if ($isAdmin)
+                                        <th class="py-3 px-6 text-center">Aksi</th>
+                                    @endif
                                 </tr>
                             </thead>
                             
@@ -55,11 +65,13 @@
                                     {{-- Kolom Nama (Di HP, NIP ditumpuk di bawah Nama) --}}
                                     <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6 border-b md:border-none border-dashed border-gray-200 mb-3 md:mb-0 pb-3 md:pb-4">
                                         <div class="font-bold text-gray-900 text-base md:text-sm whitespace-nowrap">{{ $pengajar->nama_lengkap }}</div>
-                                        <div class="text-xs text-gray-500 md:hidden mt-1 font-medium">NIP: {{ $pengajar->nip ?? '-' }}</div>
+                                        <div class="text-xs text-gray-500 md:hidden mt-1 font-medium">No HP: {{ $pengajar->nomor_hp ?? '-' }}</div>
                                     </td>
                                     
-                                    {{-- Kolom NIP (Hanya muncul terpisah di Desktop) --}}
-                                    <td class="hidden md:table-cell py-4 px-6">{{ $pengajar->nip ?? '-' }}</td>
+                                    {{-- Kolom NIP (Hanya muncul terpisah di Desktop)
+                                    <td class="hidden md:table-cell py-4 px-6">{{ $pengajar->nip ?? '-' }}</td> --}}
+                                    {{-- Kolom NIP (Hanya muncul terpisah di Desktop)--}}
+                                    <td class="hidden md:table-cell py-4 px-6">{{ $pengajar->nomor_hp ?? '-' }}</td> 
                                     
                                     {{-- Kolom Jabatan --}}
                                     <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6 mb-2 md:mb-0">
@@ -78,6 +90,7 @@
                                     </td>
                                     
                                     {{-- Kolom Aksi --}}
+                                    @if ($isAdmin)
                                     <td class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4" onclick="event.stopPropagation();">
                                         <div class="flex justify-end md:justify-center space-x-5">
                                             {{-- Edit --}}
@@ -94,6 +107,8 @@
                                             </form>
                                         </div>
                                     </td>
+                                    @endif
+                                    
                                 </tr>
                                 @empty
                                 <tr class="block md:table-row bg-white border border-gray-200 rounded-lg p-4">
