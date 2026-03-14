@@ -13,7 +13,7 @@ class AdminOnly
     {
         // Jika user sudah login DAN datanya ada di tabel pengajars, tolak!
         if (auth()->check() && Pengajar::where('user_id', auth()->id())->exists()) {
-            abort(403, 'AKSES DITOLAK! Halaman ini khusus untuk Admin Vihara.');
+            abort(403,'AKSES DITOLAK! Halaman ini khusus untuk Admin Vihara.');
         }
 
         return $next($request);

@@ -46,9 +46,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
     Route::get('/kelas/create', [KelasController::class, 'create'])->name('kelas.create');
     Route::post('/kelas', [KelasController::class, 'store'])->name('kelas.store');
-    Route::get('/kelas/{kela}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
-    Route::put('/kelas/{kela}', [KelasController::class, 'update'])->name('kelas.update');
-    Route::delete('/kelas/{kela}', [KelasController::class, 'destroy'])->name('kelas.destroy');
+    Route::get('/kelas/{kelas}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
+    Route::put('/kelas/{kelas}', [KelasController::class, 'update'])->name('kelas.update');
+    Route::delete('/kelas/{kelas}', [KelasController::class, 'destroy'])->name('kelas.destroy');
 
     // Laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');

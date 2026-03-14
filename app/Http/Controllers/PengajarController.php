@@ -10,21 +10,34 @@ use Illuminate\Support\Facades\Hash;
 class PengajarController extends Controller
 {
     public function index(Request $request)
-    {
-        $search = $request->input('search');
+{
+    $search = $request->input('search');
 
-        // Mengambil data pengajar beserta data akun (user) miliknya
-        $pengajars = Pengajar::with('user')
-            ->when($search, function ($query, $search) {
-                return $query->where('nama_lengkap', 'like', "%{$search}%");
-                             
-            })
-            ->latest()
-            ->paginate(10)
-            ->appends(['search' => $search]);
+    // Cek apakah user adalah admin (berguna jika Anda membatasi tombol Edit/Hapus di view)
+    $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
 
-        return view('pengajar.index', compact('pengajars'));
+    // Mengambil data pengajar beserta data akun (user) miliknya
+    $pengajars = Pengajar::with('user')
+        ->when($search, function ($query, $search) {
+            return $query->where('nama_lengkap', 'like', "%{$search}%");
+            
+            // Catatan: Jika pengajar punya NIP dan Anda ingin bisa dicari juga, 
+            // Anda bisa tambahkan orWhere di sini seperti pada siswa.
+            // ->orWhere('nip', 'like', "%{$search}%"); 
+        })
+        ->latest()
+        ->paginate(10)
+        ->appends(['search' => $search]);
+
+    // LOGIKA AJAX
+    if ($request->ajax()) {
+        // Mengembalikan hanya HTML tabelnya saja
+        return view('pengajar.partials._table', compact('pengajars', 'isAdmin'))->render();
     }
+
+    // Jika diakses biasa, kembalikan halaman penuh
+    return view('pengajar.index', compact('pengajars', 'isAdmin'));
+}
 
     public function create()
     {

@@ -25,7 +25,10 @@ class KelasController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_kelas' => 'required|unique:kelas,nama_kelas', // Nama kelas gak boleh kembar
+            'nama_kelas' => 'required|unique:kelas,nama_kelas',
+        ], [
+            'nama_kelas.unique' => 'Kelas sudah dibuat, silakan gunakan nama lain.',
+            'nama_kelas.required' => 'Nama kelas wajib diisi.'
         ]);
 
         Kelas::create($request->all());
@@ -34,27 +37,27 @@ class KelasController extends Controller
     }
 
     // 4. FORM EDIT KELAS
-    public function edit(Kelas $kela) // Perhatikan: Laravel kadang otomatis pakai $kela untuk singular dari $kelas
+    public function edit(Kelas $kelas) // Perhatikan: Laravel kadang otomatis pakai $kela untuk singular dari $kelas
     {
-        return view('kelas.edit', compact('kela'));
+        return view('kelas.edit', compact('kelas'));
     }
 
     // 5. UPDATE DATA
-    public function update(Request $request, Kelas $kela)
+    public function update(Request $request, Kelas $kelas)
     {
         $request->validate([
-            'nama_kelas' => 'required|unique:kelas,nama_kelas,'.$kela->id,
+            'nama_kelas' => 'required|unique:kelas,nama_kelas,'.$kelas->id,
         ]);
 
-        $kela->update($request->all());
+        $kelas->update($request->all());
 
         return redirect()->route('kelas.index')->with('success', 'Nama kelas berhasil diperbarui!');
     }
 
     // 6. HAPUS DATA
-    public function destroy(Kelas $kela)
+    public function destroy(Kelas $kelas)
     {
-        $kela->delete();
+        $kelas->delete();
         return redirect()->route('kelas.index')->with('success', 'Kelas berhasil dihapus!');
     }
 }
