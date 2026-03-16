@@ -22,10 +22,10 @@ class AgendaController extends Controller
         \App\Models\Agenda::whereIn('status', ['akan datang', 'sedang berlangsung'])
             ->where(function($query) {
                 $query->where('tanggal', '<', now()->toDateString()) 
-                      ->orWhere(function($q) {
-                          $q->where('tanggal', '=', now()->toDateString())
+                    ->orWhere(function($q) {
+                        $q->where('tanggal', '=', now()->toDateString())
                             ->where('waktu_selesai', '<=', now()->toTimeString());
-                      });
+                    });
             })->update(['status' => 'selesai']);
         // ----------------------------------------
 
@@ -34,14 +34,19 @@ class AgendaController extends Controller
         // Mengelompokkan data berdasarkan tanggal (GROUP BY)
         $agendasGrouped = \App\Models\Agenda::selectRaw('tanggal, count(id) as total_kegiatan')
             ->when($search, function ($query, $search) {
-                // Pencarian sekarang berdasarkan format tanggal (YYYY-MM-DD)
                 return $query->where('tanggal', 'like', "%{$search}%");
             })
             ->groupBy('tanggal')
             ->orderBy('tanggal', 'desc')
-            ->paginate(10)
+            ->paginate(8) // UBAH MENJADI 8 DI SINI
             ->appends(['search' => $search]);
 
+        // LOGIKA AJAX
+        if ($request->ajax()) {
+            return view('agenda.partials._table', compact('agendasGrouped'))->render();
+        }
+
+        // Tampilan Biasa
         return view('agenda.index', compact('agendasGrouped'));
     }
 
