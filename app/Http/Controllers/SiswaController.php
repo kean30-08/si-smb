@@ -65,9 +65,31 @@ class SiswaController extends Controller
     {
         // 1. Validasi Data (Biar gak asal isi)
         $request->validate([
-            'nama_lengkap' => 'required',
-            'nis' => 'required|unique:siswas,nis', // NIS gak boleh kembar
+            'nama_lengkap' => 'required|regex:/^[a-zA-Z\s]+$/',
+            'nis' => 'required|unique:siswas,nis|regex:/^[0-9]+$/',
             'jenis_kelamin' => 'required',
+            'kelas_id' => 'required',
+            'tanggal_lahir' => 'required',
+            'tempat_lahir' => 'required',
+            'nama_orang_tua' => 'required',
+            'nomor_hp_orang_tua' => 'required|regex:/^[0-9]+$/',
+            'email_orang_tua' => 'required|email',
+            'alamat' => 'required',
+        ],[
+            'nis.unique' => 'NIS ini sudah terdaftar untuk siswa lain. Silakan gunakan NIS yang berbeda.',
+            'nis.regex' => 'NIS hanya boleh berisi angka.',
+            'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
+            'nama_lengkap.regex' => 'Nama hanya boleh berisi huruf dan spasi.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'kelas_id.required' => 'Kelas yang dipilih tidak valid.',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
+            'tempat_lahir.required' => 'Tempat lahir wajib diisi.',
+            'nama_orang_tua.required' => 'Nama orang tua wajib diisi.',
+            'nomor_hp_orang_tua.required' => 'Nomor telepon wajib diisi.',
+            'nomor_hp_orang_tua.regex' => 'Format nomor telepon salah.',
+            'alamat' => 'Alamat wajib diisi.',
+            'email_orang_tua.required' => 'Email wajib diisi.',
+            'email_orang_tua.email' => 'Format email tidak valid.',
         ]);
 
         // 2. Simpan ke Database
@@ -76,21 +98,43 @@ class SiswaController extends Controller
         // 3. Kembali ke Halaman Index dengan Pesan Sukses
         return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil ditambahkan!');
     }
+
+    // Form edit data siswa
     public function edit(Siswa $siswa)
     {
-        // Kita butuh data kelas lagi untuk dropdown
         $kelas = Kelas::all();
         return view('siswa.edit', compact('siswa', 'kelas'));
     }
 
-    // 2. FUNGSI UPDATE DATA KE DATABASE
+    // Update data siswa ke Database
     public function update(Request $request, Siswa $siswa)
     {
         $request->validate([
-            'nama_lengkap' => 'required',
-            // Validasi unik NIS, tapi KECUALIKAN siswa yang sedang diedit ini
-            'nis' => 'required|unique:siswas,nis,'.$siswa->id, 
+            'nama_lengkap' => 'required|regex:/^[a-zA-Z\s]+$/',
+            'nis' => 'required|unique:siswas,nis|regex:/^[0-9]+$/',
             'jenis_kelamin' => 'required',
+            'kelas_id' => 'required',
+            'tanggal_lahir' => 'required',
+            'tempat_lahir' => 'required',
+            'nama_orang_tua' => 'required',
+            'nomor_hp_orang_tua' => 'required|regex:/^[0-9]+$/',
+            'email_orang_tua' => 'required|email',
+            'alamat' => 'required',
+        ],[
+            'nis.unique' => 'NIS ini sudah terdaftar untuk siswa lain. Silakan gunakan NIS yang berbeda.',
+            'nis.regex' => 'NIS hanya boleh berisi angka.',
+            'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
+            'nama_lengkap.regex' => 'Nama hanya boleh berisi huruf dan spasi.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'kelas_id.required' => 'Kelas yang dipilih tidak valid.',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
+            'tempat_lahir.required' => 'Tempat lahir wajib diisi.',
+            'nama_orang_tua.required' => 'Nama orang tua wajib diisi.',
+            'nomor_hp_orang_tua.required' => 'Nomor telepon wajib diisi.',
+            'nomor_hp_orang_tua.regex' => 'Format nomor telepon salah.',
+            'alamat' => 'Alamat wajib diisi.',
+            'email_orang_tua.required' => 'Email wajib diisi.',
+            'email_orang_tua.email' => 'Format email tidak valid.',
         ]);
 
         // Update semua data sesuai input

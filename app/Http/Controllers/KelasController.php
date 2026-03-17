@@ -47,6 +47,9 @@ class KelasController extends Controller
     {
         $request->validate([
             'nama_kelas' => 'required|unique:kelas,nama_kelas,'.$kelas->id,
+        ],[
+            'nama_kelas.unique' => 'Kelas sudah dibuat, silakan gunakan nama lain.',
+            'nama_kelas.required' => 'Nama kelas wajib diisi.'
         ]);
 
         $kelas->update($request->all());
