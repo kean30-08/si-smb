@@ -101,6 +101,7 @@ Route::middleware('auth')->group(function () {
 
     // Materi
     Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
+    Route::get('/materi/{materi}', [MateriController::class, 'show'])->name('materi.show');
 });
 
 require __DIR__.'/auth.php';

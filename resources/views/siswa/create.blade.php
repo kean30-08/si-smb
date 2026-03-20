@@ -28,7 +28,7 @@
                                 <label class="block font-medium text-sm text-gray-700">NIS</label>
                                 <input type="text" name="nis"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('nis') }}" placeholder="Masukkan Nomor Induk Siswa ...">
+                                    value="{{ old('nis') }}" placeholder="Masukkan Nomor Induk Siswa ..." required>
                             </div>
 
                             <div>
@@ -67,14 +67,14 @@
                                 <label class="block font-medium text-sm text-gray-700">Tempat Lahir</label>
                                 <input type="text" name="tempat_lahir"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('tempat_lahir') }}" placeholder="Masukkan Tempat Lahir ...">
+                                    value="{{ old('tempat_lahir') }}" placeholder="Masukkan Tempat Lahir ..." required>
                             </div>
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Tanggal Lahir</label>
                                 <input type="date" name="tanggal_lahir"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('tanggal_lahir') }}">
+                                    value="{{ old('tanggal_lahir') }}" required>
                             </div>
 
                             {{-- KONTAK & ORANG TUA --}}
@@ -82,14 +82,16 @@
                                 <label class="block font-medium text-sm text-gray-700">Nama Orang Tua</label>
                                 <input type="text" name="nama_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('nama_orang_tua') }}" placeholder="Masukkan Nama Orang Tua ...">
+                                    value="{{ old('nama_orang_tua') }}" placeholder="Masukkan Nama Orang Tua ..."
+                                    required>
                             </div>
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Email Orang Tua</label>
                                 <input type="email" name="email_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('email_orang_tua') }}" placeholder="Masukkan Email Orang Tua ...">
+                                    value="{{ old('email_orang_tua') }}" placeholder="Masukkan Email Orang Tua ..."
+                                    required>
                             </div>
 
                             <div>
@@ -97,7 +99,7 @@
                                 <input type="tel" name="nomor_hp_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
                                     value="{{ old('nomor_hp_orang_tua') }}"
-                                    placeholder="Masukkan No HP / WA Orang Tua ...">
+                                    placeholder="Masukkan No HP / WA Orang Tua ..." required>
                             </div>
 
                             {{-- STATUS & GAMIFIKASI --}}
@@ -124,7 +126,7 @@
                                 <label class="block font-medium text-sm text-gray-700">Alamat Lengkap</label>
                                 <textarea name="alamat" rows="3"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    placeholder="Masukkan Alamat Lengkap ...">{{ old('alamat') }}</textarea>
+                                    placeholder="Masukkan Alamat Lengkap ..." required>{{ old('alamat') }}</textarea>
                             </div>
                         </div>
 

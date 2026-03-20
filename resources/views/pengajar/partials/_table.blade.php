@@ -46,7 +46,7 @@
                         <div class="flex items-center justify-between md:justify-start">
                             <span
                                 class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Jabatan</span>
-                            <span class="text-sm text-gray-800">{{ $pengajar->jabatan }}</span>
+                            <span class="text-sm text-gray-800">{{ $pengajar->jabatan->nama_jabatan ?? '-' }}</span>
                         </div>
                     </td>
 

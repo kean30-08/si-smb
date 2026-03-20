@@ -16,4 +16,10 @@ class Pengajar extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Tambahkan Relasi ke tabel Jabatans
+    public function jabatan()
+    {
+        return $this->belongsTo(Jabatan::class);
+    }
 }

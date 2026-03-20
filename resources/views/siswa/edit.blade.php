@@ -69,14 +69,16 @@
                                 <label class="block font-medium text-sm text-gray-700">Tempat Lahir</label>
                                 <input type="text" name="tempat_lahir"
                                     value="{{ old('tempat_lahir', $siswa->tempat_lahir) }}"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required>
                             </div>
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Tanggal Lahir</label>
                                 <input type="date" name="tanggal_lahir"
                                     value="{{ old('tanggal_lahir', $siswa->tanggal_lahir) }}"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required>
                             </div>
 
                             {{-- KONTAK & ORANG TUA --}}
@@ -84,21 +86,24 @@
                                 <label class="block font-medium text-sm text-gray-700">Nama Orang Tua</label>
                                 <input type="text" name="nama_orang_tua"
                                     value="{{ old('nama_orang_tua', $siswa->nama_orang_tua) }}"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required>
                             </div>
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Email Orang Tua</label>
                                 <input type="email" name="email_orang_tua"
                                     value="{{ old('email_orang_tua', $siswa->email_orang_tua) }}"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required>
                             </div>
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">No HP / WA Orang Tua</label>
                                 <input type="text" name="nomor_hp_orang_tua"
                                     value="{{ old('nomor_hp_orang_tua', $siswa->nomor_hp_orang_tua) }}"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required>
                             </div>
 
                             {{-- STATUS & GAMIFIKASI --}}
@@ -127,7 +132,8 @@
                             <div class="md:col-span-2">
                                 <label class="block font-medium text-sm text-gray-700">Alamat Lengkap</label>
                                 <textarea name="alamat" rows="3"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('alamat', $siswa->alamat) }}</textarea>
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    required>{{ old('alamat', $siswa->alamat) }}</textarea>
                             </div>
 
                         </div>

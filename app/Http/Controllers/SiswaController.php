@@ -111,7 +111,7 @@ class SiswaController extends Controller
     {
         $request->validate([
             'nama_lengkap' => 'required|regex:/^[a-zA-Z\s]+$/',
-            'nis' => 'required|unique:siswas,nis|regex:/^[0-9]+$/',
+            'nis' => 'required|regex:/^[0-9]+$/|unique:siswas,nis,' . $siswa->id,
             'jenis_kelamin' => 'required',
             'kelas_id' => 'required',
             'tanggal_lahir' => 'required',

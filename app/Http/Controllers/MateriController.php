@@ -17,6 +17,8 @@ class MateriController extends Controller
 
         $kelas = Kelas::all();
 
+        $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+
         $materis = Materi::with('kelas')
             ->when($search, function ($query, $search) {
                 return $query->where('judul', 'like', "%{$search}%");
@@ -27,8 +29,13 @@ class MateriController extends Controller
             ->latest()
             ->paginate(10)
             ->appends(['search' => $search, 'kelas_id' => $kelas_id]);
+        
+        if ($request->ajax()) {
+            return view('materi.partials._table', compact('materis', 'isAdmin'))->render();
+        }
 
-        return view('materi.index', compact('materis', 'kelas'));
+        // UBAH MENJADI:
+        return view('materi.index', compact('materis', 'kelas', 'isAdmin'));
     }
 
     public function create()
@@ -40,11 +47,15 @@ class MateriController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'judul' => 'required|string|max:255',
+            'judul' => 'required|string|max:255|unique:materis,judul',
             'kelas_id' => 'required|exists:kelas,id',
             'deskripsi' => 'nullable|string',
             // Validasi file: maksimal 5MB, format bebas untuk dokumen
             'file_materi' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar|max:5120', 
+        ],[
+            'file_materi.mimes' => 'File harus berupa dokumen (pdf, doc, docx, ppt, pptx, xls, xlsx, zip, rar).',
+            'file_materi.max' => 'Ukuran file maksimal 5MB.',
+            'judul.unique' => 'Judul materi sudah ada, silakan gunakan judul lain.',
         ]);
 
         $data = $request->all();
@@ -79,10 +90,14 @@ class MateriController extends Controller
     public function update(Request $request, Materi $materi)
     {
         $request->validate([
-            'judul' => 'required|string|max:255',
+            'judul' => 'required|string|max:255|unique:materis,judul,' . $materi->judul,
             'kelas_id' => 'required|exists:kelas,id',
             'deskripsi' => 'nullable|string',
             'file_materi' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar|max:5120',
+        ],[
+            'file_materi.mimes' => 'File harus berupa dokumen (pdf, doc, docx, ppt, pptx, xls, xlsx, zip, rar).',
+            'file_materi.max' => 'Ukuran file maksimal 5MB.',
+            'judul.unique' => 'Judul materi sudah ada, silakan gunakan judul lain.',
         ]);
 
         $data = $request->except(['file_materi']); // Ambil semua data kecuali file dulu
@@ -108,6 +123,14 @@ class MateriController extends Controller
         $materi->update($data);
 
         return redirect()->route('materi.index')->with('success', 'Materi berhasil diperbarui!');
+    }
+
+    public function show(Materi $materi)
+    {
+        // Memuat relasi kelas agar nama kelas bisa ditampilkan
+        $materi->load('kelas'); 
+        
+        return view('materi.show', compact('materi'));
     }
 
     public function destroy(Materi $materi)
