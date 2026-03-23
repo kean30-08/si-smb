@@ -20,15 +20,22 @@
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Nama Lengkap</label>
                                 <input type="text" name="nama_lengkap"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic class:@error('nama_lengkap') border-red-500 @enderror"
                                     value="{{ old('nama_lengkap') }}" placeholder="Masukkan Nama Lengkap ...">
+                                @error('nama_lengkap')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">NIS</label>
                                 <input type="text" name="nis"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic class:@error('nis') border-red-500 @enderror
+"
                                     value="{{ old('nis') }}" placeholder="Masukkan Nomor Induk Siswa ..." required>
+                                @error('nis')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <div>
@@ -97,9 +104,12 @@
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">No HP / WA Orang Tua</label>
                                 <input type="tel" name="nomor_hp_orang_tua"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic class:@error('nomor_hp_orang_tua') border-red-500 @enderror"
                                     value="{{ old('nomor_hp_orang_tua') }}"
                                     placeholder="Masukkan No HP / WA Orang Tua ..." required>
+                                @error('nomor_hp_orang_tua')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             {{-- STATUS & GAMIFIKASI --}}

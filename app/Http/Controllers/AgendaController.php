@@ -1,222 +1,257 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Siswa;
+use App\Models\Agenda;
 use App\Mail\BroadcastAgendaMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Agenda;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Validation\Rule; // PENTING: Tambahkan ini untuk validasi kombinasi
 
 class AgendaController extends Controller
 {
+    /**
+     * Menampilkan daftar agenda yang dikelompokkan berdasarkan tanggal.
+     */
     public function index(Request $request)
     {
+        $now = now();
+        $today = $now->toDateString();
+        $currentTime = $now->toTimeString();
+
         // --- FITUR AUTO UPDATE STATUS CERDAS ---
-        \App\Models\Agenda::where('status', 'akan datang')
-            ->where('tanggal', '=', now()->toDateString())
-            ->where('waktu_mulai', '<=', now()->toTimeString())
-            ->where('waktu_selesai', '>', now()->toTimeString())
+        Agenda::where('status', 'akan datang')
+            ->where('tanggal', $today)
+            ->where('waktu_mulai', '<=', $currentTime)
+            ->where('waktu_selesai', '>', $currentTime)
             ->update(['status' => 'sedang berlangsung']);
 
-        \App\Models\Agenda::whereIn('status', ['akan datang', 'sedang berlangsung'])
-            ->where(function($query) {
-                $query->where('tanggal', '<', now()->toDateString()) 
-                    ->orWhere(function($q) {
-                        $q->where('tanggal', '=', now()->toDateString())
-                            ->where('waktu_selesai', '<=', now()->toTimeString());
+        Agenda::whereIn('status', ['akan datang', 'sedang berlangsung'])
+            ->where(function($query) use ($today, $currentTime) {
+                $query->where('tanggal', '<', $today) 
+                    ->orWhere(function($q) use ($today, $currentTime) {
+                        $q->where('tanggal', $today)
+                            ->where('waktu_selesai', '<=', $currentTime);
                     });
             })->update(['status' => 'selesai']);
-        // ----------------------------------------
 
         $search = $request->input('search');
 
-        // Mengelompokkan data berdasarkan tanggal (GROUP BY)
-        $agendasGrouped = \App\Models\Agenda::selectRaw('tanggal, count(id) as total_kegiatan')
+        $agendasGrouped = Agenda::selectRaw('tanggal, count(id) as total_kegiatan')
             ->when($search, function ($query, $search) {
                 return $query->where('tanggal', 'like', "%{$search}%");
             })
             ->groupBy('tanggal')
             ->orderBy('tanggal', 'desc')
-            ->paginate(8) // UBAH MENJADI 8 DI SINI
+            ->paginate(8)
             ->appends(['search' => $search]);
 
-        // LOGIKA AJAX
         if ($request->ajax()) {
             return view('agenda.partials._table', compact('agendasGrouped'))->render();
         }
 
-        // Tampilan Biasa
         return view('agenda.index', compact('agendasGrouped'));
     }
 
-    // Fungsi Baru untuk menampilkan detail rundown pada tanggal tertentu
     public function showDate($tanggal)
     {
-        $agendas = \App\Models\Agenda::where('tanggal', $tanggal)
+        $agendas = Agenda::where('tanggal', $tanggal)
             ->orderBy('waktu_mulai', 'asc')
             ->get();
 
         return view('agenda.show', compact('agendas', 'tanggal'));
     }
 
-public function store(Request $request)
-{
-    // Validasi input berupa Array (Karena form mengirim banyak data sekaligus)
-    $request->validate([
-        'tanggal' => 'required|date',
-        'nama_kegiatan' => 'required|array',
-        'nama_kegiatan.*' => 'required|string',
-        'waktu_mulai' => 'required|array',
-        'waktu_mulai.*' => 'required',
-        // Waktu selesai WAJIB diisi agar fitur Auto-Update status bisa mendeteksi kapan acara berakhir
-        'waktu_selesai' => 'required|array', 
-        'waktu_selesai.*' => 'required',
-    ]);
-
-    $tanggal = $request->tanggal;
-
-    // Looping / Ulangi penyimpanan sebanyak jumlah kegiatan yang ditambahkan di form
-    foreach ($request->nama_kegiatan as $index => $nama) {
-        Agenda::create([
-            'tanggal' => $tanggal,
-            'nama_kegiatan' => $nama,
-            'waktu_mulai' => $request->waktu_mulai[$index],
-            'waktu_selesai' => $request->waktu_selesai[$index],
-            'deskripsi_rundown' => $request->deskripsi_rundown[$index] ?? null,
-            'status' => 'akan datang', // Default selalu akan datang
-        ]);
-    }
-
-    return redirect()->route('agenda.index')->with('success', 'Rangkaian jadwal berhasil ditambahkan!');
-}
-
     public function create()
     {
         return view('agenda.create');
     }
 
+    /**
+     * Menyimpan rangkaian agenda baru dalam bentuk array (bulk store).
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'tanggal' => 'required|date',
+            'nama_kegiatan' => 'required|array',
+            'nama_kegiatan.*' => 'required|string',
+            'waktu_mulai' => 'required|array',
+            'waktu_selesai' => 'required|array',
+        ]);
+
+        $tanggal = $request->tanggal;
+
+        // 1. VALIDASI MANUAL: Cek apakah di dalam form yang disubmit ada data kembar
+        $kegiatanWaktuSubmitted = [];
+        foreach ($request->nama_kegiatan as $index => $nama) {
+            $waktu = $request->waktu_mulai[$index];
+            $key = $nama . '-' . $waktu; // Contoh: "test 1-08:00"
+            
+            if (in_array($key, $kegiatanWaktuSubmitted)) {
+                return back()->withInput()->withErrors(['nama_kegiatan' => 'Terdapat duplikasi kegiatan "'.$nama.'" di jam yang sama pada form pengisian Anda!']);
+            }
+            $kegiatanWaktuSubmitted[] = $key;
+        }
+
+        // 2. VALIDASI DATABASE: Cek apakah jadwal tersebut sudah ada di Database
+        foreach ($request->nama_kegiatan as $index => $nama) {
+            $exists = Agenda::where('tanggal', $tanggal)
+                            ->where('waktu_mulai', $request->waktu_mulai[$index])
+                            ->where('nama_kegiatan', $nama)
+                            ->exists();
+            if ($exists) {
+                return back()->withInput()->withErrors(['nama_kegiatan' => 'Kegiatan yang sama pada tanggal dan jam tersebut sudah dibuat!']);
+            }
+        }
+
+        // Jika lolos semua validasi, baru simpan ke database
+        DB::transaction(function () use ($request, $tanggal) {
+            foreach ($request->nama_kegiatan as $index => $nama) {
+                Agenda::create([
+                    'tanggal' => $tanggal,
+                    'nama_kegiatan' => $nama,
+                    'waktu_mulai' => $request->waktu_mulai[$index],
+                    'waktu_selesai' => $request->waktu_selesai[$index],
+                    'deskripsi_rundown' => $request->deskripsi_rundown[$index] ?? null,
+                    'status' => 'akan datang',
+                ]);
+            }
+        });
+
+        return redirect()->route('agenda.index')->with('success', 'Rangkaian jadwal berhasil ditambahkan!');
+    }
 
     public function edit(Agenda $agenda)
     {
         return view('agenda.edit', compact('agenda'));
     }
 
+    /**
+     * Memperbarui data agenda tunggal.
+     */
     public function update(Request $request, Agenda $agenda)
     {
         $request->validate([
-            'nama_kegiatan' => 'required',
             'tanggal' => 'required|date',
             'waktu_mulai' => 'required',
-            'status' => 'required'
+            'status' => 'required',
+            // VALIDASI KOMBINASI: Cek unik tapi boleh nama yang sama asal jam/tanggal beda
+            'nama_kegiatan' => [
+                'required',
+                'string',
+                Rule::unique('agendas')->where(function ($query) use ($request) {
+                    return $query->where('tanggal', $request->tanggal)
+                                 ->where('waktu_mulai', $request->waktu_mulai);
+                })->ignore($agenda->id) // Abaikan ID data ini sendiri (agar bisa disave walau tidak diganti namanya)
+            ],
+        ], [
+            'nama_kegiatan.unique' => 'Gagal mengubah! Kegiatan dengan nama dan jam mulai tersebut sudah ada di rundown.'
         ]);
 
         $agenda->update($request->all());
 
-        return redirect()->route('agenda.index')->with('success', 'Status/Data agenda berhasil diperbarui!');
+        return redirect()->route('agenda.showDate', $request->tanggal)->with('success', 'Data agenda berhasil diperbarui!');
     }
 
     public function destroy(Agenda $agenda)
     {
+        $tanggal = $agenda->tanggal;
         $agenda->delete();
-        return redirect()->route('agenda.index')->with('success', 'Agenda berhasil dihapus!');
+        return redirect()->route('agenda.showDate', $tanggal)->with('success', 'Acara rundown berhasil dihapus!');
     }
 
-    // Tambahkan variabel $tanggal di dalam kurung
-    public function broadcastPdf($tanggal) 
-    {
-        // Beri waktu loading maksimal 5 menit agar tidak putus di tengah jalan
-        set_time_limit(300); 
-
-        $agendas = \App\Models\Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
-
-        if ($agendas->isEmpty()) {
-            return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal pada tanggal tersebut.');
-        }
-
-        // --- SISTEM PELINDUNG ERROR (TRY-CATCH) ---
-        try {
-            // Proses buat PDF
-            $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
-            $pdfContent = $pdf->output();
-
-            // Cari email HANYA untuk siswa yang masih Aktif
-            $emails = \App\Models\Siswa::where('status', 'aktif')
-                           ->whereNotNull('email_orang_tua')
-                           ->where('email_orang_tua', '!=', '')
-                           ->distinct() 
-                           ->pluck('email_orang_tua')
-                           ->unique();
-                           
-
-            if ($emails->isEmpty()) {
-                return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data email orang tua yang tersimpan.');
-            }
-
-            // Proses kirim
-            foreach ($emails as $email) {
-                Mail::to($email)->send(new \App\Mail\BroadcastAgendaMail($pdfContent));
-                
-                sleep(1);
-            }
-
-            // Jika semua lancar, kembali bawa pesan sukses
-            return redirect()->route('agenda.showDate', $tanggal)
-                             ->with('success', 'Jadwal berhasil dikirim ke ' . $emails->count() . ' email orang tua!');
-
-        } catch (\Exception $e) {
-            // JIKA TERJADI ERROR APAPUN (Koneksi putus, timeout, dll), tangkap di sini!
-            // Alih-alih layar putih 500, kita kembalikan ke halaman dengan Pop-up merah
-            return redirect()->route('agenda.showDate', $tanggal)
-                             ->with('error', 'Gagal mengirim email: ' . $e->getMessage());
-        }
-    }
-    
-    // Fungsi untuk mengunduh PDF secara langsung (tanpa kirim email)
-    public function downloadPdf($tanggal)
-    {
-        $agendas = \App\Models\Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
-
-        if ($agendas->isEmpty()) {
-            return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal pada tanggal tersebut untuk didownload.');
-        }
-
-        // Buat PDF menggunakan template yang sudah ada
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
-        
-        // Buat nama file yang rapi (Contoh: Rundown_Kegiatan_19_Feb_2026.pdf)
-        $fileName = 'Rundown_Kegiatan_' . \Carbon\Carbon::parse($tanggal)->format('d_M_Y') . '.pdf';
-        
-        // Gunakan perintah ->download() agar browser langsung mengunduhnya
-        return $pdf->download($fileName);
-    }
-
-    // Menampilkan form tambah acara untuk tanggal spesifik
     public function createDetail($tanggal)
     {
         return view('agenda.create_detail', compact('tanggal'));
     }
 
-    // Menyimpan acara tambahan tersebut
+    /**
+     * Menyimpan satu detail acara tambahan pada tanggal yang sudah ada.
+     */
     public function storeDetail(Request $request)
     {
         $request->validate([
             'tanggal' => 'required|date',
-            'nama_kegiatan' => 'required|string',
             'waktu_mulai' => 'required',
             'waktu_selesai' => 'required',
+            // VALIDASI KOMBINASI UNTUK TAMBAH 1 JADWAL
+            'nama_kegiatan' => [
+                'required',
+                'string',
+                Rule::unique('agendas')->where(function ($query) use ($request) {
+                    return $query->where('tanggal', $request->tanggal)
+                                 ->where('waktu_mulai', $request->waktu_mulai);
+                })
+            ],
+        ], [
+            'nama_kegiatan.unique' => 'Gagal menambah! Kegiatan "'.$request->nama_kegiatan.'" pada jam '.$request->waktu_mulai.' sudah ada di rundown ini.'
         ]);
 
-        Agenda::create([
-            'tanggal' => $request->tanggal,
-            'nama_kegiatan' => $request->nama_kegiatan,
-            'waktu_mulai' => $request->waktu_mulai,
-            'waktu_selesai' => $request->waktu_selesai,
-            'deskripsi_rundown' => $request->deskripsi_rundown,
-            'status' => 'akan datang', 
-        ]);
+        Agenda::create(array_merge($request->all(), ['status' => 'akan datang']));
 
-        // Setelah simpan, kembalikan ke halaman detail tanggal tersebut
         return redirect()->route('agenda.showDate', $request->tanggal)->with('success', 'Acara tambahan berhasil dimasukkan ke jadwal!');
+    }
+
+    /**
+     * Membuat PDF Rundown dan menyebarkannya ke email
+     */
+    public function broadcastPdf($tanggal) 
+    {
+        set_time_limit(300); 
+
+        $agendas = Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
+
+        if ($agendas->isEmpty()) {
+            return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal pada tanggal tersebut.');
+        }
+
+        try {
+            $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
+            $pdfContent = $pdf->output();
+
+            $emails = Siswa::where('status', 'aktif')
+                           ->whereNotNull('email_orang_tua')
+                           ->where('email_orang_tua', '!=', '')
+                           ->distinct() 
+                           ->pluck('email_orang_tua');
+
+            if ($emails->isEmpty()) {
+                return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data email orang tua yang tersimpan.');
+            }
+
+            foreach ($emails as $email) {
+                Mail::to($email)->send(new BroadcastAgendaMail($pdfContent));
+                usleep(500000); 
+            }
+
+            return redirect()->route('agenda.showDate', $tanggal)
+                             ->with('success', 'Jadwal berhasil dikirim ke ' . $emails->count() . ' email orang tua!');
+
+        } catch (\Exception $e) {
+            return redirect()->route('agenda.showDate', $tanggal)
+                             ->with('error', 'Gagal mengirim email: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Mengunduh file PDF Rundown secara langsung.
+     */
+    public function downloadPdf($tanggal)
+    {
+        $agendas = Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
+
+        if ($agendas->isEmpty()) {
+            return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal untuk diunduh.');
+        }
+
+        $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
+        $fileName = 'Rundown_Kegiatan_' . Carbon::parse($tanggal)->format('d_M_Y') . '.pdf';
+        
+        return $pdf->download($fileName);
     }
 }

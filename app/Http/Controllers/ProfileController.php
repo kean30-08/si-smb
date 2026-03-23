@@ -34,9 +34,6 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        // ==========================================
-        // TAMBAHAN: Simpan data ke tabel pengajars
-        // ==========================================
         $pengajar = \App\Models\Pengajar::where('user_id', $request->user()->id)->first();
         
         if ($pengajar) {

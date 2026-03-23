@@ -38,7 +38,7 @@
                                 <label class="block font-medium text-sm text-gray-700">Password Login </label>
                                 <input type="password" name="password"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder:italic @error('password') border-red-500 @enderror"
-                                    required minlength="6" placeholder="Masukkan Minimal 6 Katakter">
+                                    required placeholder="Masukkan Minimal 6 Katakter">
                                 @error('password')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -61,8 +61,11 @@
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Nama Lengkap</label>
                                 <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap') }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder:italic"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder:italic class:@error('nama_lengkap') border-red-500 @enderror"
                                     required placeholder="Masukkan Nama Lengkap Pengajar">
+                                @error('nama_lengkap')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             {{-- NIP --}}
@@ -139,18 +142,5 @@
         </div>
     </div>
 
-    @if ($errors->any())
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Validasi Gagal!',
-                    // Mengambil error pertama saja agar pop-up tidak terlalu panjang
-                    text: '{{ $errors->first() }}',
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'Mengerti'
-                });
-            });
-        </script>
-    @endif
+
 </x-app-layout>

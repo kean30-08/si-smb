@@ -9,15 +9,21 @@ class Pengajar extends Model
 {
     use HasFactory;
 
-    protected $guarded = []; // Izinkan semua kolom diisi
+    protected $guarded = [];
 
-    // Relasi ke tabel Users (Untuk data Login)
+    /**
+     * Summary of user
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, Pengajar>
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Tambahkan Relasi ke tabel Jabatans
+    /**
+     * Summary of jabatan
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Jabatan, Pengajar>
+     */
     public function jabatan()
     {
         return $this->belongsTo(Jabatan::class);

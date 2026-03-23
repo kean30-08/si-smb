@@ -8,59 +8,75 @@ use Illuminate\Http\Request;
 
 class KelasController extends Controller
 {
-    // 1. TAMPILKAN DAFTAR KELAS
+    /**
+     * Menampilkan daftar seluruh entitas kelas.
+     */
     public function index()
     {
-        $kelas = Kelas::all(); // Ambil semua data
+        $kelas = Kelas::all(); 
+               
         return view('kelas.index', compact('kelas'));
     }
 
-    // 2. FORM TAMBAH KELAS
+    /**
+     * Menampilkan formulir pembuatan kelas baru.
+     */
     public function create()
     {
         return view('kelas.create');
     }
 
-    // 3. SIMPAN DATA BARU
+    /**
+     * Menyimpan data kelas baru ke dalam database.
+     * Dilengkapi dengan validasi keunikan nama kelas.
+     */
     public function store(Request $request)
     {
         $request->validate([
             'nama_kelas' => 'required|unique:kelas,nama_kelas',
         ], [
-            'nama_kelas.unique' => 'Kelas sudah dibuat, silakan gunakan nama lain.',
-            'nama_kelas.required' => 'Nama kelas wajib diisi.'
+            'nama_kelas.unique' => 'Identitas kelas tersebut sudah terdaftar dalam sistem.',
+            'nama_kelas.required' => 'Atribut nama kelas wajib dilengkapi.'
         ]);
 
+        // Proses mass assignment data kelas
         Kelas::create($request->all());
 
-        return redirect()->route('kelas.index')->with('success', 'Kelas berhasil ditambahkan!');
+        return redirect()->route('kelas.index')->with('success', 'Entitas kelas baru berhasil ditambahkan!');
     }
 
-    // 4. FORM EDIT KELAS
-    public function edit(Kelas $kelas) // Perhatikan: Laravel kadang otomatis pakai $kela untuk singular dari $kelas
+    /**
+     * Menampilkan formulir untuk memperbarui data kelas.
+     */
+    public function edit(Kelas $kelas) 
     {
         return view('kelas.edit', compact('kelas'));
     }
 
-    // 5. UPDATE DATA
+    /**
+     * Memperbarui informasi entitas kelas di database.
+     */
     public function update(Request $request, Kelas $kelas)
     {
         $request->validate([
-            'nama_kelas' => 'required|unique:kelas,nama_kelas,'.$kelas->id,
-        ],[
-            'nama_kelas.unique' => 'Kelas sudah dibuat, silakan gunakan nama lain.',
-            'nama_kelas.required' => 'Nama kelas wajib diisi.'
+            'nama_kelas' => 'required|unique:kelas,nama_kelas,' . $kelas->id,
+        ], [
+            'nama_kelas.unique' => 'Nama kelas tersebut sudah digunakan oleh entitas lain.',
+            'nama_kelas.required' => 'Atribut nama kelas tidak boleh dikosongkan.'
         ]);
 
         $kelas->update($request->all());
 
-        return redirect()->route('kelas.index')->with('success', 'Nama kelas berhasil diperbarui!');
+        return redirect()->route('kelas.index')->with('success', 'Informasi entitas kelas berhasil diperbarui!');
     }
 
-    // 6. HAPUS DATA
+    /**
+     * Menghapus entitas kelas dari sistem.
+     */
     public function destroy(Kelas $kelas)
     {
         $kelas->delete();
-        return redirect()->route('kelas.index')->with('success', 'Kelas berhasil dihapus!');
+        
+        return redirect()->route('kelas.index')->with('success', 'Entitas kelas berhasil dihapus dari sistem!');
     }
 }

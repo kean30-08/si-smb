@@ -83,7 +83,7 @@
     {{-- Script untuk Auto-Submit (Live Search & Filter) --}}
     <script>
         let typingTimer;
-        let doneTypingInterval = 500; // Dikurangi jadi 500ms agar lebih responsif
+        let doneTypingInterval = 500;
         let searchInput = document.getElementById('searchInput');
         let searchForm = document.getElementById('searchForm');
         let kelasFilter = document.getElementById('kelasFilter');

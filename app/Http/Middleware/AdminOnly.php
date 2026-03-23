@@ -9,9 +9,15 @@ use App\Models\Pengajar;
 
 class AdminOnly
 {
+    /**
+    * Handle an incoming request.
+    *
+    * @param  \Illuminate\Http\Request  $request
+    * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+    * @return \Symfony\Component\HttpFoundation\Response
+    */
     public function handle(Request $request, Closure $next): Response
     {
-        // Jika user sudah login DAN datanya ada di tabel pengajars, tolak!
         if (auth()->check() && Pengajar::where('user_id', auth()->id())->exists()) {
             abort(403,'AKSES DITOLAK! Halaman ini khusus untuk Admin Vihara.');
         }

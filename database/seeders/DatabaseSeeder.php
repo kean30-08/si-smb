@@ -18,27 +18,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 
-        // 1. SEEDER TABEL JABATAN
-        // 
-        $daftarJabatan = [
-            'Guru Sekolah Minggu',
-            'Kepala Sekolah Minggu',
-            'Wakil Kepala Sekolah',
-            'Sekretaris Sekolah Minggu',
-            'Humas Sekolah Minggu',
-            'Bendahara Sekolah Minggu',
-            'Pengurus Vihara',
-        ];
-
-        // Looping untuk memasukkan data ke tabel jabatans
-        foreach ($daftarJabatan as $nama) {
-            Jabatan::create([
-                'nama_jabatan' => $nama
-            ]);
-        }
-
-        // 
-        // 2. SEEDER AKUN ADMIN
+        // SEEDER AKUN ADMIN
         // 
         User::factory()->create([
             'name' => 'Admin',

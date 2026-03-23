@@ -15,11 +15,21 @@ class BroadcastAgendaMail extends Mailable
 
     public $pdfContent;
 
+    /**
+     * Create a new message instance.
+     *
+     * @return void
+     */
     public function __construct($pdfContent)
     {
         $this->pdfContent = $pdfContent;
     }
 
+    /**
+     * Get the message envelope.
+     *
+     * @return \Illuminate\Mail\Mailables\Envelope
+     */
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -27,16 +37,25 @@ class BroadcastAgendaMail extends Mailable
         );
     }
 
+    /**
+     * Get the message content definition.
+     *
+     * @return \Illuminate\Mail\Mailables\Content
+     */
     public function content(): Content
     {
         return new Content(
-            view: 'emails.agenda_pesan', // Kita akan buat file view ini nanti
+            view: 'emails.agenda_pesan',
         );
     }
 
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array
+     */
     public function attachments(): array
     {
-        // Menyisipkan file PDF langsung dari memory (tanpa harus disimpan ke folder PC dulu)
         return [
             Attachment::fromData(fn () => $this->pdfContent, 'Jadwal_Kegiatan_Vihara.pdf')
                 ->withMime('application/pdf'),

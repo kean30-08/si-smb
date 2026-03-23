@@ -9,10 +9,12 @@ class Siswa extends Model
 {
     use HasFactory;
 
-    // Izinkan semua kolom diisi
     protected $guarded = [];
 
-    // Relasi: Setiap Siswa milik 1 Kelas
+    /**
+     * Summary of kelas
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Kelas, Siswa>
+     */
     public function kelas()
     {
         return $this->belongsTo(Kelas::class);

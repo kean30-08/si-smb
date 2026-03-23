@@ -8,7 +8,10 @@ class Materi extends Model
     use HasFactory;
     protected $guarded = [];
 
-    // Relasi: 1 Materi milik 1 Kelas
+    /**
+     * Summary of kelas
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Kelas, Materi>
+     */
     public function kelas()
     {
         return $this->belongsTo(Kelas::class);

@@ -55,7 +55,6 @@
                                 </div>
 
                                 <div>
-                                    {{-- WAJIB ADA INI AGAR VALIDASI 'CONFIRMED' BEKERJA --}}
                                     <label class="block font-medium text-sm text-gray-700">Konfirmasi Password
                                         Baru</label>
                                     <input type="password" name="password_confirmation"
@@ -63,6 +62,7 @@
                                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm placeholder:italic">
                                 </div>
                             </div>
+                            {{-- END KONTANER EMAIL & PASSWORD --}}
 
 
                             {{-- BIODATA PENGAJAR --}}
@@ -114,7 +114,6 @@
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Nomor HP / WA</label>
-                                {{-- Ubah jadi type="tel" --}}
                                 <input type="tel" name="nomor_hp"
                                     value="{{ old('nomor_hp', $pengajar->nomor_hp) }}"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('nomor_hp') border-red-500 @enderror"
@@ -128,9 +127,10 @@
                                 <label class="block font-medium text-sm text-gray-700">Alamat Lengkap</label>
                                 <textarea name="alamat" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>{{ old('alamat', $pengajar->alamat) }}</textarea>
                             </div>
-
+                            {{-- END BIODATA PENGAJAR --}}
                         </div>
 
+                        {{-- BUTTON --}}
                         <div class="flex items-center justify-end mt-6">
                             <a href="{{ route('pengajar.index') }}"
                                 class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 mr-2 rounded transition">Batal</a>
@@ -139,15 +139,12 @@
                                 Update Data
                             </button>
                         </div>
-
                     </form>
-
-
-
                 </div>
             </div>
         </div>
     </div>
+
     {{-- SCRIPT UNTUK TOGGLE EMAIL & PASSWORD --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -157,14 +154,10 @@
 
             toggleBtn.addEventListener('change', function() {
                 if (this.checked) {
-                    // Munculkan container
                     container.classList.remove('hidden');
-                    // Jadikan email wajib diisi
                     emailInput.setAttribute('required', 'required');
                 } else {
-                    // Sembunyikan container
                     container.classList.add('hidden');
-                    // Cabut status wajib diisi agar form bisa di-submit
                     emailInput.removeAttribute('required');
                 }
             });

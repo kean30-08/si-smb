@@ -19,7 +19,11 @@
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Judul Materi</label>
                                 <input type="text" name="judul" value="{{ old('judul', $materi->judul) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm class:@error('judul') border-red-500 @enderror"
+                                    required>
+                                @error('judul')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <div>

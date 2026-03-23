@@ -20,8 +20,11 @@
                                 <label class="block font-medium text-sm text-gray-700">Judul Materi</label>
                                 <input type="text" name="judul" value="{{ old('judul') }}"
                                     placeholder="Contoh: Pengenalan Riwayat Buddha Gautama"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder:italic"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder:italic class:@error('judul') border-red-500 @enderror"
                                     required>
+                                @error('judul')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <div>

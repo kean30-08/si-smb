@@ -258,11 +258,11 @@
                                                     <div class="font-bold text-gray-900 text-base md:text-sm">
                                                         {{ $pengajar->nama_lengkap }}</div>
                                                     <div class="text-xs text-amber-600 md:hidden mt-1 font-semibold">
-                                                        {{ $pengajar->jabatan ?? '-' }}</div>
+                                                        {{ $pengajar->jabatan->nama_jabatan ?? '-' }}</div>
                                                 </td>
 
                                                 <td class="hidden md:table-cell py-4 px-4">
-                                                    {{ $pengajar->jabatan ?? '-' }}</td>
+                                                    {{ $pengajar->jabatan->nama_jabatan ?? '-' }}</td>
 
                                                 <td
                                                     class="block md:table-cell py-2 md:py-4 px-2 md:px-4 md:text-center mb-2 md:mb-0">

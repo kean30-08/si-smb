@@ -11,10 +11,14 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    /**
+     * Menampilkan halaman dashboard utama dengan ringkasan statistik,
+     * grafik kehadiran, dan leaderboard siswa teladan.
+     */
     public function index(Request $request)
     {
+        // Pengaturan rentang waktu filter
         $rentang_bulan = $request->input('rentang', 1);
-
         $start_date = Carbon::now()->subMonths($rentang_bulan - 1)->startOfMonth()->toDateString();
         $end_date = Carbon::now()->endOfMonth()->toDateString();
 
@@ -22,13 +26,13 @@ class DashboardController extends Controller
         $total_siswa = Siswa::where('status', 'aktif')->count();
         $total_pengajar = Pengajar::count();
         
-        // Menghitung SEMUA jadwal di database tanpa terpengaruh filter tanggal
+        // Menghitung jadwal unik (berdasarkan tanggal) untuk statistik keaktifan
         $total_agenda_harian = Agenda::distinct('tanggal')->count('tanggal');
 
-        // Total Jadwal (khusus dalam rentang waktu terpilih) untuk perhitungan persentase
+        // Total jadwal khusus dalam periode filter untuk perhitungan persentase leaderboard
         $total_jadwal_period = Agenda::whereBetween('tanggal', [$start_date, $end_date])
-                              ->distinct('tanggal')
-                              ->count('tanggal');
+                                     ->distinct('tanggal')
+                                     ->count('tanggal');
 
         // 2. DATA GRAFIK & REKAPITULASI (Sesuai Rentang Bulan)
         $agendas_per_hari = Agenda::whereBetween('tanggal', [$start_date, $end_date])
@@ -46,78 +50,88 @@ class DashboardController extends Controller
             $label_grafik[] = Carbon::parse($tanggal)->format('d M');
             $agenda_ids = $agendas->pluck('id')->toArray();
             
-            // Hitung status harian per siswa unik
-            $hadir_count = Absensi::whereIn('agenda_id', $agenda_ids)->where('status_kehadiran', 'hadir')->distinct('siswa_id')->count('siswa_id');
-            $izin_count = Absensi::whereIn('agenda_id', $agenda_ids)->where('status_kehadiran', 'izin')->distinct('siswa_id')->count('siswa_id');
-            $sakit_count = Absensi::whereIn('agenda_id', $agenda_ids)->where('status_kehadiran', 'sakit')->distinct('siswa_id')->count('siswa_id');
+            // Mengambil jumlah siswa unik per status kehadiran dalam satu hari
+            $hadir_count = Absensi::whereIn('agenda_id', $agenda_ids)
+                                ->where('status_kehadiran', 'hadir')
+                                ->distinct('siswa_id')
+                                ->count('siswa_id');
+
+            $izin_count = Absensi::whereIn('agenda_id', $agenda_ids)
+                                ->where('status_kehadiran', 'izin')
+                                ->distinct('siswa_id')
+                                ->count('siswa_id');
+
+            $sakit_count = Absensi::whereIn('agenda_id', $agenda_ids)
+                                 ->where('status_kehadiran', 'sakit')
+                                 ->distinct('siswa_id')
+                                 ->count('siswa_id');
             
-            // Alpa = Total Siswa Aktif dikurangi yang Hadir, Izin, dan Sakit
-            $alpa_count = $total_siswa - ($hadir_count + $izin_count + $sakit_count);
-            if($alpa_count < 0) $alpa_count = 0;
+            // Perhitungan Alpa: Total siswa aktif - (Hadir + Izin + Sakit)
+            $alpa_count = max(0, $total_siswa - ($hadir_count + $izin_count + $sakit_count));
 
             $data_hadir[] = $hadir_count;
-            $data_izin[] = $izin_count;
+            $data_izin[]  = $izin_count;
             $data_sakit[] = $sakit_count;
-            $data_alpa[] = $alpa_count;
+            $data_alpa[]  = $alpa_count;
         }
 
-        // Hitung Total Sakit, Izin, Alpa untuk ditampilkan di bawah grafik
-        $total_izin_period = array_sum($data_izin);
+        // Statistik total untuk ringkasan di bawah grafik
+        $total_izin_period  = array_sum($data_izin);
         $total_sakit_period = array_sum($data_sakit);
-        $total_alpa_period = array_sum($data_alpa);
+        $total_alpa_period  = array_sum($data_alpa);
 
-        // 3. LEADERBOARD SISWA TELADAN DENGAN SISTEM POIN & KEDISIPLINAN WAKTU
+        // 3. LEADERBOARD SISWA TELADAN (POIN & KEDISIPLINAN)
+        // Eager loading relasi kelas untuk efisiensi query
         $siswas = Siswa::with('kelas')->where('status', 'aktif')->get();
 
         foreach ($siswas as $siswa) {
-            $absensi_hari_ini = Absensi::where('siswa_id', $siswa->id)
+            // Mengambil riwayat absensi dalam periode filter
+            $absensi_history = Absensi::where('siswa_id', $siswa->id)
                 ->whereHas('agenda', function($q) use ($start_date, $end_date) {
                     $q->whereBetween('tanggal', [$start_date, $end_date]);
                 })
                 ->with('agenda')
                 ->get()
-                ->groupBy(function($item) { return $item->agenda->tanggal; });
+                ->groupBy(fn($item) => $item->agenda->tanggal);
 
             $hadir = 0; $izin = 0; $sakit = 0;
-            $total_detik_kedatangan = 0; // Untuk menghitung rata-rata kedatangan
+            $total_detik_kedatangan = 0; 
             $jumlah_scan = 0;
             
-            foreach ($absensi_hari_ini as $tanggal => $records) {
+            foreach ($absensi_history as $tanggal => $records) {
+                // Mengambil status harian dari agenda pertama pada hari tersebut
                 $status = $records->first()->status_kehadiran;
                 $waktu_hadir = $records->first()->waktu_hadir;
 
                 if ($status == 'hadir') {
                     $hadir++;
-                    // Jika ada jam kehadirannya, ubah ke detik dari tengah malam
                     if ($waktu_hadir) {
                         $total_detik_kedatangan += Carbon::parse($waktu_hadir)->secondsSinceMidnight();
                         $jumlah_scan++;
                     }
+                } elseif ($status == 'izin') {
+                    $izin++;
+                } elseif ($status == 'sakit') {
+                    $sakit++;
                 }
-                elseif ($status == 'izin') $izin++;
-                elseif ($status == 'sakit') $sakit++;
             }
 
+            // Kalkulasi skor keaktifan
             $siswa->poin_keaktifan = ($hadir * 100) + ($izin * 10) + ($sakit * 10);
             $siswa->persentase = $total_jadwal_period > 0 ? round(($hadir / $total_jadwal_period) * 100) : 0;
             
-            // Hitung rata-rata waktu kedatangan (semakin kecil angkanya, semakin pagi dia datang)
-            // Jika dia tidak pernah hadir/scan, beri angka sangat besar agar ditaruh di bawah
+            // Tie-breaker: Kecepatan waktu hadir (rata-rata detik sejak tengah malam)
             $siswa->rata_rata_waktu_hadir = $jumlah_scan > 0 ? ($total_detik_kedatangan / $jumlah_scan) : 9999999; 
         }
 
-        // URUTKAN SISWA (SORTING CANGGIH)
+        // Proses pengurutan Leaderboard (Sorting: Poin Tinggi > Waktu Pagi > Nama Abjad)
         $top_siswas = $siswas->sort(function ($a, $b) {
-            // Jika Poin Keaktifan SAMA PERSIS (Misal sama-sama 500)
             if ($a->poin_keaktifan == $b->poin_keaktifan) {
-                // TIE-BREAKER: Siapa yang rata-rata kedatangannya lebih PAGI (detik lebih kecil)?
                 if ($a->rata_rata_waktu_hadir == $b->rata_rata_waktu_hadir) {
-                    // Jika datangnya juga sama-sama persis di detik yang sama (sangat jarang), baru pakai Abjad
                     return strcmp($a->nama_lengkap, $b->nama_lengkap);
                 }
-                return $a->rata_rata_waktu_hadir <=> $b->rata_rata_waktu_hadir; // Sortir dari yang terkecil (Paling pagi)
+                return $a->rata_rata_waktu_hadir <=> $b->rata_rata_waktu_hadir;
             }
-            // Jika poin beda, urutkan murni dari Poin Tertinggi
             return $b->poin_keaktifan <=> $a->poin_keaktifan;
         })->take(5)->values();
 
