@@ -18,11 +18,12 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-4 sm:p-6 text-gray-900 bg-gray-50 md:bg-white">
 
+                    <p class="text-gray-700 text-sm mb-1">Cari Jadwal Berdasarkan Urutan Tahun, Bulan, Hari</p>
                     {{-- Form Pencarian Tanggal --}}
                     <form id="searchForm" action="{{ route('agenda.index') }}" method="GET" class="mb-6 flex w-full">
                         <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
-                            placeholder="Cari tanggal kegiatan.."
-                            class="w-full md:w-1/3 border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            placeholder="Contoh: 2023-06-28"
+                            class="w-full md:w-1/3 border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder:italic">
                         <button type="submit"
                             class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r-md flex items-center justify-center transition">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
