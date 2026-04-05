@@ -1,7 +1,7 @@
 <section>
     @php
         // Definisikan dulu siapa itu Admin
-        $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+        $isAdmin = auth()->user()->isAdmin();
     @endphp
 
     <header>

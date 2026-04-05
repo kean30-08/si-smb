@@ -15,7 +15,7 @@
 
     <div class="py-12">
         @php
-            $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+            $isAdmin = auth()->user()->isAdmin();
         @endphp
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">

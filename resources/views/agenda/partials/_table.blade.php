@@ -5,7 +5,7 @@
             <tr>
                 <th class="py-3 px-6">Tanggal Kegiatan</th>
                 <th class="py-3 px-6">Total Rangkaian Acara</th>
-                <th class="py-3 px-6">Penanggung Jawab</th> {{-- TAMBAHAN KOLOM --}}
+                <th class="py-3 px-6">Penanggung Jawab Absensi</th>
                 @if ($isAdmin)
                     <th class="py-3 px-6 text-center">Aksi</th>
                 @endif

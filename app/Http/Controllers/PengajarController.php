@@ -23,7 +23,7 @@ class PengajarController extends Controller
         $search = $request->input('search');
         
         // Periksa hak akses pengguna administrator
-        $isAdmin = !Pengajar::where('user_id', auth()->id())->exists();
+        $isAdmin = auth()->user()->isAdmin();
 
         $pengajars = Pengajar::with(['user', 'jabatan']) 
             ->when($search, function ($query, $search) {

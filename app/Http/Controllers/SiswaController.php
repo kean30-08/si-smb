@@ -26,7 +26,7 @@ class SiswaController extends Controller
         $kelas = Kelas::all();
         
         // Identifikasi hak akses pengguna (Administrator check)
-        $isAdmin = !Pengajar::where('user_id', auth()->id())->exists();
+        $isAdmin = auth()->user()->isAdmin();
 
         $siswas = Siswa::with('kelas')
             ->when($search, function ($query, $search) {

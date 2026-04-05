@@ -23,7 +23,7 @@ class MateriController extends Controller
         $kelas = Kelas::all();
 
         // Cek otoritas pengguna (Administrator check)
-        $isAdmin = !Pengajar::where('user_id', auth()->id())->exists();
+        $isAdmin = auth()->user()->isAdmin();
 
         $materis = Materi::with('kelas')
             ->when($search, function ($query, $search) {

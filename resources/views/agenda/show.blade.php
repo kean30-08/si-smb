@@ -13,7 +13,7 @@
             <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
 
                 @php
-                    $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+                    $isAdmin = auth()->user()->isAdmin();
                 @endphp
 
                 @if ($isAdmin)
