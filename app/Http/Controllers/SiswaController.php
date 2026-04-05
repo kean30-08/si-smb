@@ -100,6 +100,7 @@ class SiswaController extends Controller
             'email_orang_tua' => 'required|email',
             'alamat' => 'required|string',
         ], [
+            'kelas_id.required' => 'Tidak ada kelas yang dibuat.',
             'nis.unique' => 'Nomor Induk Siswa (NIS) sudah terdaftar dalam sistem.',
             'nis.regex' => 'NIS hanya diperbolehkan berisi angka.',
             'nama_lengkap.regex' => 'Format nama tidak valid (hanya huruf dan spasi).',

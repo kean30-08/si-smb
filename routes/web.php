@@ -8,8 +8,8 @@ use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\MateriController;
 use App\Http\Controllers\LaporanController;
-use App\Http\Controllers\AbsensiController; // Saya tambahkan import ini agar rapi
-use App\Http\Controllers\DashboardController; // Saya tambahkan import ini agar rapi
+use App\Http\Controllers\AbsensiController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -19,9 +19,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-// ==========================================================
-// 1. RUTE KHUSUS ADMIN (DITARUH DI ATAS AGAR CREATE TIDAK TERTUMPUK)
-// ==========================================================
+// RUTE KHUSUS ADMIN
 Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(function () {
 
     // Agenda broadcast
@@ -65,9 +63,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 });
 
 
-// ==========================================================
-// 2. RUTE UMUM UNTUK SEMUA ROLE (ADMIN & PENGAJAR)
-// ==========================================================
+// RUTE UMUM UNTUK SEMUA ROLE (ADMIN & PENGAJAR)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -77,12 +73,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/agenda/detail/{tanggal}', [AgendaController::class, 'showDate'])->name('agenda.showDate');
     Route::get('/agenda/detail/{tanggal}/tambah', [AgendaController::class, 'createDetail'])->name('agenda.createDetail');
     Route::post('/agenda/detail/store', [AgendaController::class, 'storeDetail'])->name('agenda.storeDetail');
+    // Rute ganti Penanggung Jawab
+    Route::put('/agenda/detail/{tanggal}/update-pic', [App\Http\Controllers\AgendaController::class, 'updatePic'])->name('agenda.updatePic');
     Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
     Route::get('/agenda/create', [AgendaController::class, 'create'])->name('agenda.create');
     Route::post('/agenda', [AgendaController::class, 'store'])->name('agenda.store');
     Route::get('/agenda/{agenda}/edit', [AgendaController::class, 'edit'])->name('agenda.edit');
     Route::put('/agenda/{agenda}', [AgendaController::class, 'update'])->name('agenda.update');
     Route::delete('/agenda/{agenda}', [AgendaController::class, 'destroy'])->name('agenda.destroy');
+    Route::delete('/agenda/date/{tanggal}', [AgendaController::class, 'destroyDate'])->name('agenda.destroyDate');
 
     // Absensi
     Route::get('/absensi/scanner', [AbsensiController::class, 'scanner'])->name('absensi.scanner');
@@ -91,11 +90,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/absensi/manual', [AbsensiController::class, 'updateManual'])->name('absensi.manual');
     Route::post('/absensi/manual-pengajar', [AbsensiController::class, 'updateManualPengajar'])->name('absensi.manualPengajar');
 
-    // Siswa (Index & Show ditaruh di bawah agar tidak konflik)
+    // Siswa
     Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');
     Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
 
-    // Pengajar (Index & Show ditaruh di bawah agar tidak konflik)
+    // Pengajar
     Route::get('/pengajar', [PengajarController::class, 'index'])->name('pengajar.index');
     Route::get('/pengajar/{pengajar}', [PengajarController::class, 'show'])->name('pengajar.show');
 

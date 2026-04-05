@@ -29,7 +29,9 @@ class AbsensiController extends Controller
         $agendas = Agenda::where('tanggal', $tanggal)->get();
         $agenda_ids = $agendas->pluck('id')->toArray();
 
-        // JIKA TAB SISWA YANG AKTIF
+        $penanggungJawab = $agendas->isNotEmpty() ? $agendas->first()->penanggungJawab : null;
+
+        // TAB SISWA
         if ($type == 'siswa') {
             $siswas = Siswa::with('kelas')
                 ->when($kelas_id, function($q, $kelas_id) { 
@@ -46,9 +48,9 @@ class AbsensiController extends Controller
             
             $absensis = Absensi::whereIn('agenda_id', $agenda_ids)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'siswas', 'absensis', 'type', 'search'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab'));
         
-        // JIKA TAB PENGAJAR YANG AKTIF
+        // TAB PENGAJAR
         } else {
             $pengajars = Pengajar::orderBy('nama_lengkap', 'asc')
                 ->when($search, function($q, $search) {
@@ -59,7 +61,7 @@ class AbsensiController extends Controller
                 
             $absensiPengajars = AbsensiPengajar::whereIn('agenda_id', $agenda_ids)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'pengajars', 'absensiPengajars', 'type', 'search'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab'));
         }
     }
 
@@ -81,7 +83,6 @@ class AbsensiController extends Controller
             return back()->with('error', 'Tidak ada jadwal pada tanggal tersebut.');
         }
 
-        // Menggunakan Transaction untuk integritas data multi-row
         DB::transaction(function () use ($agendas, $request) {
             foreach ($agendas as $agenda) {
                 $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
@@ -146,7 +147,6 @@ class AbsensiController extends Controller
 
         $absenTerisi = 0;
 
-        // Membungkus looping ke dalam transaction
         DB::transaction(function () use ($agendas, $siswa, &$absenTerisi) {
             foreach ($agendas as $agenda) {
                 $absen = Absensi::updateOrCreate(

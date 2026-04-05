@@ -9,4 +9,9 @@ class Agenda extends Model
 {
     use HasFactory;
     protected $guarded = [];
+    
+    public function penanggungJawab()
+    {
+        return $this->belongsTo(Pengajar::class, 'penanggung_jawab_id');
+    }
 }

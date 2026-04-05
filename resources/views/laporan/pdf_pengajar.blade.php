@@ -12,12 +12,13 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            margin-bottom: 30px;
         }
 
         th,
         td {
             border: 1px solid #000;
-            padding: 5px;
+            padding: 6px;
             text-align: center;
         }
 
@@ -29,7 +30,6 @@
             text-align: left;
         }
 
-        /* Tambahan style untuk baris total (Konsisten dengan laporan siswa) */
         .row-total {
             background-color: #e6e6e6;
             font-weight: bold;
@@ -38,6 +38,41 @@
         .text-right {
             text-align: right;
             padding-right: 10px;
+        }
+
+        /* Style Tanda Tangan */
+        .signature-box {
+            width: 100%;
+            page-break-inside: avoid;
+        }
+
+        .signature-wrapper {
+            float: right;
+            width: 250px;
+            text-align: center;
+        }
+
+        .signature-date {
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+
+        .signature-title {
+            margin-bottom: 60px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .signature-name {
+            font-weight: bold;
+            text-decoration: underline;
+            font-size: 12px;
+        }
+
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
         }
     </style>
 </head>
@@ -61,7 +96,6 @@
             </tr>
         </thead>
         <tbody>
-            {{-- Menggunakan forelse agar lebih aman jika data kosong --}}
             @forelse ($pengajars as $index => $p)
                 <tr>
                     <td>{{ $index + 1 }}</td>
@@ -80,40 +114,43 @@
             @endforelse
         </tbody>
 
-        {{-- BAGIAN REKAPITULASI TOTAL & RATA-RATA --}}
         @if ($pengajars->count() > 0)
             <tfoot>
-
-                {{-- BARIS 1: TOTAL KESELURUHAN --}}
                 <tr class="row-total">
                     <td colspan="3" class="text-right">TOTAL KESELURUHAN</td>
                     <td>{{ $pengajars->sum('total_hadir') }}</td>
                     <td>{{ $pengajars->sum('total_izin') }}</td>
                     <td>{{ $pengajars->sum('total_sakit') }}</td>
                     <td>{{ $pengajars->sum('total_alpa') }}</td>
-                    <td>-</td> {{-- Strip, karena total persentase tidak relevan --}}
+                    <td>-</td>
                 </tr>
-
-                {{-- BARIS 2: RATA-RATA --}}
                 <tr class="row-total">
                     <td colspan="3" class="text-right">RATA-RATA</td>
-                    {{-- 
-                    Kita gunakan (float) untuk mencegah Error 500 (null reference)
-                    Lalu dibulatkan 1 angka di belakang koma menggunakan round(..., 1)
-                --}}
                     <td>{{ round((float) $pengajars->avg('total_hadir'), 1) }}</td>
                     <td>{{ round((float) $pengajars->avg('total_izin'), 1) }}</td>
                     <td>{{ round((float) $pengajars->avg('total_sakit'), 1) }}</td>
                     <td>{{ round((float) $pengajars->avg('total_alpa'), 1) }}</td>
-
-                    {{-- Rata-rata persentase dibulatkan utuh tanpa koma --}}
                     <td>{{ round((float) $pengajars->avg('persentase')) }}%</td>
                 </tr>
-
             </tfoot>
         @endif
+    </table> {{-- PERHATIKAN: Tag table ditutup di sini --}}
 
-    </table>
+    {{-- KOTAK TANDA TANGAN (Di luar table) --}}
+    <div class="signature-box clearfix">
+        <div class="signature-wrapper">
+            <div class="signature-date">
+                {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}<br>
+                Mengetahui,
+            </div>
+            <div class="signature-title">
+                Kepala Sekolah Minggu Buddha
+            </div>
+            <div class="signature-name">
+                {{ $admin->name ?? 'Admin Sekolah Minggu' }}
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

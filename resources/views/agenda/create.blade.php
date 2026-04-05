@@ -21,6 +21,25 @@
                                 required>
                         </div>
 
+                        {{-- Input Penanggung Jawab Kehadiran (Hanya 1 untuk seluruh rangkaian acara) --}}
+                        <div class="mb-6 border-b pb-6">
+                            <label class="block font-bold text-lg text-gray-800 mb-2">Penanggung Jawab Kehadiran
+                                *</label>
+                            <select name="penanggung_jawab_id"
+                                class="select2 block w-full md:w-1/2 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required placeholder="-- Ketik/Pilih Nama Pengajar --">
+                                <option value="">-- Ketik/Pilih Nama Pengajar --</option>
+                                @foreach ($pengajars as $pengajar)
+                                    <option value="{{ $pengajar->id }}"
+                                        {{ old('penanggung_jawab_id') == $pengajar->id ? 'selected' : '' }}>
+                                        {{ $pengajar->nama_lengkap }}
+                                        ({{ $pengajar->jabatan->nama_jabatan ?? 'Pengajar' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Admin yang bertugas mengabsensi pada hari ini.</p>
+                        </div>
+
                         {{-- Wadah untuk menampung baris form rundown kegiatan --}}
                         <div id="rundown-container">
                             {{-- Baris Form Pertama (Default) --}}
@@ -81,6 +100,7 @@
         </div>
     </div>
 
+
     {{-- Script untuk Duplikasi Baris Form --}}
     <script>
         function addRundown() {
@@ -115,5 +135,19 @@
             // Sisipkan form baru di bagian bawah container
             container.insertAdjacentHTML('beforeend', rowHtml);
         }
+    </script>
+
+    {{-- Memuat Library Select2 untuk Searchable Dropdown --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                placeholder: "-- Ketik Nama Pengajar --",
+                allowClear: true,
+                width: '100%'
+            });
+        });
     </script>
 </x-app-layout>

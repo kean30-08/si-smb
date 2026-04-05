@@ -13,6 +13,7 @@ return new class extends Migration
 {
     Schema::create('agendas', function (Blueprint $table) {
         $table->id();
+        $table->foreignId('penanggung_jawab_id')->nullable()->constrained('pengajars')->onDelete('set null');
         $table->string('nama_kegiatan'); // Misal: Puja Bakti Anak, Sekolah Minggu
         $table->date('tanggal');
         $table->time('waktu_mulai');
