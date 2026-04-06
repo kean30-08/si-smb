@@ -42,19 +42,21 @@
                     class="w-full sm:w-auto m-0">
                     @csrf
                     @method('DELETE')
-                    <button type="submit"
-                        class="w-full sm:w-auto justify-center bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="mr-2">
-                            <path d="M3 6h18" />
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            <line x1="10" x2="10" y1="11" y2="17" />
-                            <line x1="14" x2="14" y1="11" y2="17" />
-                        </svg>
-                        Hapus Semua Tanggal Ini
-                    </button>
+                    @if ($isAdmin)
+                        <button type="submit"
+                            class="w-full sm:w-auto justify-center bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="mr-2">
+                                <path d="M3 6h18" />
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                <line x1="10" x2="10" y1="11" y2="17" />
+                                <line x1="14" x2="14" y1="11" y2="17" />
+                            </svg>
+                            Hapus Semua Tanggal Ini
+                        </button>
+                    @endif
                 </form>
 
                 {{-- Tombol Download PDF --}}
@@ -70,11 +72,13 @@
                     </svg>
                     Download PDF
                 </a>
-                {{-- Tombol Tambah Acara Baru --}}
-                <a href="{{ route('agenda.createDetail', $tanggal) }}"
-                    class="w-full sm:w-auto justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
-                    + Tambah Acara
-                </a>
+                @if ($isAdmin)
+                    {{-- Tombol Tambah Acara Baru --}}
+                    <a href="{{ route('agenda.createDetail', $tanggal) }}"
+                        class="w-full sm:w-auto justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
+                        + Tambah Acara
+                    </a>
+                @endif
 
                 {{-- Tombol Kembali --}}
                 <a href="{{ route('agenda.index') }}"
@@ -165,16 +169,19 @@
                                     <th class="py-3 px-6">Waktu</th>
                                     <th class="py-3 px-6">Nama Kegiatan</th>
                                     <th class="py-3 px-6">Status</th>
-                                    <th class="py-3 px-6 text-center">Aksi</th>
+                                    @if ($isAdmin)
+                                        <th class="py-3 px-6 text-center">Aksi</th>
+                                    @endif
                                 </tr>
                             </thead>
 
                             {{-- BODY TABEL (Berubah jadi susunan kartu) --}}
+                            {{-- BODY TABEL (Berubah jadi susunan kartu) --}}
                             <tbody class="block md:table-row-group">
                                 @foreach ($agendas as $agenda)
                                     {{-- BARIS TABEL: Bentuk Kartu di Mobile --}}
-                                    <tr
-                                        class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-50 transition mb-4 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none p-4 md:p-0">
+                                    <tr onclick="window.location='{{ route('absensi.index', ['tanggal' => $agenda->tanggal, 'agenda_id' => $agenda->id, 'type' => 'siswa']) }}'"
+                                        class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-100 cursor-pointer transition mb-4 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none p-4 md:p-0">
 
                                         {{-- WAKTU --}}
                                         <td
@@ -219,47 +226,50 @@
                                         </td>
 
                                         {{-- AKSI --}}
-                                        <td
-                                            class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4">
-                                            <div class="flex justify-end md:justify-center space-x-5">
-                                                <a href="{{ route('agenda.edit', $agenda->id) }}"
-                                                    class="text-blue-500 hover:text-blue-700 transition"
-                                                    title="Edit">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
-                                                        height="20" viewBox="0 0 24 24" fill="none"
-                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                        stroke-linejoin="round">
-                                                        <path
-                                                            d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                        <path
-                                                            d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
-                                                    </svg>
-                                                </a>
-                                                <form action="{{ route('agenda.destroy', $agenda->id) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Yakin ingin menghapus agenda ini?');"
-                                                    class="m-0">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="text-red-500 hover:text-red-700 transition"
-                                                        title="Hapus">
+                                        @if ($isAdmin)
+                                            {{-- TAMBAHAN: onclick event.stopPropagation() agar saat menekan tombol Edit/Hapus, barisnya tidak ikut terklik --}}
+                                            <td onclick="event.stopPropagation();"
+                                                class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4">
+                                                <div class="flex justify-end md:justify-center space-x-5">
+                                                    <a href="{{ route('agenda.edit', $agenda->id) }}"
+                                                        class="text-blue-500 hover:text-blue-700 transition"
+                                                        title="Edit">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="20"
                                                             height="20" viewBox="0 0 24 24" fill="none"
                                                             stroke="currentColor" stroke-width="2"
                                                             stroke-linecap="round" stroke-linejoin="round">
-                                                            <path d="M3 6h18" />
-                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                            <line x1="10" x2="10" y1="11"
-                                                                y2="17" />
-                                                            <line x1="14" x2="14" y1="11"
-                                                                y2="17" />
+                                                            <path
+                                                                d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                            <path
+                                                                d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
                                                         </svg>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
+                                                    </a>
+                                                    <form action="{{ route('agenda.destroy', $agenda->id) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Yakin ingin menghapus agenda ini?');"
+                                                        class="m-0">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="text-red-500 hover:text-red-700 transition"
+                                                            title="Hapus">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                                height="20" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M3 6h18" />
+                                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                <line x1="10" x2="10" y1="11"
+                                                                    y2="17" />
+                                                                <line x1="14" x2="14" y1="11"
+                                                                    y2="17" />
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>

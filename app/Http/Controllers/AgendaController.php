@@ -27,6 +27,8 @@ class AgendaController extends Controller
         $today = $now->toDateString();
         $currentTime = $now->toTimeString();
 
+        $isAdmin = auth()->user()->isAdmin();
+
         Agenda::where('status', 'akan datang')
             ->where('tanggal', $today)
             ->where('waktu_mulai', '<=', $currentTime)
@@ -45,7 +47,7 @@ class AgendaController extends Controller
         $search = $request->input('search');
 
         // Definisikan $isAdmin di sini
-        $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+        $isAdmin = auth()->user()->isAdmin();
 
         $agendasGrouped = Agenda::selectRaw('tanggal, count(id) as total_kegiatan, MAX(penanggung_jawab_id) as penanggung_jawab_id')
             ->with('penanggungJawab') 
@@ -72,10 +74,9 @@ class AgendaController extends Controller
         $pengajars = \App\Models\Pengajar::orderBy('nama_lengkap', 'asc')->get();
         $penanggungJawabId = $agendas->first()->penanggung_jawab_id ?? null;
         
-        // Definisikan $isAdmin di sini agar tidak error di show.blade.php
-        $isAdmin = !\App\Models\Pengajar::where('user_id', auth()->id())->exists();
+        $isAdmin = auth()->user()->isAdmin();
 
-        // Pastikan $isAdmin ikut dikirim ke halaman show
+        // Cukup kirimkan data ini saja, tidak perlu defaultKelasId
         return view('agenda.show', compact('agendas', 'tanggal', 'pengajars', 'penanggungJawabId', 'isAdmin'));
     }
 

@@ -123,7 +123,7 @@
                                 <circle cx="12" cy="8" r="6" />
                                 <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
                             </svg>
-                            <h3 class="text-lg font-bold text-indigo-800">Ranking Kehadiran Siswa</h3>
+                            <h3 class="text-lg font-bold text-indigo-800">Peringkat Kehadiran Siswa</h3>
                         </div>
                         <p class="text-xs text-indigo-600 mb-4">Jika terdapat poin yang sama, peringkat akan ditentukan
                             berdasarkan rata-rata kedatangan paling awal.</p>

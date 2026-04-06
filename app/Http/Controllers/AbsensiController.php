@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\DB;
 class AbsensiController extends Controller
 {
     /**
-     * Menampilkan Halaman Kelola Absensi (Siswa & Pengajar dalam 1 Page)
-     * Mendukung filter tanggal, kelas, pencarian, dan tab aktif.
+     * Menampilkan Halaman Kelola Absensi
      */
     public function index(Request $request)
     {
@@ -26,10 +25,17 @@ class AbsensiController extends Controller
         $search = $request->input('search'); 
 
         $kelas = Kelas::all();
-        $agendas = Agenda::where('tanggal', $tanggal)->get();
-        $agenda_ids = $agendas->pluck('id')->toArray();
+        $agendas = Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai')->get();
 
-        $penanggungJawab = $agendas->isNotEmpty() ? $agendas->first()->penanggungJawab : null;
+        // TENTUKAN AGENDA TERPILIH (Default ke agenda pertama jika tidak ada yang dipilih)
+        $agenda_id = $request->input('agenda_id');
+        if (!$agenda_id && $agendas->isNotEmpty()) {
+            $agenda_id = $agendas->first()->id;
+        }
+
+        // Ambil objek agenda yang sedang dipilih saat ini
+        $selectedAgenda = $agendas->where('id', $agenda_id)->first();
+        $penanggungJawab = $selectedAgenda ? $selectedAgenda->penanggungJawab : null;
 
         // TAB SISWA
         if ($type == 'siswa') {
@@ -39,16 +45,16 @@ class AbsensiController extends Controller
                 })
                 ->when($search, function($q, $search) {
                     return $q->where('nama_lengkap', 'like', "%{$search}%")
-                             ->orWhere('id', 'like', "%{$search}%")
                              ->orWhere('nis', 'like', "%{$search}%");
                 })
                 ->orderBy('nama_lengkap', 'asc')
                 ->paginate(8)
-                ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'type' => 'siswa', 'search' => $search]);
+                ->appends(['tanggal' => $tanggal, 'agenda_id' => $agenda_id, 'kelas_id' => $kelas_id, 'type' => 'siswa', 'search' => $search]);
             
-            $absensis = Absensi::whereIn('agenda_id', $agenda_ids)->get();
+            // HANYA AMBIL ABSENSI UNTUK AGENDA TERPILIH SAJA
+            $absensis = Absensi::where('agenda_id', $agenda_id)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab'));
         
         // TAB PENGAJAR
         } else {
@@ -57,164 +63,128 @@ class AbsensiController extends Controller
                     return $q->where('nama_lengkap', 'like', "%{$search}%");
                 })
                 ->paginate(8)
-                ->appends(['tanggal' => $tanggal, 'type' => 'pengajar', 'search' => $search]);
+                ->appends(['tanggal' => $tanggal, 'agenda_id' => $agenda_id, 'type' => 'pengajar', 'search' => $search]);
                 
-            $absensiPengajars = AbsensiPengajar::whereIn('agenda_id', $agenda_ids)->get();
+            // HANYA AMBIL ABSENSI PENGAJAR UNTUK AGENDA TERPILIH SAJA
+            $absensiPengajars = AbsensiPengajar::where('agenda_id', $agenda_id)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab'));
         }
     }
 
     /**
      * Memproses Absensi Manual KHUSUS PENGAJAR
-     * Melakukan sinkronisasi kehadiran pada seluruh agenda di tanggal terpilih.
      */
     public function updateManualPengajar(Request $request)
     {
         $request->validate([
             'pengajar_id' => 'required',
-            'tanggal' => 'required|date',
+            'agenda_id' => 'required', // Validasi ke agenda spesifik
             'status' => 'required|in:hadir,izin,sakit,alpa'
         ]);
 
-        $agendas = Agenda::where('tanggal', $request->tanggal)->get();
+        $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
 
-        if ($agendas->isEmpty()) {
-            return back()->with('error', 'Tidak ada jadwal pada tanggal tersebut.');
-        }
+        AbsensiPengajar::updateOrCreate(
+            ['agenda_id' => $request->agenda_id, 'pengajar_id' => $request->pengajar_id],
+            ['status_kehadiran' => $request->status, 'waktu_hadir' => $waktu]
+        );
 
-        DB::transaction(function () use ($agendas, $request) {
-            foreach ($agendas as $agenda) {
-                $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
-
-                AbsensiPengajar::updateOrCreate(
-                    ['agenda_id' => $agenda->id, 'pengajar_id' => $request->pengajar_id],
-                    ['status_kehadiran' => $request->status, 'waktu_hadir' => $waktu]
-                );
-            }
-        });
-
-        return back()->with('success', 'Status kehadiran Pengajar berhasil diperbarui!');
+        return back()->with('success', 'Status kehadiran Pengajar pada sesi ini berhasil diperbarui!');
     }
 
     /**
-     * Menampilkan Halaman Kamera Scanner untuk Pengajar
+     * Memproses Absensi Manual (Izin/Sakit/Alpa) dari Halaman Admin untuk Siswa
      */
-    public function scanner()
+    public function updateManual(Request $request)
     {
-        $hari_ini = Carbon::now()->toDateString();
-        $agendas = Agenda::where('tanggal', $hari_ini)->orderBy('waktu_mulai')->get();
+        $request->validate([
+            'siswa_id' => 'required',
+            'agenda_id' => 'required', // Validasi ke agenda spesifik
+            'status' => 'required|in:hadir,izin,sakit,alpa'
+        ]);
 
-        return view('absensi.scanner', compact('agendas', 'hari_ini'));
+        $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
+
+        Absensi::updateOrCreate(
+            [
+                'agenda_id' => $request->agenda_id,
+                'siswa_id' => $request->siswa_id
+            ],
+            [
+                'status_kehadiran' => $request->status,
+                'metode_absen' => 'manual', 
+                'waktu_hadir' => $waktu
+            ]
+        );
+
+        return back()->with('success', 'Status kehadiran siswa pada sesi ini berhasil diperbarui!');
+    }
+
+    /**
+     * Menampilkan Halaman Kamera Scanner untuk Siswa
+     */
+    public function scanner(Request $request)
+    {
+        $agenda_id = $request->agenda_id;
+        $agenda = Agenda::find($agenda_id);
+
+        if (!$agenda) {
+            return redirect()->route('absensi.index')->with('error', 'Pilih kegiatan/agenda terlebih dahulu sebelum membuka scanner!');
+        }
+
+        // Kirim 1 agenda spesifik yang sedang discan ke view scanner
+        return view('absensi.scanner', compact('agenda'));
     }
 
     /**
      * Memproses Data dari Kamera (AJAX)
-     * Mengonversi barcode menjadi data kehadiran otomatis untuk semua agenda hari ini.
      */
     public function prosesScan(Request $request)
     {
         $barcode = $request->barcode; 
-        $hari_ini = Carbon::now()->toDateString();
+        $agenda_id = $request->agenda_id; // Mengambil ID Agenda spesifik dari Scanner
+
+        $agenda = Agenda::find($agenda_id);
+        if (!$agenda) {
+            return response()->json(['success' => false, 'message' => 'Agenda tidak valid atau tidak ditemukan!']);
+        }
 
         $parts = explode('-', $barcode);
         
         if (count($parts) != 2 || $parts[0] != 'SMB' || !is_numeric($parts[1])) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Format Barcode tidak dikenali!'
-            ]);
+            return response()->json(['success' => false, 'message' => 'Format Barcode tidak dikenali!']);
         }
 
         $siswa_id = $parts[1];
         $siswa = Siswa::find($siswa_id);
 
         if (!$siswa) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Data Siswa tidak ditemukan di sistem!'
-            ]);
+            return response()->json(['success' => false, 'message' => 'Data Siswa tidak ditemukan di sistem!']);
         }
 
-        $agendas = Agenda::where('tanggal', $hari_ini)->get();
+        // Simpan / Cek absensi untuk 1 AGENDA INI SAJA
+        $absen = Absensi::where('agenda_id', $agenda->id)->where('siswa_id', $siswa->id)->first();
 
-        if ($agendas->isEmpty()) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Tidak ada jadwal kegiatan untuk hari ini.'
-            ]);
-        }
-
-        $absenTerisi = 0;
-
-        DB::transaction(function () use ($agendas, $siswa, &$absenTerisi) {
-            foreach ($agendas as $agenda) {
-                $absen = Absensi::updateOrCreate(
-                    [
-                        'agenda_id' => $agenda->id,
-                        'siswa_id' => $siswa->id
-                    ],
-                    [
-                        'waktu_hadir' => Carbon::now()->toTimeString(),
-                        'status_kehadiran' => 'hadir',
-                        'metode_absen' => 'barcode'
-                    ]
-                );
-
-                if ($absen->wasRecentlyCreated) {
-                    $absenTerisi++;
-                }
-            }
-        });
-
-        if ($absenTerisi > 0) {
+        if ($absen && $absen->status_kehadiran == 'hadir') {
             return response()->json([
                 'success' => true, 
-                'message' => $siswa->nama_lengkap . ' Berhasil Hadir!'
-            ]);
-        } else {
-            return response()->json([
-                'success' => true, 
-                'message' => $siswa->nama_lengkap . ' sudah melakukan absensi hari ini.'
+                'message' => $siswa->nama_lengkap . ' sudah melakukan absensi untuk sesi ' . $agenda->nama_kegiatan
             ]);
         }
-    }
-    
-    /**
-     * Memproses Absensi Manual (Izin/Sakit/Alpa) dari Halaman Admin
-     */
-    public function updateManual(Request $request)
-    {
-        $request->validate([
-            'siswa_id' => 'required',
-            'tanggal' => 'required|date',
-            'status' => 'required|in:hadir,izin,sakit,alpa'
+
+        Absensi::updateOrCreate(
+            ['agenda_id' => $agenda->id, 'siswa_id' => $siswa->id],
+            [
+                'waktu_hadir' => Carbon::now()->toTimeString(),
+                'status_kehadiran' => 'hadir',
+                'metode_absen' => 'barcode'
+            ]
+        );
+
+        return response()->json([
+            'success' => true, 
+            'message' => $siswa->nama_lengkap . ' Berhasil Hadir di Sesi ' . $agenda->nama_kegiatan . '!'
         ]);
-
-        $agendas = Agenda::where('tanggal', $request->tanggal)->get();
-
-        if ($agendas->isEmpty()) {
-            return back()->with('error', 'Tidak ada jadwal pada tanggal tersebut.');
-        }
-
-        DB::transaction(function () use ($agendas, $request) {
-            foreach ($agendas as $agenda) {
-                $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
-
-                Absensi::updateOrCreate(
-                    [
-                        'agenda_id' => $agenda->id,
-                        'siswa_id' => $request->siswa_id
-                    ],
-                    [
-                        'status_kehadiran' => $request->status,
-                        'metode_absen' => 'manual', 
-                        'waktu_hadir' => $waktu
-                    ]
-                );
-            }
-        });
-
-        return back()->with('success', 'Status kehadiran siswa berhasil diperbarui!');
     }
 }

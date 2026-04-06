@@ -48,12 +48,13 @@
             overflow: hidden !important;
         }
     </style>
+
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Mulai Absensi Kelas (Scanner)') }}
             </h2>
-            <a href="{{ route('absensi.index') }}"
+            <a href="{{ route('absensi.index', ['tanggal' => $agenda->tanggal, 'agenda_id' => $agenda->id]) }}"
                 class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                 Kembali
             </a>
@@ -62,6 +63,8 @@
 
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+
+            {{-- INFORMASI AGENDA YANG SEDANG DI-SCAN --}}
             <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 shadow-sm rounded-r-lg">
                 <div class="flex items-center mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -72,23 +75,18 @@
                         <line x1="8" x2="8" y1="2" y2="6" />
                         <line x1="3" x2="21" y1="10" y2="10" />
                     </svg>
-                    <h3 class="font-bold text-blue-800">Jadwal Hari Ini:
-                        {{ \Carbon\Carbon::parse($hari_ini)->translatedFormat('l, d F Y') }}</h3>
+                    <h3 class="font-bold text-blue-800 text-lg">Sesi Absensi: {{ $agenda->nama_kegiatan }}</h3>
                 </div>
-                @if ($agendas->isEmpty())
-                    <p class="text-sm text-red-600 font-semibold">Tidak ada kegiatan yang dijadwalkan hari ini. Absensi
-                        tidak dapat dilakukan.</p>
-                @else
-                    <ul class="list-disc list-inside text-sm text-blue-700">
-                        @foreach ($agendas as $agenda)
-                            <li><strong>{{ $agenda->nama_kegiatan }}</strong>
-                                ({{ \Carbon\Carbon::parse($agenda->waktu_mulai)->format('H:i') }})
-                            </li>
-                        @endforeach
-                    </ul>
-                    <p class="text-xs text-blue-600 mt-2 italic">*Satu kali scan akan otomatis mengisi kehadiran untuk
-                        semua kegiatan di atas.</p>
-                @endif
+
+                <div class="ml-7 text-sm text-blue-700">
+                    <p><strong>Tanggal:</strong>
+                        {{ \Carbon\Carbon::parse($agenda->tanggal)->translatedFormat('l, d F Y') }}</p>
+                    <p><strong>Waktu:</strong> {{ \Carbon\Carbon::parse($agenda->waktu_mulai)->format('H:i') }} -
+                        {{ $agenda->waktu_selesai ? \Carbon\Carbon::parse($agenda->waktu_selesai)->format('H:i') : 'Selesai' }}
+                    </p>
+                </div>
+                <p class="text-xs text-blue-600 mt-3 italic">*Pindai barcode siswa untuk merekam kehadiran khusus pada
+                    sesi kegiatan ini saja.</p>
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border-t-4 border-indigo-500">
@@ -112,7 +110,6 @@
     {{-- Script untuk HTML5-QRCode dan Logika AJAX --}}
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-
     <script>
         // Mencegah scanner mengirim data bertubi-tubi saat 1 barcode ditahan di depan kamera
         let isProcessing = false;
@@ -128,7 +125,7 @@
             let audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07a.mp3');
             audio.play().catch(e => console.log("Audio autoplay diblokir browser"));
 
-            // Kirim data Barcode ke Controller
+            // Kirim data Barcode dan AGENDA_ID ke Controller
             fetch('{{ route('absensi.prosesScan') }}', {
                     method: 'POST',
                     headers: {
@@ -136,7 +133,8 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({
-                        barcode: decodedText
+                        barcode: decodedText,
+                        agenda_id: '{{ $agenda->id }}' // <-- TAMBAHAN KRUSIAL
                     })
                 })
                 .then(response => response.json())
@@ -149,8 +147,7 @@
                             timer: 2000,
                             showConfirmButton: false
                         }).then(() => {
-                            isProcessing =
-                                false;
+                            isProcessing = false;
                         });
                     } else {
                         Swal.fire({
@@ -176,6 +173,7 @@
         }
 
         function onScanFailure(error) {
+            // Biarkan kosong agar tidak spam log
         }
 
         // Konfigurasi dan Penyalakan Kamera

@@ -4,12 +4,14 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Agenda & Jadwal Kegiatan') }}
             </h2>
-            <div class="w-full sm:w-auto flex">
-                <a href="{{ route('agenda.create') }}"
-                    class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                    + Tambah Jadwal
-                </a>
-            </div>
+            @if ($isAdmin)
+                <div class="w-full sm:w-auto flex">
+                    <a href="{{ route('agenda.create') }}"
+                        class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                        + Tambah Jadwal
+                    </a>
+                </div>
+            @endif
         </div>
     </x-slot>
 
