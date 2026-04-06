@@ -10,6 +10,7 @@ use App\Http\Controllers\MateriController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RefleksiController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -19,6 +20,12 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+
+    // Rute ini bebas diakses siapa saja (Tanpa perlu login)
+// === REFLEKSI (View Admin/Pengajar) ===
+// === FORM REFLEKSI PUBLIK (Tanpa Login) ===
+Route::get('/refleksi/{tanggal}', [\App\Http\Controllers\RefleksiController::class, 'create'])->name('refleksi.create');
+Route::post('/refleksi/{tanggal}', [\App\Http\Controllers\RefleksiController::class, 'store'])->name('refleksi.store');
 // =======================================================
 // RUTE KHUSUS ADMIN & KEPALA SEKOLAH
 // =======================================================
@@ -92,6 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
     Route::get('/agenda/detail/{tanggal}', [AgendaController::class, 'showDate'])->name('agenda.showDate');
     Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
+    Route::get('/agenda/detail/{tanggal}/refleksi', [\App\Http\Controllers\RefleksiController::class, 'index'])->name('refleksi.index');
 
     // === ABSENSI ===
     Route::get('/absensi/scanner', [AbsensiController::class, 'scanner'])->name('absensi.scanner');

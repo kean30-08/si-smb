@@ -9,6 +9,7 @@ use App\Models\Siswa;
 use App\Models\Agenda;
 use App\Models\Absensi;
 use App\Models\AbsensiPengajar;
+use App\Models\RefleksiSiswa; // TAMBAHAN: Import Model Refleksi
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -18,8 +19,7 @@ class DataDummy extends Seeder
 {
     /**
      * Seed the application's database.
-     * 
-     * @return void
+     * * @return void
      */
     public function run(): void
     {
@@ -32,7 +32,7 @@ class DataDummy extends Seeder
             'Purnama', 'Wahyudi', 'Kurniawan', 'Wibowo', 'Permana'
         ];
 
-        //Generate Pengajar
+        // 1. Generate Pengajar
         for ($i = 1; $i <= 3; $i++) {
             $jk = $faker->randomElement(['L', 'P']);
             
@@ -61,7 +61,7 @@ class DataDummy extends Seeder
             );
         }
 
-        //Generate Kelas
+        // 2. Generate Kelas
         $daftarKelas = [
             'Kelas TK', 'Kelas 1 SD', 'Kelas 2 SD', 'Kelas 3 SD', 
             'Kelas 4 SD', 'Kelas 5 SD', 'Kelas 6 SD'
@@ -71,7 +71,7 @@ class DataDummy extends Seeder
             Kelas::firstOrCreate(['nama_kelas' => $kelas]);
         }
 
-        //Generate Siswa
+        // 3. Generate Siswa
         $semuaKelas = Kelas::all();
         
         $lastSiswa = Siswa::orderBy('id', 'desc')->first();
@@ -111,7 +111,7 @@ class DataDummy extends Seeder
             }
         }
 
-        //Generate Agenda
+        // 4. Generate Agenda (Yang sudah lewat / selesai)
         $agendas = [];
 
         for ($minggu = 4; $minggu >= 1; $minggu--) {
@@ -129,7 +129,7 @@ class DataDummy extends Seeder
             );
         }
 
-        // Generate Agenda untuk besok
+        // Generate Agenda untuk besok (Akan datang)
         Agenda::firstOrCreate(
             [
                 'tanggal' => Carbon::tomorrow()->toDateString(),
@@ -143,12 +143,32 @@ class DataDummy extends Seeder
             ]
         );
 
-        // Generate Absensi untuk semua Agenda
+        // 5. Generate Absensi dan Refleksi untuk Agenda yang sudah selesai
         $semuaSiswa = Siswa::all();
         $semuaPengajar = Pengajar::all();
         
         $statusSiswa = ['hadir', 'hadir', 'hadir', 'hadir', 'izin', 'sakit', 'alpa'];
         $statusPengajar = ['hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'izin', 'sakit'];
+
+        // Variasi teks dummy untuk refleksi agar tidak terlalu acak/aneh bahasanya
+        $dummyRangkuman = [
+            'Hari ini belajar tentang riwayat Sang Buddha.',
+            'Mendengarkan Dhammadesana dan bermeditasi bersama.',
+            'Kegiatan hari ini sangat seru, kita menyanyi lagu Buddhis dan mewarnai.',
+            'Belajar tentang hukum karma dan mempraktikkan perbuatan baik.'
+        ];
+        $dummyDisukai = [
+            'Suka saat bagian menyanyi.',
+            'Mewarnai gambar teratai.',
+            'Cerita Jataka yang dibawakan sangat menarik.',
+            'Saat kuis berhadiah.'
+        ];
+        $dummyKurangDisukai = [
+            'Meditasinya terasa terlalu lama.',
+            'Tidak ada, semuanya menyenangkan.',
+            'Suara mic-nya agak kurang jelas di belakang.',
+            'Sedikit mengantuk saat mendengarkan ceramah.'
+        ];
 
         foreach ($agendas as $agenda) {
             
@@ -168,6 +188,31 @@ class DataDummy extends Seeder
                         'metode_absen' => $status === 'hadir' ? 'barcode' : 'manual'
                     ]
                 );
+
+                // TAMBAHAN: Generate Refleksi Siswa
+                // Jika siswa 'hadir', ada peluang 60% dia mengisi form refleksi
+                if ($status === 'hadir' && rand(1, 100) <= 60) {
+                    
+                    // Waktu pengisian dibuat realistis: sekitar jam 10 pagi - 12 siang pada hari tersebut
+                    $waktuIsi = Carbon::parse($agenda->tanggal . ' 10:' . rand(10, 59) . ':00');
+
+                    RefleksiSiswa::firstOrCreate(
+                        [
+                            'tanggal' => $agenda->tanggal,
+                            'nis' => $siswa->nis,
+                        ],
+                        [
+                            'nama_siswa' => $siswa->nama_lengkap,
+                            'nama_orang_tua' => $siswa->nama_orang_tua,
+                            'email_orang_tua' => $faker->randomElement([null, strtolower(str_replace(' ', '', $siswa->nama_orang_tua)) . '@gmail.com']),
+                            'rangkuman' => $faker->randomElement($dummyRangkuman) . ' ' . $faker->sentence(3),
+                            'bagian_disukai' => $faker->randomElement($dummyDisukai),
+                            'bagian_kurang_disukai' => $faker->randomElement($dummyKurangDisukai),
+                            'created_at' => $waktuIsi,
+                            'updated_at' => $waktuIsi,
+                        ]
+                    );
+                }
             }
 
             // Generate Absen Pengajar

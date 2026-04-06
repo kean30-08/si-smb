@@ -1,17 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        {{-- PERBAIKAN HEADER: Flex-col agar teks dan tombol tidak tabrakan di HP --}}
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Rundown Kegiatan: ') }} <br class="lg:hidden">
+                {{ __('Rundown Kegiatan: ') }} <br class="xl:hidden">
                 {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
             </h2>
 
-
-
-            {{-- PERBAIKAN TOMBOL: Menggunakan gap-2 flex-col untuk HP, flex-row untuk Layar Besar --}}
-            <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
-
+            {{-- KELOMPOK TOMBOL ATAS (HEADER) --}}
+            <div class="w-full xl:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
                 @php
                     $isAdmin = auth()->user()->isAdmin();
                 @endphp
@@ -20,11 +16,11 @@
                     {{-- Tombol Broadcast PDF --}}
                     <form action="{{ route('agenda.broadcast', $tanggal) }}" method="POST"
                         onsubmit="return confirm('Kirim jadwal rundown tanggal ini ke SEMUA email orang tua yang terdaftar?');"
-                        class="w-full sm:w-auto m-0">
+                        class="m-0 w-full sm:w-auto">
                         @csrf
                         <button type="submit"
-                            class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                            class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="mr-2">
                                 <path
@@ -36,34 +32,11 @@
                     </form>
                 @endif
 
-                {{-- Tombol Delete Agenda Satu Tanggal (hapus semua agenda pada tanggal tersebut) --}}
-                <form action="{{ route('agenda.destroyDate', $tanggal) }}" method="POST"
-                    onsubmit="return confirm('Yakin ingin menghapus SEMUA agenda pada tanggal ini?');"
-                    class="w-full sm:w-auto m-0">
-                    @csrf
-                    @method('DELETE')
-                    @if ($isAdmin)
-                        <button type="submit"
-                            class="w-full sm:w-auto justify-center bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="mr-2">
-                                <path d="M3 6h18" />
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                <line x1="10" x2="10" y1="11" y2="17" />
-                                <line x1="14" x2="14" y1="11" y2="17" />
-                            </svg>
-                            Hapus Semua Tanggal Ini
-                        </button>
-                    @endif
-                </form>
-
                 {{-- Tombol Download PDF --}}
                 <a href="{{ route('agenda.download', $tanggal) }}"
-                    class="w-full sm:w-auto justify-center bg-teal-600 hover:bg-teal-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition"
+                    class="w-full sm:w-auto justify-center bg-teal-600 hover:bg-teal-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm"
                     title="Download PDF untuk dibagikan via WhatsApp/Manual">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" class="mr-2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -72,17 +45,18 @@
                     </svg>
                     Download PDF
                 </a>
+
                 @if ($isAdmin)
                     {{-- Tombol Tambah Acara Baru --}}
                     <a href="{{ route('agenda.createDetail', $tanggal) }}"
-                        class="w-full sm:w-auto justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
+                        class="w-full sm:w-auto justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm">
                         + Tambah Acara
                     </a>
                 @endif
 
                 {{-- Tombol Kembali --}}
                 <a href="{{ route('agenda.index') }}"
-                    class="w-full sm:w-auto justify-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition">
+                    class="w-full sm:w-auto justify-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm">
                     &larr; Kembali
                 </a>
             </div>
@@ -93,20 +67,72 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-4 sm:p-6 text-gray-900 bg-gray-50 md:bg-white">
-                    {{-- Form Ganti PIC (Hanya Admin) --}}
+
+                    {{-- ======================================================== --}}
+                    {{-- KELOMPOK TOMBOL BAWAH (Di atas Kartu PIC)                --}}
+                    {{-- ======================================================== --}}
+                    <div
+                        class="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-center justify-start border-b border-gray-200 pb-6">
+
+                        {{-- Tombol Lihat Refleksi --}}
+                        <a href="{{ route('refleksi.index', $tanggal) }}"
+                            class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="mr-2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <path d="M16 13H8" />
+                                <path d="M16 17H8" />
+                                <path d="M10 9H8" />
+                            </svg>
+                            Lihat Refleksi Siswa
+                        </a>
+
+                        {{-- Tombol Copy Link Form --}}
+                        <button onclick="copyToClipboard('{{ route('refleksi.create', $tanggal) }}')"
+                            class="w-full sm:w-auto justify-center bg-white hover:bg-gray-100 text-gray-800 font-bold py-2 px-4 rounded flex items-center shadow transition border border-gray-300 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="mr-2">
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                            </svg>
+                            Copy Link Form
+                        </button>
+
+                        @if ($isAdmin)
+                            {{-- Tombol Hapus Semua Tanggal (Digeser ke kanan di layar besar) --}}
+                            <form action="{{ route('agenda.destroyDate', $tanggal) }}" method="POST"
+                                onsubmit="return confirm('Yakin ingin menghapus SEMUA agenda pada tanggal ini?');"
+                                class="m-0 w-full sm:w-auto sm:ml-auto">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="w-full sm:w-auto justify-center bg-red-50 text-red-600 hover:bg-red-100 font-bold py-2 px-4 rounded flex items-center transition border border-red-200 text-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M3 6h18" />
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                        <line x1="10" x2="10" y1="11" y2="17" />
+                                        <line x1="14" x2="14" y1="11" y2="17" />
+                                    </svg>
+                                    Hapus Semua
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                    {{-- ======================================================== --}}
+
+
+                    {{-- Form Ganti PIC --}}
                     <div
                         class="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-
-                        {{-- Info Teks Kiri --}}
                         <div class="flex items-center">
                             <div class="p-2 bg-indigo-100 rounded-full text-indigo-600 mr-3 hidden sm:block">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <polyline points="16 11 18 13 22 9" />
-                                </svg>
+                                <i data-lucide="user" class="w-6 h-6"></i>
                             </div>
                             <div>
                                 <h3 class="text-sm font-bold text-indigo-900">Penanggung Jawab Absensi</h3>
@@ -115,7 +141,6 @@
                             </div>
                         </div>
 
-                        {{-- Form Ganti PIC (Hanya Admin) --}}
                         @if ($isAdmin)
                             <form action="{{ route('agenda.updatePic', $tanggal) }}" method="POST"
                                 class="m-0 w-full md:w-auto flex items-center gap-2">
@@ -125,8 +150,8 @@
                                 <select name="penanggung_jawab_id"
                                     class="w-full md:w-72 text-sm font-medium border-indigo-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-700 py-2">
                                     @if ($pengajars->isEmpty())
-                                        <option value="" disabled selected class="text-gray-400 italic">Belum ada
-                                            pengajar terdaftar</option>
+                                        <option value="" disabled selected class="text-gray-400 italic">Belum
+                                            ada pengajar terdaftar</option>
                                     @else
                                         @foreach ($pengajars as $pengajar)
                                             <option value="{{ $pengajar->id }}"
@@ -136,15 +161,14 @@
                                         @endforeach
                                     @endif
                                 </select>
-
                                 <button type="submit"
                                     class="bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-md text-sm font-bold shadow transition duration-150 flex-shrink-0">
                                     Simpan
                                 </button>
                             </form>
                         @else
-                            {{-- Tampilan Jika Bukan Admin (Hanya Baca) --}}
-                            <div class="bg-white px-4 py-2 border border-gray-200 rounded-md shadow-sm">
+                            <div
+                                class="bg-white px-4 py-2 border border-gray-200 rounded-md shadow-sm w-full md:w-auto">
                                 <span class="text-sm font-bold text-gray-800">
                                     @php
                                         $namaPic = $pengajars->firstWhere('id', $penanggungJawabId);
@@ -155,15 +179,11 @@
                                 </span>
                             </div>
                         @endif
-
                     </div>
 
-
-                    {{-- PERBAIKAN TABEL: Menghapus overflow-x-auto, menambah wrapper responsif --}}
+                    {{-- TABEL RUNDOWN --}}
                     <div class="w-full md:shadow-md md:rounded-lg">
                         <table class="w-full text-sm text-left text-gray-500">
-
-                            {{-- HEADER TABEL (Sembunyi di HP) --}}
                             <thead class="hidden md:table-header-group text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
                                     <th class="py-3 px-6">Waktu</th>
@@ -174,16 +194,10 @@
                                     @endif
                                 </tr>
                             </thead>
-
-                            {{-- BODY TABEL (Berubah jadi susunan kartu) --}}
-                            {{-- BODY TABEL (Berubah jadi susunan kartu) --}}
                             <tbody class="block md:table-row-group">
                                 @foreach ($agendas as $agenda)
-                                    {{-- BARIS TABEL: Bentuk Kartu di Mobile --}}
                                     <tr onclick="window.location='{{ route('absensi.index', ['tanggal' => $agenda->tanggal, 'agenda_id' => $agenda->id, 'type' => 'siswa']) }}'"
                                         class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-100 cursor-pointer transition mb-4 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none p-4 md:p-0">
-
-                                        {{-- WAKTU --}}
                                         <td
                                             class="block md:table-cell py-2 md:py-4 px-2 md:px-6 border-b md:border-none border-dashed border-gray-200 mb-3 md:mb-0 pb-3 md:pb-4 font-bold text-gray-800">
                                             <span
@@ -191,8 +205,6 @@
                                             {{ \Carbon\Carbon::parse($agenda->waktu_mulai)->format('H:i') }} -
                                             {{ $agenda->waktu_selesai ? \Carbon\Carbon::parse($agenda->waktu_selesai)->format('H:i') : 'Selesai' }}
                                         </td>
-
-                                        {{-- NAMA KEGIATAN --}}
                                         <td
                                             class="block md:table-cell py-2 md:py-4 px-2 md:px-6 border-b md:border-none border-dashed border-gray-200 mb-3 md:mb-0 pb-3 md:pb-4">
                                             <p class="text-base font-bold text-gray-900">{{ $agenda->nama_kegiatan }}
@@ -200,14 +212,11 @@
                                             <p class="text-xs text-gray-500 mt-1">
                                                 {{ $agenda->deskripsi_rundown ?? '-' }}</p>
                                         </td>
-
-                                        {{-- STATUS --}}
                                         <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6 mb-2 md:mb-0">
                                             <div class="flex items-center justify-between md:justify-start">
                                                 <span
                                                     class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                     Acara</span>
-
                                                 @if ($agenda->status == 'akan datang')
                                                     <span
                                                         class="px-2 py-1 font-semibold text-blue-700 bg-blue-100 rounded-full text-[10px] md:text-xs">Akan
@@ -224,10 +233,7 @@
                                                 @endif
                                             </div>
                                         </td>
-
-                                        {{-- AKSI --}}
                                         @if ($isAdmin)
-                                            {{-- TAMBAHAN: onclick event.stopPropagation() agar saat menekan tombol Edit/Hapus, barisnya tidak ikut terklik --}}
                                             <td onclick="event.stopPropagation();"
                                                 class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4">
                                                 <div class="flex justify-end md:justify-center space-x-5">
@@ -280,4 +286,20 @@
             </div>
         </div>
     </div>
+
+    {{-- Script untuk Copy Link --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function copyToClipboard(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Disalin!',
+                    text: 'Link form refleksi berhasil disalin. Silakan paste ke grup WhatsApp!',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+            });
+        }
+    </script>
 </x-app-layout>

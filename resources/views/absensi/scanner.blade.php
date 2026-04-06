@@ -134,29 +134,34 @@
                     },
                     body: JSON.stringify({
                         barcode: decodedText,
-                        agenda_id: '{{ $agenda->id }}' // <-- TAMBAHAN KRUSIAL
+                        agenda_id: '{{ $agenda->id }}'
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // PERBAIKAN: Hapus timer, nyalakan tombol OK
                         Swal.fire({
                             icon: 'success',
                             title: 'Terekam!',
                             text: data.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK, Lanjut',
+                            confirmButtonColor: '#4f46e5' // Warna tombol serasi dengan tema
+                        }).then((result) => {
+                            // Kunci baru dibuka SETELAH tombol OK ditekan
                             isProcessing = false;
                         });
                     } else {
+                        // PERBAIKAN: Hapus timer, nyalakan tombol OK
                         Swal.fire({
                             icon: 'error',
-                            title: 'Gagal!',
+                            title: 'Gagal / Info!',
                             text: data.message,
-                            timer: 2500,
-                            showConfirmButton: false
-                        }).then(() => {
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK, Mengerti',
+                            confirmButtonColor: '#d33' // Warna merah untuk error/peringatan
+                        }).then((result) => {
                             isProcessing = false;
                         });
                     }
@@ -166,9 +171,12 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Error Jaringan',
-                        text: 'Gagal terhubung ke server.'
+                        text: 'Gagal terhubung ke server.',
+                        showConfirmButton: true,
+                        confirmButtonText: 'Tutup'
+                    }).then(() => {
+                        isProcessing = false;
                     });
-                    isProcessing = false;
                 });
         }
 
