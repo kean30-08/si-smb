@@ -100,6 +100,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/agenda/detail/{tanggal}', [AgendaController::class, 'showDate'])->name('agenda.showDate');
     Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
     Route::get('/agenda/detail/{tanggal}/refleksi', [\App\Http\Controllers\RefleksiController::class, 'index'])->name('refleksi.index');
+    Route::get('/refleksi/detail/{id}', [\App\Http\Controllers\RefleksiController::class, 'show'])->name('refleksi.show'); // <-- TAMBAHKAN INI
 
     // === ABSENSI ===
     Route::get('/absensi/scanner', [AbsensiController::class, 'scanner'])->name('absensi.scanner');

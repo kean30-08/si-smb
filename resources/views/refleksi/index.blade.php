@@ -21,7 +21,10 @@
                 @else
                     <div class="space-y-6">
                         @foreach ($refleksis as $ref)
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            {{-- TAMBAHKAN ONCLICK DAN EFEK HOVER DI SINI --}}
+                            <div onclick="window.location='{{ route('refleksi.show', $ref->id) }}'"
+                                class="bg-gray-50 border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-100 hover:shadow-md transition duration-200">
+
                                 <div class="flex justify-between border-b pb-2 mb-3">
                                     <div>
                                         <h3 class="font-bold text-lg text-indigo-700">
@@ -40,19 +43,31 @@
                                             | Dikirim: {{ $ref->created_at->diffForHumans() }}
                                         </p>
                                     </div>
+
+                                    {{-- Tambahkan Ikon Panah Kecil untuk indikasi bisa diklik --}}
+                                    <div class="flex items-center text-gray-400">
+                                        <span class="text-xs mr-1 hidden sm:block">Lihat Detail</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="m9 18 6-6-6-6" />
+                                        </svg>
+                                    </div>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                                {{-- Potong teks agar tidak terlalu panjang di halaman index (Preview saja) --}}
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 opacity-80">
                                     <div class="bg-white p-3 rounded shadow-sm border-l-4 border-indigo-400">
                                         <p class="text-xs font-bold text-gray-500 mb-1">Rangkuman:</p>
-                                        <p class="text-sm text-gray-800">{{ $ref->rangkuman }}</p>
+                                        <p class="text-sm text-gray-800 truncate">{{ $ref->rangkuman }}</p>
                                     </div>
                                     <div class="bg-white p-3 rounded shadow-sm border-l-4 border-green-400">
                                         <p class="text-xs font-bold text-gray-500 mb-1">Hal Disukai:</p>
-                                        <p class="text-sm text-gray-800">{{ $ref->bagian_disukai }}</p>
+                                        <p class="text-sm text-gray-800 truncate">{{ $ref->bagian_disukai }}</p>
                                     </div>
                                     <div class="bg-white p-3 rounded shadow-sm border-l-4 border-red-400">
                                         <p class="text-xs font-bold text-gray-500 mb-1">Kurang Disukai:</p>
-                                        <p class="text-sm text-gray-800">{{ $ref->bagian_kurang_disukai }}</p>
+                                        <p class="text-sm text-gray-800 truncate">{{ $ref->bagian_kurang_disukai }}</p>
                                     </div>
                                 </div>
                             </div>

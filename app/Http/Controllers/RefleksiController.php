@@ -74,4 +74,13 @@ class RefleksiController extends Controller
         $refleksis = RefleksiSiswa::where('tanggal', $tanggal)->latest()->get();
         return view('refleksi.index', compact('refleksis', 'tanggal'));
     }
+
+    /**
+     * Menampilkan detail satu refleksi secara penuh
+     */
+    public function show($id)
+    {
+        $refleksi = RefleksiSiswa::findOrFail($id);
+        return view('refleksi.show', compact('refleksi'));
+    }
 }
