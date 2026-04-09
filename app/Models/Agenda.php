@@ -12,6 +12,7 @@ class Agenda extends Model
     
     public function penanggungJawab()
     {
-        return $this->belongsTo(Pengajar::class, 'penanggung_jawab_id');
+        // Ubah dari belongsTo menjadi belongsToMany
+        return $this->belongsToMany(Pengajar::class, 'agenda_pengajar', 'agenda_id', 'pengajar_id');
     }
 }

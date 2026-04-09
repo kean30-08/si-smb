@@ -28,4 +28,9 @@ class Pengajar extends Model
     {
         return $this->belongsTo(Jabatan::class);
     }
+
+    public function agendas()
+    {
+        return $this->belongsToMany(Agenda::class, 'agenda_pengajar', 'pengajar_id', 'agenda_id');
+    }
 }

@@ -39,18 +39,30 @@
 
                     {{-- PENANGGUNG JAWAB (PIC) --}}
                     <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6">
-                        <div class="flex items-center justify-between md:justify-start">
-                            <span class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">PIC
+                        <div class="flex flex-col md:justify-start">
+                            <span class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">PIC
                                 Absensi</span>
-                            @if ($group->penanggungJawab)
-                                <div class="flex items-center text-sm font-medium text-gray-800">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-indigo-500">
-                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                                        <circle cx="12" cy="7" r="4" />
-                                    </svg>
-                                    {{ $group->penanggungJawab->nama_lengkap }}
+
+                            @php
+                                $pics = isset($agendasWithPics[$group->tanggal])
+                                    ? $agendasWithPics[$group->tanggal]->penanggungJawab
+                                    : collect();
+                            @endphp
+
+                            @if ($pics->isNotEmpty())
+                                <div class="flex flex-col gap-1 text-sm font-medium text-gray-800">
+                                    @foreach ($pics as $pic)
+                                        <div class="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="mr-2 text-indigo-500 shrink-0">
+                                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                                <circle cx="12" cy="7" r="4" />
+                                            </svg>
+                                            {{ $pic->nama_lengkap }}
+                                        </div>
+                                    @endforeach
                                 </div>
                             @else
                                 <span class="text-sm italic text-gray-400">Belum Ditentukan</span>

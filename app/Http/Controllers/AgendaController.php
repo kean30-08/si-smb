@@ -14,19 +14,11 @@ use Illuminate\Validation\Rule;
 
 class AgendaController extends Controller
 {
-    /**
-     * Menampilkan daftar agenda yang dikelompokkan berdasarkan tanggal.
-     * 
-     * @param Request $request
-     * @return \Illuminate\Contracts\View\View
-     * @throws \Exception
-     */
     public function index(Request $request)
     {
         $now = now();
         $today = $now->toDateString();
         $currentTime = $now->toTimeString();
-
         $isAdmin = auth()->user()->isAdmin();
 
         Agenda::where('status', 'akan datang')
@@ -46,11 +38,8 @@ class AgendaController extends Controller
 
         $search = $request->input('search');
 
-        // Definisikan $isAdmin di sini
-        $isAdmin = auth()->user()->isAdmin();
-
-        $agendasGrouped = Agenda::selectRaw('tanggal, count(id) as total_kegiatan, MAX(penanggung_jawab_id) as penanggung_jawab_id')
-            ->with('penanggungJawab') 
+        // PERBAIKAN: Jangan pakai MAX(penanggung_jawab_id) lagi, tapi gunakan MIN(id)
+        $agendasGrouped = Agenda::selectRaw('tanggal, count(id) as total_kegiatan, MIN(id) as first_agenda_id')
             ->when($search, function ($query, $search) {
                 return $query->where('tanggal', 'like', "%{$search}%");
             })
@@ -59,36 +48,48 @@ class AgendaController extends Controller
             ->paginate(8)
             ->appends(['search' => $search]);
 
+        // PERBAIKAN: Tarik relasi Many-to-Many PIC
+        $firstAgendaIds = $agendasGrouped->pluck('first_agenda_id');
+        $agendasWithPics = Agenda::with('penanggungJawab')->whereIn('id', $firstAgendaIds)->get()->keyBy('tanggal');
+
         if ($request->ajax()) {
-            // Pastikan $isAdmin ikut dikirim ke file _table
-            return view('agenda.partials._table', compact('agendasGrouped', 'isAdmin'))->render();
+            return view('agenda.partials._table', compact('agendasGrouped', 'agendasWithPics', 'isAdmin'))->render();
         }
 
-        // Pastikan $isAdmin ikut dikirim ke halaman index
-        return view('agenda.index', compact('agendasGrouped', 'isAdmin'));
+        return view('agenda.index', compact('agendasGrouped', 'agendasWithPics', 'isAdmin'));
     }
 
     public function showDate($tanggal)
     {
-        $agendas = Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
+        $agendas = Agenda::with('penanggungJawab')->where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->get();
         $pengajars = \App\Models\Pengajar::orderBy('nama_lengkap', 'asc')->get();
-        $penanggungJawabId = $agendas->first()->penanggung_jawab_id ?? null;
+        
+        // Tarik semua ID Pengajar yang ditugaskan (Bisa lebih dari 1)
+        $penanggungJawabIds = $agendas->first() ? $agendas->first()->penanggungJawab->pluck('id')->toArray() : [];
         
         $isAdmin = auth()->user()->isAdmin();
 
-        // Cukup kirimkan data ini saja, tidak perlu defaultKelasId
-        return view('agenda.show', compact('agendas', 'tanggal', 'pengajars', 'penanggungJawabId', 'isAdmin'));
+        return view('agenda.show', compact('agendas', 'tanggal', 'pengajars', 'penanggungJawabIds', 'isAdmin'));
     }
 
     // TAMBAHKAN FUNGSI BARU UNTUK UPDATE PIC
     public function updatePic(Request $request, $tanggal)
     {
-        $request->validate(['penanggung_jawab_id' => 'required|exists:pengajars,id']);
+        // Validasi array PIC
+        $request->validate([
+            'penanggung_jawab_id' => 'nullable|array',
+            'penanggung_jawab_id.*' => 'exists:pengajars,id'
+        ]);
         
-        // Update semua acara di tanggal tersebut dengan PIC yang baru
-        Agenda::where('tanggal', $tanggal)->update(['penanggung_jawab_id' => $request->penanggung_jawab_id]);
+        $agendas = Agenda::where('tanggal', $tanggal)->get();
+        $picIds = $request->penanggung_jawab_id ?? [];
         
-        return back()->with('success', 'Penanggung Jawab hari tersebut berhasil diperbarui!');
+        // Sync (sinkronisasi) array PIC ke seluruh agenda pada tanggal tersebut
+        foreach ($agendas as $agenda) {
+            $agenda->penanggungJawab()->sync($picIds);
+        }
+        
+        return back()->with('success', 'Daftar PIC Absensi hari tersebut berhasil diperbarui!');
     }
 
     public function create()
@@ -105,7 +106,8 @@ class AgendaController extends Controller
     {
         $request->validate([
             'tanggal' => 'required|date',
-            'penanggung_jawab_id' => 'required|exists:pengajars,id',
+            'penanggung_jawab_id' => 'nullable|array', // Array dari Select2 Multiple
+            'penanggung_jawab_id.*' => 'exists:pengajars,id',
             'nama_kegiatan' => 'required|array',
             'nama_kegiatan.*' => 'required|string',
             'waktu_mulai' => 'required|array',
@@ -114,11 +116,11 @@ class AgendaController extends Controller
 
         $tanggal = $request->tanggal;
 
-        // 1. VALIDASI MANUAL: Cek apakah di dalam form yang disubmit ada data kembar
+        // 1. VALIDASI MANUAL
         $kegiatanWaktuSubmitted = [];
         foreach ($request->nama_kegiatan as $index => $nama) {
             $waktu = $request->waktu_mulai[$index];
-            $key = $nama . '-' . $waktu; // Contoh: "test 1-08:00"
+            $key = $nama . '-' . $waktu; 
             
             if (in_array($key, $kegiatanWaktuSubmitted)) {
                 return back()->withInput()->withErrors(['nama_kegiatan' => 'Terdapat duplikasi kegiatan "'.$nama.'" di jam yang sama pada form pengisian Anda!']);
@@ -126,7 +128,7 @@ class AgendaController extends Controller
             $kegiatanWaktuSubmitted[] = $key;
         }
 
-        // 2. VALIDASI DATABASE: Cek apakah jadwal tersebut sudah ada di Database
+        // 2. VALIDASI DATABASE
         foreach ($request->nama_kegiatan as $index => $nama) {
             $exists = Agenda::where('tanggal', $tanggal)
                             ->where('waktu_mulai', $request->waktu_mulai[$index])
@@ -137,18 +139,24 @@ class AgendaController extends Controller
             }
         }
 
-        // Jika lolos semua validasi, baru simpan ke database
+        // 3. SIMPAN DATA
         DB::transaction(function () use ($request, $tanggal) {
+            $picIds = $request->penanggung_jawab_id ?? [];
+
             foreach ($request->nama_kegiatan as $index => $nama) {
-                Agenda::create([
+                $agenda = Agenda::create([
                     'tanggal' => $tanggal,
-                    'penanggung_jawab_id' => $request->penanggung_jawab_id,
                     'nama_kegiatan' => $nama,
                     'waktu_mulai' => $request->waktu_mulai[$index],
                     'waktu_selesai' => $request->waktu_selesai[$index],
                     'deskripsi_rundown' => $request->deskripsi_rundown[$index] ?? null,
                     'status' => 'akan datang',
                 ]);
+
+                // Sync PIC ke tabel pivot agenda_pengajar
+                if (!empty($picIds)) {
+                    $agenda->penanggungJawab()->sync($picIds);
+                }
             }
         });
 

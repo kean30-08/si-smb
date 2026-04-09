@@ -4,8 +4,8 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Kelola Data Kehadiran') }}
             </h2>
-            @if ($type == 'siswa' && isset($selectedAgenda))
-                {{-- PERBAIKAN: Tombol scanner membawa parameter agenda_id yang dipilih --}}
+            {{-- TOMBOL SCANNER HANYA MUNCUL JIKA USER ADALAH PIC / ADMIN --}}
+            @if ($type == 'siswa' && isset($selectedAgenda) && $isPic)
                 <a href="{{ route('absensi.scanner', ['agenda_id' => $selectedAgenda->id]) }}"
                     class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -78,13 +78,13 @@
                         @endif
 
                         {{-- TAMPILAN NAMA PIC ABSENSI --}}
-                        @if ($agendas->isNotEmpty() && $penanggungJawab)
+                        @if ($agendas->isNotEmpty() && $penanggungJawab && $penanggungJawab->isNotEmpty())
                             <div class="w-full lg:w-auto hidden md:block">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">PIC Absensi</label>
                                 <div
-                                    class="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-md text-indigo-800 font-semibold text-sm flex items-center h-[42px]">
-                                    <i data-lucide="user" class="w-4 h-4 mr-2"></i>
-                                    {{ $penanggungJawab->nama_lengkap }}
+                                    class="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-md text-indigo-800 font-semibold text-sm flex items-center min-h-[42px]">
+                                    <i data-lucide="users" class="w-4 h-4 mr-2 shrink-0"></i>
+                                    {{ $penanggungJawab->pluck('nama_lengkap')->join(', ') }}
                                 </div>
                             </div>
                         @endif
@@ -126,14 +126,13 @@
                             </p>
                         </div>
                     @else
-                        {{-- FILTER BARIS 2: DETAIL AGENDA (BARU) --}}
+                        {{-- FILTER BARIS 2: DETAIL AGENDA --}}
                         <form action="{{ route('absensi.index') }}" method="GET"
                             class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                             <input type="hidden" name="tanggal" value="{{ $tanggal }}">
                             <input type="hidden" name="type" value="{{ $type }}">
                             <input type="hidden" name="kelas_id" value="{{ $kelas_id }}">
 
-                            {{-- Dropdown Nama Kegiatan --}}
                             <div class="md:col-span-1">
                                 <label class="block text-sm font-bold text-indigo-700 mb-1">Pilih Sesi Kegiatan</label>
                                 <select name="agenda_id"
@@ -148,7 +147,6 @@
                                 </select>
                             </div>
 
-                            {{-- Status Read-Only --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-500 mb-1">Status</label>
                                 <input type="text" disabled
@@ -161,7 +159,6 @@
                                     value="{{ $selectedAgenda ? ucwords(str_replace('_', ' ', $selectedAgenda->status)) : '-' }}">
                             </div>
 
-                            {{-- Waktu Mulai Read-Only --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-500 mb-1">Waktu Mulai</label>
                                 <input type="text" disabled
@@ -169,7 +166,6 @@
                                     value="{{ $selectedAgenda ? \Carbon\Carbon::parse($selectedAgenda->waktu_mulai)->format('H:i') : '-' }}">
                             </div>
 
-                            {{-- Waktu Selesai Read-Only --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-500 mb-1">Waktu Selesai</label>
                                 <input type="text" disabled
@@ -217,36 +213,51 @@
                                                         <span
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                             Absensi</span>
-                                                        <form action="{{ route('absensi.manual') }}" method="POST"
-                                                            class="m-0">
-                                                            @csrf
-                                                            <input type="hidden" name="siswa_id"
-                                                                value="{{ $siswa->id }}">
-                                                            <input type="hidden" name="agenda_id"
-                                                                value="{{ $agenda_id }}"> {{-- PERBAIKAN PENTING DI SINI --}}
-                                                            <input type="hidden" name="tanggal"
-                                                                value="{{ $tanggal }}">
-                                                            @php $statusSaatIni = $absenSiswa ? $absenSiswa->status_kehadiran : 'alpa'; @endphp
-                                                            <select name="status" onchange="this.form.submit()"
-                                                                class="text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
+                                                        @php $statusSaatIni = $absenSiswa ? $absenSiswa->status_kehadiran : 'alpa'; @endphp
+
+                                                        {{-- LOGIKA KEAMANAN PIC --}}
+                                                        @if ($isPic)
+                                                            <form action="{{ route('absensi.manual') }}"
+                                                                method="POST" class="m-0">
+                                                                @csrf
+                                                                <input type="hidden" name="siswa_id"
+                                                                    value="{{ $siswa->id }}">
+                                                                <input type="hidden" name="agenda_id"
+                                                                    value="{{ $agenda_id }}">
+                                                                <input type="hidden" name="tanggal"
+                                                                    value="{{ $tanggal }}">
+                                                                <select name="status" onchange="this.form.submit()"
+                                                                    class="text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
+                                                                    @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
+                                                                    @elseif($statusSaatIni == 'hadir') bg-green-100 text-green-800 border-green-200
+                                                                    @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
+                                                                    @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif">
+                                                                    <option value="alpa" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'alpa' ? 'selected' : '' }}>
+                                                                        Alpa</option>
+                                                                    <option value="hadir" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'hadir' ? 'selected' : '' }}>
+                                                                        Hadir</option>
+                                                                    <option value="izin" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'izin' ? 'selected' : '' }}>
+                                                                        Izin</option>
+                                                                    <option value="sakit" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'sakit' ? 'selected' : '' }}>
+                                                                        Sakit</option>
+                                                                </select>
+                                                            </form>
+                                                        @else
+                                                            {{-- Tampilan Read-Only Jika Bukan PIC --}}
+                                                            <div
+                                                                class="px-3 py-1 rounded-full text-xs font-bold border shadow-sm text-center
                                                                 @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
                                                                 @elseif($statusSaatIni == 'hadir') bg-green-100 text-green-800 border-green-200
                                                                 @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
                                                                 @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif">
-                                                                <option value="alpa" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'alpa' ? 'selected' : '' }}>
-                                                                    Alpa</option>
-                                                                <option value="hadir" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'hadir' ? 'selected' : '' }}>
-                                                                    Hadir</option>
-                                                                <option value="izin" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'izin' ? 'selected' : '' }}>
-                                                                    Izin</option>
-                                                                <option value="sakit" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'sakit' ? 'selected' : '' }}>
-                                                                    Sakit</option>
-                                                            </select>
-                                                        </form>
+                                                                {{ ucfirst($statusSaatIni) }}
+                                                            </div>
+                                                        @endif
+
                                                     </div>
                                                 </td>
                                                 <td
@@ -314,36 +325,51 @@
                                                         <span
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                             Absensi</span>
-                                                        <form action="{{ route('absensi.manualPengajar') }}"
-                                                            method="POST" class="m-0">
-                                                            @csrf
-                                                            <input type="hidden" name="pengajar_id"
-                                                                value="{{ $pengajar->id }}">
-                                                            <input type="hidden" name="agenda_id"
-                                                                value="{{ $agenda_id }}"> {{-- PERBAIKAN PENTING DI SINI --}}
-                                                            <input type="hidden" name="tanggal"
-                                                                value="{{ $tanggal }}">
-                                                            @php $statusSaatIni = $absenPengajar ? $absenPengajar->status_kehadiran : 'alpa'; @endphp
-                                                            <select name="status" onchange="this.form.submit()"
-                                                                class="text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
+                                                        @php $statusSaatIni = $absenPengajar ? $absenPengajar->status_kehadiran : 'alpa'; @endphp
+
+                                                        {{-- LOGIKA KEAMANAN PIC --}}
+                                                        @if ($isPic)
+                                                            <form action="{{ route('absensi.manualPengajar') }}"
+                                                                method="POST" class="m-0">
+                                                                @csrf
+                                                                <input type="hidden" name="pengajar_id"
+                                                                    value="{{ $pengajar->id }}">
+                                                                <input type="hidden" name="agenda_id"
+                                                                    value="{{ $agenda_id }}">
+                                                                <input type="hidden" name="tanggal"
+                                                                    value="{{ $tanggal }}">
+                                                                <select name="status" onchange="this.form.submit()"
+                                                                    class="text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
+                                                                    @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
+                                                                    @elseif($statusSaatIni == 'hadir') bg-amber-100 text-amber-800 border-amber-200
+                                                                    @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
+                                                                    @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif">
+                                                                    <option value="alpa" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'alpa' ? 'selected' : '' }}>
+                                                                        Alpa</option>
+                                                                    <option value="hadir" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'hadir' ? 'selected' : '' }}>
+                                                                        Hadir</option>
+                                                                    <option value="izin" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'izin' ? 'selected' : '' }}>
+                                                                        Izin</option>
+                                                                    <option value="sakit" class="bg-white text-black"
+                                                                        {{ $statusSaatIni == 'sakit' ? 'selected' : '' }}>
+                                                                        Sakit</option>
+                                                                </select>
+                                                            </form>
+                                                        @else
+                                                            {{-- Tampilan Read-Only Jika Bukan PIC --}}
+                                                            <div
+                                                                class="px-3 py-1 rounded-full text-xs font-bold border shadow-sm text-center
                                                                 @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
                                                                 @elseif($statusSaatIni == 'hadir') bg-amber-100 text-amber-800 border-amber-200
                                                                 @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
                                                                 @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif">
-                                                                <option value="alpa" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'alpa' ? 'selected' : '' }}>
-                                                                    Alpa</option>
-                                                                <option value="hadir" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'hadir' ? 'selected' : '' }}>
-                                                                    Hadir</option>
-                                                                <option value="izin" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'izin' ? 'selected' : '' }}>
-                                                                    Izin</option>
-                                                                <option value="sakit" class="bg-white text-black"
-                                                                    {{ $statusSaatIni == 'sakit' ? 'selected' : '' }}>
-                                                                    Sakit</option>
-                                                            </select>
-                                                        </form>
+                                                                {{ ucfirst($statusSaatIni) }}
+                                                            </div>
+                                                        @endif
+
                                                     </div>
                                                 </td>
                                                 <td

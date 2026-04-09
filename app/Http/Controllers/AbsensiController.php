@@ -15,6 +15,23 @@ use Illuminate\Support\Facades\DB;
 class AbsensiController extends Controller
 {
     /**
+     * Fungsi Bantuan untuk mengecek apakah user adalah PIC atau Admin
+     */
+    private function isAuthorizedPic($agenda)
+    {
+        $user = auth()->user();
+        
+        // Admin & Kepala Sekolah bebas mengakses semuanya
+        if ($user->isAdmin()) return true;
+
+        $pengajar = $user->pengajar;
+        if (!$pengajar) return false;
+
+        // Cek apakah ID pengajar yang sedang login ada di dalam daftar PIC agenda ini
+        return $agenda->penanggungJawab->contains('id', $pengajar->id);
+    }
+
+    /**
      * Menampilkan Halaman Kelola Absensi
      */
     public function index(Request $request)
@@ -25,7 +42,7 @@ class AbsensiController extends Controller
         $search = $request->input('search'); 
 
         $kelas = Kelas::all();
-        $agendas = Agenda::where('tanggal', $tanggal)->orderBy('waktu_mulai')->get();
+        $agendas = Agenda::with('penanggungJawab')->where('tanggal', $tanggal)->orderBy('waktu_mulai')->get();
 
         // TENTUKAN AGENDA TERPILIH (Default ke agenda pertama jika tidak ada yang dipilih)
         $agenda_id = $request->input('agenda_id');
@@ -35,7 +52,10 @@ class AbsensiController extends Controller
 
         // Ambil objek agenda yang sedang dipilih saat ini
         $selectedAgenda = $agendas->where('id', $agenda_id)->first();
-        $penanggungJawab = $selectedAgenda ? $selectedAgenda->penanggungJawab : null;
+        $penanggungJawab = $selectedAgenda ? $selectedAgenda->penanggungJawab : collect();
+
+        // CEK HAK AKSES: Apakah yang login ini adalah PIC untuk agenda ini?
+        $isPic = $selectedAgenda ? $this->isAuthorizedPic($selectedAgenda) : false;
 
         // TAB SISWA
         if ($type == 'siswa') {
@@ -54,7 +74,7 @@ class AbsensiController extends Controller
             // HANYA AMBIL ABSENSI UNTUK AGENDA TERPILIH SAJA
             $absensis = Absensi::where('agenda_id', $agenda_id)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab', 'isPic'));
         
         // TAB PENGAJAR
         } else {
@@ -68,7 +88,7 @@ class AbsensiController extends Controller
             // HANYA AMBIL ABSENSI PENGAJAR UNTUK AGENDA TERPILIH SAJA
             $absensiPengajars = AbsensiPengajar::where('agenda_id', $agenda_id)->get();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab', 'isPic'));
         }
     }
 
@@ -79,9 +99,14 @@ class AbsensiController extends Controller
     {
         $request->validate([
             'pengajar_id' => 'required',
-            'agenda_id' => 'required', // Validasi ke agenda spesifik
+            'agenda_id' => 'required', 
             'status' => 'required|in:hadir,izin,sakit,alpa'
         ]);
+
+        $agenda = Agenda::find($request->agenda_id);
+        if (!$agenda || !$this->isAuthorizedPic($agenda)) {
+            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk sesi ini.');
+        }
 
         $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
 
@@ -100,9 +125,14 @@ class AbsensiController extends Controller
     {
         $request->validate([
             'siswa_id' => 'required',
-            'agenda_id' => 'required', // Validasi ke agenda spesifik
+            'agenda_id' => 'required', 
             'status' => 'required|in:hadir,izin,sakit,alpa'
         ]);
+
+        $agenda = Agenda::find($request->agenda_id);
+        if (!$agenda || !$this->isAuthorizedPic($agenda)) {
+            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk sesi ini.');
+        }
 
         $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
 
@@ -127,13 +157,16 @@ class AbsensiController extends Controller
     public function scanner(Request $request)
     {
         $agenda_id = $request->agenda_id;
-        $agenda = Agenda::find($agenda_id);
+        $agenda = Agenda::with('penanggungJawab')->find($agenda_id);
 
         if (!$agenda) {
             return redirect()->route('absensi.index')->with('error', 'Pilih kegiatan/agenda terlebih dahulu sebelum membuka scanner!');
         }
 
-        // Kirim 1 agenda spesifik yang sedang discan ke view scanner
+        if (!$this->isAuthorizedPic($agenda)) {
+            return redirect()->route('absensi.index')->with('error', 'Akses Ditolak! Fitur Scanner hanya bisa dibuka oleh PIC Absensi yang ditugaskan.');
+        }
+
         return view('absensi.scanner', compact('agenda'));
     }
 
@@ -143,11 +176,16 @@ class AbsensiController extends Controller
     public function prosesScan(Request $request)
     {
         $barcode = $request->barcode; 
-        $agenda_id = $request->agenda_id; // Mengambil ID Agenda spesifik dari Scanner
+        $agenda_id = $request->agenda_id; 
 
-        $agenda = Agenda::find($agenda_id);
+        $agenda = Agenda::with('penanggungJawab')->find($agenda_id);
         if (!$agenda) {
             return response()->json(['success' => false, 'message' => 'Agenda tidak valid atau tidak ditemukan!']);
+        }
+
+        // Lapis keamanan Scanner via AJAX
+        if (!$this->isAuthorizedPic($agenda)) {
+            return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda tidak memiliki izin memindai untuk sesi ini.']);
         }
 
         $parts = explode('-', $barcode);
@@ -163,7 +201,6 @@ class AbsensiController extends Controller
             return response()->json(['success' => false, 'message' => 'Data Siswa tidak ditemukan di sistem!']);
         }
 
-        // Simpan / Cek absensi untuk 1 AGENDA INI SAJA
         $absen = Absensi::where('agenda_id', $agenda->id)->where('siswa_id', $siswa->id)->first();
 
         if ($absen && $absen->status_kehadiran == 'hadir') {
