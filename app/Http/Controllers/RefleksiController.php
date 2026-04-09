@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\RefleksiSiswa;
 use App\Models\Agenda;
+use App\Models\Kelas;
 use Carbon\Carbon;
 
 class RefleksiController extends Controller
@@ -34,7 +35,10 @@ class RefleksiController extends Controller
             $statusForm = 'sudah_tutup';
         }
 
-        return view('refleksi.create', compact('tanggal', 'waktuBuka', 'waktuTutup', 'statusForm', 'agendas'));
+        // Tarik data kelas untuk dropdown
+        $kelas = Kelas::orderBy('nama_kelas', 'asc')->get();
+
+        return view('refleksi.create', compact('tanggal', 'statusForm', 'waktuBuka', 'waktuTutup', 'kelas'));
     }
 
     public function store(Request $request, $tanggal)
@@ -48,9 +52,11 @@ class RefleksiController extends Controller
             return back()->withErrors(['Waktu pengisian form refleksi untuk kegiatan ini telah habis.']);
         }
 
+        // Validasi input dari siswa
         $request->validate([
             'nama_siswa' => 'required|string|max:255',
             'nis' => 'required|string|max:255',
+            'kelas_id' => 'required|exists:kelas,id', // <-- TAMBAHAN VALIDASI KELAS
             'nama_orang_tua' => 'required|string|max:255',
             'email_orang_tua' => 'nullable|email|max:255',
             'rangkuman' => 'required|string',
@@ -71,7 +77,8 @@ class RefleksiController extends Controller
      */
     public function index($tanggal)
     {
-        $refleksis = RefleksiSiswa::where('tanggal', $tanggal)->latest()->get();
+        // Tambahkan with('kelas') agar relasinya ditarik sekaligus secara efisien
+        $refleksis = RefleksiSiswa::with('kelas')->where('tanggal', $tanggal)->latest()->get();
         return view('refleksi.index', compact('refleksis', 'tanggal'));
     }
 
@@ -80,7 +87,8 @@ class RefleksiController extends Controller
      */
     public function show($id)
     {
-        $refleksi = RefleksiSiswa::findOrFail($id);
+        // Tambahkan with('kelas') juga di sini
+        $refleksi = RefleksiSiswa::with('kelas')->findOrFail($id);
         return view('refleksi.show', compact('refleksi'));
     }
 }
