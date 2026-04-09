@@ -19,7 +19,7 @@ class AgendaController extends Controller
         $now = now();
         $today = $now->toDateString();
         $currentTime = $now->toTimeString();
-        $isAdmin = auth()->user()->isAdmin();
+        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
 
         Agenda::where('status', 'akan datang')
             ->where('tanggal', $today)
@@ -67,7 +67,7 @@ class AgendaController extends Controller
         // Tarik semua ID Pengajar yang ditugaskan (Bisa lebih dari 1)
         $penanggungJawabIds = $agendas->first() ? $agendas->first()->penanggungJawab->pluck('id')->toArray() : [];
         
-        $isAdmin = auth()->user()->isAdmin();
+        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
 
         return view('agenda.show', compact('agendas', 'tanggal', 'pengajars', 'penanggungJawabIds', 'isAdmin'));
     }
@@ -280,8 +280,11 @@ class AgendaController extends Controller
             return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal pada tanggal tersebut.');
         }
 
+        // Ambil data user Admin/Kepala Sekolah (Asumsi User ID 1 atau user admin pertama)
+        $admin = \App\Models\User::first(); 
+
         try {
-            $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
+            $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal', 'admin'));
             $pdfContent = $pdf->output();
 
             $emails = Siswa::where('status', 'aktif')
@@ -319,7 +322,10 @@ class AgendaController extends Controller
             return redirect()->route('agenda.showDate', $tanggal)->with('error', 'Tidak ada data jadwal untuk diunduh.');
         }
 
-        $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal'));
+        // Ambil data user Admin/Kepala Sekolah (Asumsi User ID 1 atau user admin pertama)
+        $admin = \App\Models\User::first(); 
+
+        $pdf = Pdf::loadView('agenda.pdf', compact('agendas', 'tanggal', 'admin'));
         $fileName = 'Rundown_Kegiatan_' . Carbon::parse($tanggal)->format('d_M_Y') . '.pdf';
         
         return $pdf->download($fileName);

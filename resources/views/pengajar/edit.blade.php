@@ -127,6 +127,29 @@
                                 <label class="block font-medium text-sm text-gray-700">Alamat Lengkap</label>
                                 <textarea name="alamat" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>{{ old('alamat', $pengajar->alamat) }}</textarea>
                             </div>
+
+                            {{-- ... Input Alamat sebelumnya ... --}}
+                            <div class="md:col-span-2">
+                                <label class="block font-medium text-sm text-gray-700">Alamat Lengkap</label>
+                                <textarea name="alamat" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>{{ old('alamat', $pengajar->alamat) }}</textarea>
+                            </div>
+
+                            {{-- TAMBAHAN: Status Aktif / Tidak Aktif --}}
+                            <div class="md:col-span-2 mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                                <label class="block font-bold text-sm text-yellow-800 mb-2">Status Mengajar</label>
+                                <select name="status"
+                                    class="mt-1 block w-full md:w-1/2 border-yellow-300 rounded-md shadow-sm focus:border-yellow-500 focus:ring-yellow-500 text-sm">
+                                    <option value="aktif"
+                                        {{ old('status', $pengajar->status) == 'aktif' ? 'selected' : '' }}>Aktif
+                                        (Dapat Login)</option>
+                                    <option value="tidak aktif"
+                                        {{ old('status', $pengajar->status) == 'tidak aktif' ? 'selected' : '' }}>Tidak
+                                        Aktif / Keluar (Akses Login Diblokir)</option>
+                                </select>
+                                <p class="text-xs text-yellow-600 mt-2">Jika disetel ke "Tidak Aktif", pengajar tidak
+                                    akan bisa lagi mengakses sistem informasi ini.</p>
+                            </div>
+
                             {{-- END BIODATA PENGAJAR --}}
                         </div>
 

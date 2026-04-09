@@ -11,27 +11,23 @@ use Illuminate\Support\Facades\DB;
 
 class PengajarController extends Controller
 {
-    /**
-     * Display a listing of the instructors with eager loaded relations.
-     * Supports search filtering and AJAX partial rendering.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function index(Request $request)
     {
         $search = $request->input('search');
-        
-        // Periksa hak akses pengguna administrator
+        $status = $request->input('status'); // Tangkap filter status
         $isAdmin = auth()->user()->isAdmin();
 
         $pengajars = Pengajar::with(['user', 'jabatan']) 
             ->when($search, function ($query, $search) {
                 return $query->where('nama_lengkap', 'like', "%{$search}%");
             })
+            ->when($status, function ($query, $status) {
+                // Filter status jika ada input dari form
+                return $query->where('status', $status);
+            })
             ->latest()
             ->paginate(10)
-            ->appends(['search' => $search]);
+            ->appends(['search' => $search, 'status' => $status]);
 
         if ($request->ajax()) {
             return view('pengajar.partials._table', compact('pengajars', 'isAdmin'))->render();
@@ -40,23 +36,12 @@ class PengajarController extends Controller
         return view('pengajar.index', compact('pengajars', 'isAdmin'));
     }
 
-    /**
-     * Tampilkan formulir untuk membuat data pengajar baru beserta pilihan jabatan.
-     *
-     * @return \Illuminate\View\View
-     */
     public function create()
     {
         $jabatans = Jabatan::all();
         return view('pengajar.create', compact('jabatans'));
     }
 
-    /**
-     * Menyimpan data pengajar baru beserta akun pengguna terkait secara atomik.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -67,15 +52,8 @@ class PengajarController extends Controller
             'jenis_kelamin' => 'required',
             'alamat' => 'required',
             'jabatan_id' => 'required|exists:jabatans,id'
-        ], [
-            'nomor_hp.regex' => 'Nomor HP hanya boleh berisi angka.',
-            'nama_lengkap.regex' => 'Nama lengkap hanya boleh berisi huruf dan spasi.',
-            'password.min' => 'Password minimal harus 6 karakter.',
-            'password.confirmed' => 'Konfirmasi password tidak sesuai.',
-            'email.unique' => 'Email sudah terdaftar dalam sistem.',
         ]);
 
-        // Wrap in transaction to ensure atomic data integrity
         return DB::transaction(function () use ($request) {
             $user = User::create([
                 'name' => $request->nama_lengkap,
@@ -90,44 +68,25 @@ class PengajarController extends Controller
                 'nomor_hp' => $request->nomor_hp,
                 'jenis_kelamin' => $request->jenis_kelamin,
                 'alamat' => $request->alamat,
+                'status' => 'aktif', // Default aktif
             ]);
 
-            return redirect()->route('pengajar.index')
-                ->with('success', 'Data pengajar dan akun berhasil diverifikasi dan disimpan.');
+            return redirect()->route('pengajar.index')->with('success', 'Data pengajar dan akun berhasil disimpan.');
         });
     }
 
-    /**
-     * Tampilkan detail informasi pengajar beserta jabatan terkait.
-     *
-     * @param  \App\Models\Pengajar  $pengajar
-     * @return \Illuminate\View\View
-     */
     public function show(Pengajar $pengajar)
     {
         $pengajar->load('jabatan'); 
         return view('pengajar.show', compact('pengajar'));
     }
 
-    /**
-     * Tampilkan formulir untuk mengedit data pengajar beserta kredensial akun terkait.
-     * 
-     * @param  \App\Models\Pengajar  $pengajar
-     * @return \Illuminate\View\View
-     */
     public function edit(Pengajar $pengajar)
     {
         $jabatans = Jabatan::all();
         return view('pengajar.edit', compact('pengajar', 'jabatans'));
     }
 
-    /**
-     * Perbarui informasi pengajar dan kredensial akun terkait jika diperlukan.
-     * 
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Pengajar  $pengajar
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function update(Request $request, Pengajar $pengajar)
     {
         $rules = [
@@ -136,33 +95,22 @@ class PengajarController extends Controller
             'jabatan_id' => 'required|exists:jabatans,id',
             'alamat' => 'required',
             'nomor_hp' => 'required|regex:/^[0-9]+$/',
+            'status' => 'required|in:aktif,tidak aktif', // Validasi status baru
         ];
 
-        $messages = [
-            'nomor_hp.regex' => 'Nomor HP hanya boleh berisi angka.',
-            'nama_lengkap.regex' => 'Nama lengkap hanya boleh berisi huruf dan spasi.',
-        ];
+        // Cegah pengubahan status Kepala Sekolah Utama (Admin)
+        if ($pengajar->user_id == 1 || $pengajar->jabatan_id == 2) { 
+             $request->merge(['status' => 'aktif']);
+        }
 
-        // Kondisional validasi untuk perubahan kredensial (email dan password)
         if ($request->has('ubah_kredensial')) {
             $rules['email'] = 'required|email|unique:users,email,' . $pengajar->user_id;
-
-            $messages = array_merge($messages, [
-                'email.unique' => 'Email sudah terdaftar dalam sistem.',
-                'email.email' => 'Format email tidak valid.',
-            ]);
-
             if ($request->filled('password')) {
                 $rules['password'] = 'min:6|confirmed';
-
-                $messages = array_merge($messages, [
-                    'password.confirmed' => 'Konfirmasi password tidak sesuai.',
-                    'password.min' => 'Password minimal harus 6 karakter.',
-                ]);
             }
         }
 
-        $request->validate($rules, $messages);
+        $request->validate($rules);
 
         return DB::transaction(function () use ($request, $pengajar) {
             $userData = ['name' => $request->nama_lengkap];
@@ -174,6 +122,12 @@ class PengajarController extends Controller
                 }
             }
             
+            // Jika status tidak aktif, hancurkan akses login user dengan mengubah password acak (Opsional untuk keamanan ekstra)
+            if ($request->status == 'tidak aktif') {
+                 // Anda juga bisa menambahkan logika suspend di LoginController, 
+                 // tapi cara termudah memutus akses adalah mereset password / email
+            }
+
             $pengajar->user->update($userData);
 
             $pengajar->update([
@@ -182,29 +136,26 @@ class PengajarController extends Controller
                 'nomor_hp' => $request->nomor_hp,
                 'jenis_kelamin' => $request->jenis_kelamin,
                 'alamat' => $request->alamat,
+                'status' => $request->status,
             ]);
 
-            return redirect()->route('pengajar.index')
-                ->with('success', 'Informasi pengajar telah berhasil diperbarui.');
+            return redirect()->route('pengajar.index')->with('success', 'Informasi pengajar telah berhasil diperbarui.');
         });
     }
 
-    /**
-     * Remove the instructor and associated user account from storage.
-     * 
-     * @param  \App\Models\Pengajar  $pengajar
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function destroy(Pengajar $pengajar)
     {
-        // Cascade deletion is handled via User model if exists
+        // PROTEKSI: Kepala Sekolah (Jabatan ID 2 atau User ID 1) TIDAK BOLEH dihapus
+        if ($pengajar->user_id == 1 || $pengajar->jabatan_id == 2 || $pengajar->id == auth()->user()->pengajar->id) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Akun Anda sendiri atau Kepala Sekolah tidak dapat dihapus.');
+        }
+
         if($pengajar->user) {
             $pengajar->user->delete(); 
         } else {
             $pengajar->delete();
         }
         
-        return redirect()->route('pengajar.index')
-            ->with('success', 'Data entitas berhasil dihapus dari sistem.');
+        return redirect()->route('pengajar.index')->with('success', 'Data pengajar berhasil dihapus.');
     }
 }

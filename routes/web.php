@@ -20,30 +20,43 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// =======================================================
+// RUTE PUBLIK (BISA DIAKSES SISWA TANPA LOGIN)
+// =======================================================
 
-    // Rute ini bebas diakses siapa saja (Tanpa perlu login)
-// === REFLEKSI (View Admin/Pengajar) ===
-// === FORM REFLEKSI PUBLIK (Tanpa Login) ===
-Route::get('/refleksi/{tanggal}', [\App\Http\Controllers\RefleksiController::class, 'create'])->name('refleksi.create');
-Route::post('/refleksi/{tanggal}', [\App\Http\Controllers\RefleksiController::class, 'store'])->name('refleksi.store');
+// Agenda (View & Download)
+Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
+Route::get('/agenda/detail/{tanggal}', [AgendaController::class, 'showDate'])->name('agenda.showDate');
+Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
+
+// Materi (View Only)
+Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
+Route::get('/materi/show/{materi}', [MateriController::class, 'show'])->name('materi.show');
+
+// Refleksi Form
+Route::get('/refleksi/{tanggal}', [RefleksiController::class, 'create'])->name('refleksi.create');
+Route::post('/refleksi/{tanggal}', [RefleksiController::class, 'store'])->name('refleksi.store');
+
+
 // =======================================================
 // RUTE KHUSUS ADMIN & KEPALA SEKOLAH
 // =======================================================
 Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(function () {
 
     // === AGENDA (Create, Update, Delete, Broadcast) ===
-    Route::get('/agenda/create', [AgendaController::class, 'create'])->name('agenda.create');
-    Route::post('/agenda', [AgendaController::class, 'store'])->name('agenda.store');
-    Route::get('/agenda/{agenda}/edit', [AgendaController::class, 'edit'])->name('agenda.edit');
-    Route::put('/agenda/{agenda}', [AgendaController::class, 'update'])->name('agenda.update');
-    Route::delete('/agenda/{agenda}', [AgendaController::class, 'destroy'])->name('agenda.destroy');
-    Route::delete('/agenda/date/{tanggal}', [AgendaController::class, 'destroyDate'])->name('agenda.destroyDate');
+    // PASTIKAN NAMA RUTE SESUAI DAN TIDAK BENTROK
+    Route::get('/admin/agenda/create', [AgendaController::class, 'create'])->name('agenda.create');
+    Route::post('/admin/agenda/store', [AgendaController::class, 'store'])->name('agenda.store');
+    Route::get('/admin/agenda/{agenda}/edit', [AgendaController::class, 'edit'])->name('agenda.edit');
+    Route::put('/admin/agenda/{agenda}', [AgendaController::class, 'update'])->name('agenda.update');
+    Route::delete('/admin/agenda/{agenda}', [AgendaController::class, 'destroy'])->name('agenda.destroy');
+    Route::delete('/admin/agenda/date/{tanggal}', [AgendaController::class, 'destroyDate'])->name('agenda.destroyDate');
     
     // Fitur Tambahan Agenda
-    Route::post('/agenda/broadcast/{tanggal}', [AgendaController::class, 'broadcastPdf'])->name('agenda.broadcast');
-    Route::get('/agenda/detail/{tanggal}/tambah', [AgendaController::class, 'createDetail'])->name('agenda.createDetail');
-    Route::post('/agenda/detail/store', [AgendaController::class, 'storeDetail'])->name('agenda.storeDetail');
-    Route::put('/agenda/detail/{tanggal}/update-pic', [AgendaController::class, 'updatePic'])->name('agenda.updatePic');
+    Route::post('/admin/agenda/broadcast/{tanggal}', [AgendaController::class, 'broadcastPdf'])->name('agenda.broadcast');
+    Route::get('/admin/agenda/detail/{tanggal}/tambah', [AgendaController::class, 'createDetail'])->name('agenda.createDetail');
+    Route::post('/admin/agenda/detail/store', [AgendaController::class, 'storeDetail'])->name('agenda.storeDetail');
+    Route::put('/admin/agenda/detail/{tanggal}/update-pic', [AgendaController::class, 'updatePic'])->name('agenda.updatePic');
 
 
     // === PENGAJAR ===
@@ -80,11 +93,11 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 
 
     // === MATERI (CRUD) ===
-    Route::get('/materi/create', [MateriController::class, 'create'])->name('materi.create');
-    Route::post('/materi', [MateriController::class, 'store'])->name('materi.store');
-    Route::get('/materi/{materi}/edit', [MateriController::class, 'edit'])->name('materi.edit');
-    Route::put('/materi/{materi}', [MateriController::class, 'update'])->name('materi.update');
-    Route::delete('/materi/{materi}', [MateriController::class, 'destroy'])->name('materi.destroy');
+    Route::get('/admin/materi/create', [MateriController::class, 'create'])->name('materi.create');
+    Route::post('/admin/materi/store', [MateriController::class, 'store'])->name('materi.store');
+    Route::get('/admin/materi/{materi}/edit', [MateriController::class, 'edit'])->name('materi.edit');
+    Route::put('/admin/materi/{materi}', [MateriController::class, 'update'])->name('materi.update');
+    Route::delete('/admin/materi/{materi}', [MateriController::class, 'destroy'])->name('materi.destroy');
 });
 
 
@@ -95,12 +108,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     
-    // === AGENDA (Read Only & Download) ===
-    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
-    Route::get('/agenda/detail/{tanggal}', [AgendaController::class, 'showDate'])->name('agenda.showDate');
-    Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
-    Route::get('/agenda/detail/{tanggal}/refleksi', [\App\Http\Controllers\RefleksiController::class, 'index'])->name('refleksi.index');
-    Route::get('/refleksi/detail/{id}', [\App\Http\Controllers\RefleksiController::class, 'show'])->name('refleksi.show'); // <-- TAMBAHKAN INI
+    // === AGENDA REFLEKSI (Read Only) ===
+    Route::get('/agenda/detail/{tanggal}/refleksi', [RefleksiController::class, 'index'])->name('refleksi.index');
+    Route::get('/refleksi/detail/{id}', [RefleksiController::class, 'show'])->name('refleksi.show');
 
     // === ABSENSI ===
     Route::get('/absensi/scanner', [AbsensiController::class, 'scanner'])->name('absensi.scanner');
@@ -116,10 +126,6 @@ Route::middleware('auth')->group(function () {
     // === PENGAJAR (View) ===
     Route::get('/pengajar', [PengajarController::class, 'index'])->name('pengajar.index');
     Route::get('/pengajar/{pengajar}', [PengajarController::class, 'show'])->name('pengajar.show');
-
-    // === MATERI (View) ===
-    Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
-    Route::get('/materi/{materi}', [MateriController::class, 'show'])->name('materi.show');
 });
 
 require __DIR__.'/auth.php';

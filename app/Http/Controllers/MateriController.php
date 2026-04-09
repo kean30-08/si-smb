@@ -23,7 +23,7 @@ class MateriController extends Controller
         $kelas = Kelas::all();
 
         // Cek otoritas pengguna (Administrator check)
-        $isAdmin = auth()->user()->isAdmin();
+        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
 
         $materis = Materi::with('kelas')
             ->when($search, function ($query, $search) {
@@ -49,6 +49,7 @@ class MateriController extends Controller
     public function create()
     {
         $kelas = Kelas::all();
+        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
         return view('materi.create', compact('kelas'));
     }
 
@@ -93,6 +94,7 @@ class MateriController extends Controller
     public function edit(Materi $materi)
     {
         $kelas = Kelas::all();
+        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
         return view('materi.edit', compact('materi', 'kelas'));
     }
 
@@ -139,6 +141,7 @@ class MateriController extends Controller
      */
     public function show(Materi $materi)
     {
+        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
         $materi->load('kelas'); 
         return view('materi.show', compact('materi'));
     }

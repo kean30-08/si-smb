@@ -32,24 +32,32 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Attempt to authenticate the request's credentials.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
+    
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        // 1. Cek apakah user ada di database
+        $user = \App\Models\User::where('email', $this->email)->first();
 
-            throw ValidationException::withMessages([
+        // 2. Jika user ditemukan, cek apakah dia punya data pengajar dan berstatus tidak aktif
+        if ($user && $user->pengajar && $user->pengajar->status === 'tidak aktif') {
+            \Illuminate\Support\Facades\RateLimiter::hit($this->throttleKey());
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => 'Akun Anda telah dinonaktifkan. Silakan hubungi Administrator.',
+            ]);
+        }
+
+        // 3. Lanjutkan proses login bawaan Laravel
+        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            \Illuminate\Support\Facades\RateLimiter::hit($this->throttleKey());
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
 
-        RateLimiter::clear($this->throttleKey());
+        \Illuminate\Support\Facades\RateLimiter::clear($this->throttleKey());
     }
 
     /**

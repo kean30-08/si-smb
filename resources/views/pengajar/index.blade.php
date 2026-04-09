@@ -1,6 +1,5 @@
 <x-app-layout>
     <x-slot name="header">
-        {{-- PERBAIKAN HEADER: Flex-col untuk HP, tombol memanjang --}}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Daftar Pengajar') }}
@@ -14,7 +13,6 @@
                     </a>
                 </div>
             @endif
-
         </div>
     </x-slot>
 
@@ -23,22 +21,38 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-4 sm:p-6 text-gray-900 bg-gray-50 md:bg-white">
 
-                    {{-- Form Live Search Saja --}}
+                    {{-- Form Live Search & Filter --}}
                     <form id="searchForm" action="{{ route('pengajar.index') }}" method="GET"
-                        class="mb-6 flex w-full">
-                        <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
-                            placeholder="Cari nama pengajar..."
-                            class="w-full md:w-1/3 border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <button type="submit"
-                            class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r-md flex items-center justify-center transition"
-                            title="Cari">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8" />
-                                <path d="m21 21-4.3-4.3" />
-                            </svg>
-                        </button>
+                        class="mb-6 flex flex-col md:flex-row gap-4 w-full">
+
+                        {{-- Dropdown Status --}}
+                        <div class="w-full md:w-1/4">
+                            <select id="statusFilter" name="status"
+                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <option value="">Semua Status</option>
+                                <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif
+                                </option>
+                                <option value="tidak aktif" {{ request('status') == 'tidak aktif' ? 'selected' : '' }}>
+                                    Tidak Aktif</option>
+                            </select>
+                        </div>
+
+                        {{-- Search Bar --}}
+                        <div class="flex flex-1">
+                            <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
+                                placeholder="Cari nama pengajar..."
+                                class="w-full border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <button type="submit"
+                                class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r-md flex items-center justify-center transition"
+                                title="Cari">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.3-4.3" />
+                                </svg>
+                            </button>
+                        </div>
                     </form>
 
                     {{-- Tabel Data --}}
@@ -53,45 +67,35 @@
     {{-- Script Auto Submit Live Search --}}
     <script>
         let typingTimer;
-        let doneTypingInterval = 500; // Dikurangi jadi 500ms agar lebih responsif
+        let doneTypingInterval = 500;
         let searchInput = document.getElementById('searchInput');
         let searchForm = document.getElementById('searchForm');
-        let kelasFilter = document.getElementById('kelasFilter');
         let statusFilter = document.getElementById('statusFilter');
         let tableContainer = document.getElementById('table-container');
 
-        // Fungsi untuk menarik data tanpa reload
         function fetchTableData(url) {
-            // Tampilkan indikator loading ringan (opsional, bisa diganti efek lain)
             tableContainer.style.opacity = '0.5';
-
             fetch(url, {
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest' // Penting! Agar Laravel mendeteksi ini sebagai AJAX
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 })
                 .then(response => response.text())
                 .then(html => {
-                    // Ganti isi HTML lama dengan HTML baru dari controller
                     tableContainer.innerHTML = html;
                     tableContainer.style.opacity = '1';
                 })
                 .catch(error => console.error('Error:', error));
         }
 
-        // Fungsi untuk mengambil parameter form dan membuat URL
         function updateData() {
             let url = new URL(searchForm.action);
             let params = new URLSearchParams(new FormData(searchForm));
             url.search = params.toString();
-
             fetchTableData(url);
-
-            // Opsional: Update URL di browser tanpa reload halamannya
             window.history.pushState({}, '', url);
         }
 
-        // Event Listeners
         searchInput.addEventListener('keyup', function() {
             clearTimeout(typingTimer);
             typingTimer = setTimeout(updateData, doneTypingInterval);
@@ -101,28 +105,19 @@
             clearTimeout(typingTimer);
         });
 
-        kelasFilter.addEventListener('change', updateData);
         statusFilter.addEventListener('change', updateData);
 
-        // Mencegah form disubmit secara tradisional jika dienter
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             updateData();
         });
 
-        // Menangani klik Pagination agar tidak full reload
         document.addEventListener('click', function(e) {
-            // Jika yang diklik adalah link pagination
             if (e.target.closest('.pagination-container a')) {
                 e.preventDefault();
                 let url = e.target.closest('.pagination-container a').href;
                 fetchTableData(url);
                 window.history.pushState({}, '', url);
-                // Scroll sedikit ke atas otomatis saat pindah halaman
-                // window.scrollTo({
-                //     top: 0,
-                //     behavior: 'smooth'
-                // });
             }
         });
     </script>

@@ -1,100 +1,107 @@
-<nav x-data="{ open: false }" class="sticky top-0 z-50 bg-white border-b border-gray-100">
-    <!-- Primary Navigation Menu -->
+<nav x-data="{ open: false }" class="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
-                <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
+                    <a href="{{ auth()->check() ? route('dashboard') : route('agenda.index') }}">
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
                     </a>
                 </div>
 
-                <!-- Navigation Links -->
                 <div class="hidden space-x-8 lg:-my-px lg:ml-10 lg:flex">
 
                     @php
-                        // Cek apakah user yang login ini adalah Admin (tidak ada di tabel pengajar)
-                        $isAdmin = auth()->user()->isAdmin();
+                        // Cek dengan aman apakah user login dan apakah dia admin
+                        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
                     @endphp
 
-                    {{-- MENU UNTUK SEMUA (Admin & Pengajar) --}}
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                    {{-- MENU UNTUK YANG LOGIN SAJA --}}
+                    @auth
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    @endauth
 
+                    {{-- MENU UNTUK SEMUA ORANG (PUBLIK & LOGIN) --}}
                     <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
                         {{ __('Agenda') }}
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
-                        {{ __('Absensi') }}
                     </x-nav-link>
 
                     <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
                         {{ __('Materi') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
-                        {{ __('Pengajar') }}
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
-                        {{ __('Siswa') }}
-                    </x-nav-link>
-                    {{-- MENU KHUSUS ADMIN --}}
-                    @if ($isAdmin)
-                        <x-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
-                            {{ __('Kelas') }}
+                    {{-- MENU LAINNYA HANYA UNTUK YANG LOGIN --}}
+                    @auth
+                        <x-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
+                            {{ __('Absensi') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                            {{ __('Laporan') }}
+                        <x-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
+                            {{ __('Pengajar') }}
                         </x-nav-link>
-                    @endif
 
+                        <x-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
+                            {{ __('Siswa') }}
+                        </x-nav-link>
+
+                        {{-- MENU KHUSUS ADMIN --}}
+                        @if ($isAdmin)
+                            <x-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
+                                {{ __('Kelas') }}
+                            </x-nav-link>
+
+                            <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                                {{ __('Laporan') }}
+                            </x-nav-link>
+                        @endif
+                    @endauth
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
             <div class="hidden lg:flex lg:items-center lg:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button
-                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
+                @auth
+                    {{-- JIKA SUDAH LOGIN --}}
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                <div>{{ Auth::user()->name }}</div>
 
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
 
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-
-                            <x-dropdown-link :href="route('logout')"
-                                onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('profile.edit')">
+                                {{ __('Profile') }}
                             </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
+
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <x-dropdown-link :href="route('logout')"
+                                    onclick="event.preventDefault(); this.closest('form').submit();">
+                                    {{ __('Log Out') }}
+                                </x-dropdown-link>
+                            </form>
+                        </x-slot>
+                    </x-dropdown>
+                @else
+                    {{-- JIKA BELUM LOGIN (PUBLIK) --}}
+                    <a href="{{ route('login') }}"
+                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        Login Pengurus
+                    </a>
+                @endauth
             </div>
 
-            <!-- Hamburger -->
             <div class="-me-2 flex items-center lg:hidden">
                 <button @click="open = ! open"
                     class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
@@ -110,67 +117,78 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
     <div :class="{ 'block': open, 'hidden': !open }" class="hidden lg:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+
+            @auth
+                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    {{ __('Dashboard') }}
+                </x-responsive-nav-link>
+            @endauth
 
             <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
                 {{ __('Agenda') }}
-            </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
-                {{ __('Absensi') }}
-            </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
-                {{ __('Pengajar') }}
-            </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
-                {{ __('Siswa') }}
-            </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
-                {{ __('Kelas') }}
             </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
                 {{ __('Materi') }}
             </x-responsive-nav-link>
 
-            @if ($isAdmin)
-                <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                    {{ __('Laporan') }}
+            @auth
+                <x-responsive-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
+                    {{ __('Absensi') }}
                 </x-responsive-nav-link>
-            @endif
+
+                <x-responsive-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
+                    {{ __('Pengajar') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('siswa.index')" :active="request()->routeIs('siswa.*')">
+                    {{ __('Siswa') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
+                    {{ __('Kelas') }}
+                </x-responsive-nav-link>
+
+                @if ($isAdmin)
+                    <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                        {{ __('Laporan') }}
+                    </x-responsive-nav-link>
+                @endif
+            @endauth
         </div>
 
-        <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
+            @auth
+                {{-- Data User Mobile jika Login --}}
+                <div class="px-4">
+                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                </div>
 
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                        onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
+                <div class="mt-3 space-y-1">
+                    <x-responsive-nav-link :href="route('profile.edit')">
+                        {{ __('Profile') }}
                     </x-responsive-nav-link>
-                </form>
-            </div>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <x-responsive-nav-link :href="route('logout')"
+                            onclick="event.preventDefault(); this.closest('form').submit();">
+                            {{ __('Log Out') }}
+                        </x-responsive-nav-link>
+                    </form>
+                </div>
+            @else
+                {{-- Tombol Login Mobile jika belum Login --}}
+                <div class="mt-3 space-y-1 px-4">
+                    <a href="{{ route('login') }}"
+                        class="block w-full text-center px-4 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition">
+                        Login Pengurus
+                    </a>
+                </div>
+            @endauth
         </div>
     </div>
 </nav>

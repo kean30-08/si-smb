@@ -8,9 +8,6 @@
 
             {{-- KELOMPOK TOMBOL ATAS (HEADER) --}}
             <div class="w-full xl:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
-                @php
-                    $isAdmin = auth()->user()->isAdmin();
-                @endphp
 
                 @if ($isAdmin)
                     {{-- Tombol Broadcast PDF --}}
@@ -32,7 +29,7 @@
                     </form>
                 @endif
 
-                {{-- Tombol Download PDF --}}
+                {{-- Tombol Download PDF (Bisa dilihat Siswa/Publik) --}}
                 <a href="{{ route('agenda.download', $tanggal) }}"
                     class="w-full sm:w-auto justify-center bg-teal-600 hover:bg-teal-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm"
                     title="Download PDF untuk dibagikan via WhatsApp/Manual">
@@ -71,191 +68,195 @@
                     {{-- ======================================================== --}}
                     {{-- KELOMPOK TOMBOL BAWAH (Di atas Kartu PIC)                --}}
                     {{-- ======================================================== --}}
-                    <div
-                        class="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-center justify-start border-b border-gray-200 pb-6">
+                    @auth
+                        <div
+                            class="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-center justify-start border-b border-gray-200 pb-6">
 
-                        {{-- Tombol Lihat Refleksi --}}
-                        <a href="{{ route('refleksi.index', $tanggal) }}"
-                            class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="mr-2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                                <path d="M16 13H8" />
-                                <path d="M16 17H8" />
-                                <path d="M10 9H8" />
-                            </svg>
-                            Lihat Refleksi Siswa
-                        </a>
+                            {{-- Tombol Lihat Refleksi --}}
+                            <a href="{{ route('refleksi.index', $tanggal) }}"
+                                class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded flex items-center shadow transition text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="mr-2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <path d="M16 13H8" />
+                                    <path d="M16 17H8" />
+                                    <path d="M10 9H8" />
+                                </svg>
+                                Lihat Refleksi Siswa
+                            </a>
 
-                        {{-- Tombol Copy Link Form --}}
-                        <button onclick="copyToClipboard('{{ route('refleksi.create', $tanggal) }}')"
-                            class="w-full sm:w-auto justify-center bg-white hover:bg-gray-100 text-gray-800 font-bold py-2 px-4 rounded flex items-center shadow transition border border-gray-300 text-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="mr-2">
-                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                            </svg>
-                            Copy Link Form
-                        </button>
+                            {{-- Tombol Copy Link Form --}}
+                            <button onclick="copyToClipboard('{{ route('refleksi.create', $tanggal) }}')"
+                                class="w-full sm:w-auto justify-center bg-white hover:bg-gray-100 text-gray-800 font-bold py-2 px-4 rounded flex items-center shadow transition border border-gray-300 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="mr-2">
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                </svg>
+                                Copy Link Form
+                            </button>
 
-                        @if ($isAdmin)
-                            {{-- Tombol Hapus Semua Tanggal (Digeser ke kanan di layar besar) --}}
-                            <form action="{{ route('agenda.destroyDate', $tanggal) }}" method="POST"
-                                onsubmit="return confirm('Yakin ingin menghapus SEMUA agenda pada tanggal ini?');"
-                                class="m-0 w-full sm:w-auto sm:ml-auto">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="w-full sm:w-auto justify-center bg-red-50 text-red-600 hover:bg-red-100 font-bold py-2 px-4 rounded flex items-center transition border border-red-200 text-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-                                        <path d="M3 6h18" />
-                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                        <line x1="10" x2="10" y1="11" y2="17" />
-                                        <line x1="14" x2="14" y1="11" y2="17" />
-                                    </svg>
-                                    Hapus Semua
-                                </button>
-                            </form>
-                        @endif
-                    </div>
+                            @if ($isAdmin)
+                                {{-- Tombol Hapus Semua Tanggal (Digeser ke kanan di layar besar) --}}
+                                <form action="{{ route('agenda.destroyDate', $tanggal) }}" method="POST"
+                                    onsubmit="return confirm('Yakin ingin menghapus SEMUA agenda pada tanggal ini?');"
+                                    class="m-0 w-full sm:w-auto sm:ml-auto">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        class="w-full sm:w-auto justify-center bg-red-50 text-red-600 hover:bg-red-100 font-bold py-2 px-4 rounded flex items-center transition border border-red-200 text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                            <path d="M3 6h18" />
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                            <line x1="10" x2="10" y1="11" y2="17" />
+                                            <line x1="14" x2="14" y1="11" y2="17" />
+                                        </svg>
+                                        Hapus Semua
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    @endauth
                     {{-- ======================================================== --}}
 
 
-                    {{-- Form Daftar PIC Dinamis --}}
-                    <div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4 shadow-sm">
-                        <div
-                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-indigo-200 pb-3">
-                            <div class="flex items-center">
-                                <div class="p-2 bg-indigo-100 rounded-full text-indigo-600 mr-3 hidden sm:block">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                        <circle cx="9" cy="7" r="4" />
-                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                    </svg>
+                    {{-- TAMPILAN PIC --}}
+                    @auth
+                        <div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4 shadow-sm">
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 border-b border-indigo-200 pb-3">
+                                <div class="flex items-center">
+                                    <div class="p-2 bg-indigo-100 rounded-full text-indigo-600 mr-3 hidden sm:block">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-indigo-900">Daftar PIC Absensi</h3>
+                                        <p class="text-xs text-indigo-700 mt-0.5">Pengajar yang memindai kehadiran hari
+                                            ini.</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="text-sm font-bold text-indigo-900">Daftar PIC Absensi</h3>
-                                    <p class="text-xs text-indigo-700 mt-0.5">Tentukan satu atau lebih pengajar untuk
-                                        memindai kehadiran.</p>
-                                </div>
+
+                                @if ($isAdmin)
+                                    <button type="button" onclick="tambahPic()"
+                                        class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-md text-xs font-bold border border-blue-300 shadow-sm transition flex items-center shrink-0">
+                                        + Tambah PIC
+                                    </button>
+                                @endif
                             </div>
 
                             @if ($isAdmin)
-                                <button type="button" onclick="tambahPic()"
-                                    class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-md text-xs font-bold border border-blue-300 shadow-sm transition flex items-center shrink-0">
-                                    + Tambah PIC
-                                </button>
-                            @endif
-                        </div>
+                                <form action="{{ route('agenda.updatePic', $tanggal) }}" method="POST" class="m-0">
+                                    @csrf @method('PUT')
 
-                        @if ($isAdmin)
-                            <form action="{{ route('agenda.updatePic', $tanggal) }}" method="POST" class="m-0">
-                                @csrf @method('PUT')
-
-                                <div id="pic-container" class="space-y-3 mb-4">
-                                    @if (empty($penanggungJawabIds))
-                                        {{-- Jika Kosong --}}
-                                        <div class="pic-row flex items-center gap-2">
-                                            <select name="penanggung_jawab_id[]"
-                                                class="flex-1 md:w-72 text-sm font-medium border-indigo-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-700 py-2">
-                                                <option value="" disabled selected>-- Pilih Pengajar --</option>
-                                                @foreach ($pengajars as $pengajar)
-                                                    <option value="{{ $pengajar->id }}">{{ $pengajar->nama_lengkap }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="button" onclick="hapusPic(this)"
-                                                class="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition"
-                                                title="Hapus">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M18 6 6 18" />
-                                                    <path d="m6 6 12 12" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    @else
-                                        {{-- Jika Ada Isinya (Looping) --}}
-                                        @foreach ($penanggungJawabIds as $idPic)
+                                    <div id="pic-container" class="space-y-3 mb-4">
+                                        @if (empty($penanggungJawabIds))
+                                            {{-- Jika Kosong --}}
                                             <div class="pic-row flex items-center gap-2">
                                                 <select name="penanggung_jawab_id[]"
                                                     class="flex-1 md:w-72 text-sm font-medium border-indigo-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-700 py-2">
-                                                    <option value="" disabled>-- Pilih Pengajar --</option>
+                                                    <option value="" disabled selected>-- Pilih Pengajar --</option>
                                                     @foreach ($pengajars as $pengajar)
-                                                        <option value="{{ $pengajar->id }}"
-                                                            {{ $idPic == $pengajar->id ? 'selected' : '' }}>
-                                                            {{ $pengajar->nama_lengkap }}</option>
+                                                        <option value="{{ $pengajar->id }}">{{ $pengajar->nama_lengkap }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                                 <button type="button" onclick="hapusPic(this)"
                                                     class="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition"
                                                     title="Hapus">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18"
-                                                        height="18" viewBox="0 0 24 24" fill="none"
-                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                        stroke-linejoin="round">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="M18 6 6 18" />
                                                         <path d="m6 6 12 12" />
                                                     </svg>
                                                 </button>
                                             </div>
+                                        @else
+                                            {{-- Jika Ada Isinya --}}
+                                            @foreach ($penanggungJawabIds as $idPic)
+                                                <div class="pic-row flex items-center gap-2">
+                                                    <select name="penanggung_jawab_id[]"
+                                                        class="flex-1 md:w-72 text-sm font-medium border-indigo-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-700 py-2">
+                                                        <option value="" disabled>-- Pilih Pengajar --</option>
+                                                        @foreach ($pengajars as $pengajar)
+                                                            <option value="{{ $pengajar->id }}"
+                                                                {{ $idPic == $pengajar->id ? 'selected' : '' }}>
+                                                                {{ $pengajar->nama_lengkap }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button type="button" onclick="hapusPic(this)"
+                                                        class="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition"
+                                                        title="Hapus">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18"
+                                                            height="18" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round">
+                                                            <path d="M18 6 6 18" />
+                                                            <path d="m6 6 12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                    </div>
+
+                                    <div class="flex justify-end">
+                                        <button type="submit"
+                                            class="bg-indigo-600 hover:bg-indigo-800 text-white px-6 py-2 rounded-md text-sm font-bold shadow transition duration-150">
+                                            Simpan PIC
+                                        </button>
+                                    </div>
+                                </form>
+                            @else
+                                {{-- Tampilan Read-Only Pengajar --}}
+                                <div class="flex flex-wrap gap-2">
+                                    @if (empty($penanggungJawabIds))
+                                        <span class="text-sm font-bold text-gray-400 italic">Belum ada PIC yang
+                                            ditentukan</span>
+                                    @else
+                                        @foreach ($penanggungJawabIds as $idPic)
+                                            @php $namaPic = $pengajars->firstWhere('id', $idPic); @endphp
+                                            @if ($namaPic)
+                                                <span
+                                                    class="bg-indigo-100 text-indigo-800 border border-indigo-200 px-3 py-1.5 rounded-full text-xs font-bold flex items-center shadow-sm">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="mr-1.5">
+                                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                                        <circle cx="12" cy="7" r="4" />
+                                                    </svg>
+                                                    {{ $namaPic->nama_lengkap }}
+                                                </span>
+                                            @endif
                                         @endforeach
                                     @endif
                                 </div>
-
-                                <div class="flex justify-end">
-                                    <button type="submit"
-                                        class="bg-indigo-600 hover:bg-indigo-800 text-white px-6 py-2 rounded-md text-sm font-bold shadow transition duration-150">
-                                        Simpan PIC
-                                    </button>
-                                </div>
-                            </form>
-                        @else
-                            {{-- Tampilan Read-Only Pengajar --}}
-                            <div class="flex flex-wrap gap-2">
-                                @if (empty($penanggungJawabIds))
-                                    <span class="text-sm font-bold text-gray-400 italic">Belum ada PIC yang
-                                        ditentukan</span>
-                                @else
-                                    @foreach ($penanggungJawabIds as $idPic)
-                                        @php $namaPic = $pengajars->firstWhere('id', $idPic); @endphp
-                                        @if ($namaPic)
-                                            <span
-                                                class="bg-indigo-100 text-indigo-800 border border-indigo-200 px-3 py-1.5 rounded-full text-xs font-bold flex items-center shadow-sm">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="mr-1.5">
-                                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                                                    <circle cx="12" cy="7" r="4" />
-                                                </svg>
-                                                {{ $namaPic->nama_lengkap }}
-                                            </span>
-                                        @endif
-                                    @endforeach
-                                @endif
-                            </div>
-                        @endif
-                    </div>
+                            @endif
+                        </div>
+                    @endauth
 
                     {{-- TABEL RUNDOWN --}}
-                    <div class="w-full md:shadow-md md:rounded-lg">
+                    <div class="w-full md:shadow-md md:rounded-lg mt-4">
                         <table class="w-full text-sm text-left text-gray-500">
                             <thead class="hidden md:table-header-group text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
                                     <th class="py-3 px-6">Waktu</th>
                                     <th class="py-3 px-6">Nama Kegiatan</th>
-                                    <th class="py-3 px-6">Status</th>
+                                    <th class="py-3 px-6 text-center">Status</th>
                                     @if ($isAdmin)
                                         <th class="py-3 px-6 text-center">Aksi</th>
                                     @endif
@@ -263,8 +264,8 @@
                             </thead>
                             <tbody class="block md:table-row-group">
                                 @foreach ($agendas as $agenda)
-                                    <tr onclick="window.location='{{ route('absensi.index', ['tanggal' => $agenda->tanggal, 'agenda_id' => $agenda->id, 'type' => 'siswa']) }}'"
-                                        class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-100 cursor-pointer transition mb-4 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none p-4 md:p-0">
+                                    <tr @auth onclick="window.location='{{ route('absensi.index', ['tanggal' => $agenda->tanggal, 'agenda_id' => $agenda->id, 'type' => 'siswa']) }}'" @endauth
+                                        class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b @auth hover:bg-gray-100 cursor-pointer @endauth transition mb-4 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none p-4 md:p-0">
                                         <td
                                             class="block md:table-cell py-2 md:py-4 px-2 md:px-6 border-b md:border-none border-dashed border-gray-200 mb-3 md:mb-0 pb-3 md:pb-4 font-bold text-gray-800">
                                             <span
@@ -279,8 +280,9 @@
                                             <p class="text-xs text-gray-500 mt-1">
                                                 {{ $agenda->deskripsi_rundown ?? '-' }}</p>
                                         </td>
-                                        <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6 mb-2 md:mb-0">
-                                            <div class="flex items-center justify-between md:justify-start">
+                                        <td
+                                            class="block md:table-cell py-2 md:py-4 px-2 md:px-6 mb-2 md:mb-0 md:text-center">
+                                            <div class="flex items-center justify-between md:justify-center">
                                                 <span
                                                     class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                     Acara</span>
@@ -300,6 +302,7 @@
                                                 @endif
                                             </div>
                                         </td>
+
                                         @if ($isAdmin)
                                             <td onclick="event.stopPropagation();"
                                                 class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4">
@@ -360,18 +363,18 @@
             function tambahPic() {
                 const container = document.getElementById('pic-container');
                 const html = `
-                                <div class="pic-row flex items-center gap-2">
-                                    <select name="penanggung_jawab_id[]" class="flex-1 md:w-72 text-sm font-medium border-indigo-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-700 py-2">
-                                        <option value="" disabled selected>-- Pilih Pengajar --</option>
-                                        @foreach ($pengajars as $pengajar)
-                                            <option value="{{ $pengajar->id }}">{{ addslashes($pengajar->nama_lengkap) }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="button" onclick="hapusPic(this)" class="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition" title="Hapus">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                    </button>
-                                </div>
-                            `;
+                    <div class="pic-row flex items-center gap-2">
+                        <select name="penanggung_jawab_id[]" class="flex-1 md:w-72 text-sm font-medium border-indigo-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-700 py-2">
+                            <option value="" disabled selected>-- Pilih Pengajar --</option>
+                            @foreach ($pengajars as $pengajar)
+                                <option value="{{ $pengajar->id }}">{{ addslashes($pengajar->nama_lengkap) }}</option>
+                            @endforeach
+                        </select>
+                        <button type="button" onclick="hapusPic(this)" class="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition" title="Hapus">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+                `;
                 container.insertAdjacentHTML('beforeend', html);
             }
 
@@ -380,25 +383,26 @@
                 if (rows.length > 1) {
                     btn.closest('.pic-row').remove();
                 } else {
-                    // Jika tersisa 1, kosongkan isinya
                     btn.closest('.pic-row').querySelector('select').value = "";
                 }
             }
         </script>
     @endif
-    {{-- Script untuk Copy Link --}}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        function copyToClipboard(url) {
-            navigator.clipboard.writeText(url).then(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Disalin!',
-                    text: 'Link form refleksi berhasil disalin. Silakan paste ke grup WhatsApp!',
-                    timer: 2500,
-                    showConfirmButton: false
+
+    @auth
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            function copyToClipboard(url) {
+                navigator.clipboard.writeText(url).then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Disalin!',
+                        text: 'Link form refleksi berhasil disalin. Silakan paste ke grup WhatsApp!',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
                 });
-            });
-        }
-    </script>
+            }
+        </script>
+    @endauth
 </x-app-layout>
