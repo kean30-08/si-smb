@@ -237,7 +237,6 @@ class AgendaController extends Controller
      */
     public function storeDetail(Request $request)
     {
-
         $request->validate([
             'tanggal' => 'required|date',
             'waktu_mulai' => 'required',
@@ -255,14 +254,23 @@ class AgendaController extends Controller
             'nama_kegiatan.unique' => 'Gagal menambah! Kegiatan "'.$request->nama_kegiatan.'" pada jam '.$request->waktu_mulai.' sudah ada di rundown ini.'
         ]);
 
-        // Cari PIC dari agenda yang sudah ada di tanggal tersebut
-        $existingAgenda = Agenda::where('tanggal', $request->tanggal)->first();
-        $pic_id = $existingAgenda ? $existingAgenda->penanggung_jawab_id : null;
+        // 1. Buat agenda baru (TANPA kolom penanggung_jawab_id)
+        $data = $request->except('penanggung_jawab_id');
+        $data['status'] = 'akan datang';
+        
+        $newAgenda = Agenda::create($data);
 
-        Agenda::create(array_merge($request->all(), [
-            'status' => 'akan datang',
-            'penanggung_jawab_id' => $pic_id // Warisi PIC hari itu
-        ]));
+        // 2. Warisi PIC dari agenda lain di hari yang sama (menggunakan Many-to-Many)
+        $existingAgenda = Agenda::where('tanggal', $request->tanggal)
+                                ->where('id', '!=', $newAgenda->id)
+                                ->first();
+        
+        if ($existingAgenda) {
+            $picIds = $existingAgenda->penanggungJawab->pluck('id')->toArray();
+            if (!empty($picIds)) {
+                $newAgenda->penanggungJawab()->sync($picIds);
+            }
+        }
 
         return redirect()->route('agenda.showDate', $request->tanggal)->with('success', 'Acara tambahan berhasil dimasukkan!');
     }

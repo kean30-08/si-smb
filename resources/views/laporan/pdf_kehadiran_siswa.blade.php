@@ -46,6 +46,15 @@
             page-break-inside: avoid;
         }
 
+        .print-info {
+            float: left;
+            margin-top: 85px;
+            /* Disesuaikan agar sejajar dengan nama Kepala Sekolah */
+            font-size: 10px;
+            font-style: italic;
+            color: #555;
+        }
+
         .signature-wrapper {
             float: right;
             width: 250px;
@@ -136,8 +145,14 @@
         @endif
     </table> {{-- PERHATIKAN: Tag table ditutup di sini --}}
 
-    {{-- KOTAK TANDA TANGAN (Di luar table) --}}
+    {{-- KOTAK TANDA TANGAN & WAKTU CETAK --}}
     <div class="signature-box clearfix">
+        {{-- Kiri: Info Cetak --}}
+        <div class="print-info">
+            Dicetak pada: {{ \Carbon\Carbon::now('Asia/Makassar')->translatedFormat('d F Y, H:i') }} WITA
+        </div>
+
+        {{-- Kanan: Tanda Tangan --}}
         <div class="signature-wrapper">
             <div class="signature-date">
                 {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}<br>

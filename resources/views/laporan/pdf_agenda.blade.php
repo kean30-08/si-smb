@@ -75,6 +75,15 @@
             /* Mencegah ttd terpotong ke halaman berikutnya */
         }
 
+        .print-info {
+            float: left;
+            margin-top: 85px;
+            /* Disesuaikan agar sejajar dengan nama Kepala Sekolah */
+            font-size: 10px;
+            font-style: italic;
+            color: #555;
+        }
+
         .signature-wrapper {
             float: right;
             width: 250px;
@@ -196,21 +205,22 @@
         </div>
     @endif
 
-    {{-- TAMBAHAN: KOTAK TANDA TANGAN (PARAF) --}}
+    {{-- KOTAK TANDA TANGAN & WAKTU CETAK --}}
     <div class="signature-box clearfix">
+        {{-- Kiri: Info Cetak --}}
+        <div class="print-info">
+            Dicetak pada: {{ \Carbon\Carbon::now('Asia/Makassar')->translatedFormat('d F Y, H:i') }} WITA
+        </div>
+
+        {{-- Kanan: Tanda Tangan --}}
         <div class="signature-wrapper">
             <div class="signature-date">
-                {{-- Tanggal otomatis menyesuaikan hari saat PDF ini di-download --}}
-                {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
-                <br>Mengetahui,<br>
-
+                {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}<br>
+                Mengetahui,
             </div>
-
             <div class="signature-title">
                 Kepala Sekolah Minggu Buddha
             </div>
-
-            {{-- Nama Admin diambil dari database (dari LaporanController) --}}
             <div class="signature-name">
                 {{ $admin->name ?? 'Admin Sekolah Minggu' }}
             </div>

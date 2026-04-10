@@ -9,7 +9,7 @@ use App\Models\Siswa;
 use App\Models\Agenda;
 use App\Models\Absensi;
 use App\Models\AbsensiPengajar;
-use App\Models\RefleksiSiswa; // TAMBAHAN: Import Model Refleksi
+use App\Models\RefleksiSiswa;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -57,6 +57,7 @@ class DataDummy extends Seeder
                     'nomor_hp' => $faker->phoneNumber,
                     'jenis_kelamin' => $jk,
                     'alamat' => $faker->address,
+                    'status' => 'aktif', // Menambahkan status eksplisit
                 ]
             );
         }
@@ -81,11 +82,9 @@ class DataDummy extends Seeder
             for ($i = 1; $i <= 3; $i++) {
                 $jkSiswa = $faker->randomElement(['L', 'P']);
                 
-                // Nama Siswa
                 $namaDepanSiswa = $jkSiswa == 'L' ? $faker->firstNameMale : $faker->firstNameFemale;
                 $namaSiswa = $namaDepanSiswa . ' ' . $faker->randomElement($safeLastNames);
                 
-                // Nama Orang Tua
                 $panggilanOrtu = $faker->randomElement(['Bapak ', 'Ibu ']);
                 $namaOrtu = $panggilanOrtu . $faker->firstName . ' ' . $faker->randomElement($safeLastNames);
                 
@@ -100,7 +99,7 @@ class DataDummy extends Seeder
                         'tempat_lahir' => $faker->city,
                         'tanggal_lahir' => $faker->dateTimeBetween('-12 years', '-6 years')->format('Y-m-d'),
                         'nama_orang_tua' => $namaOrtu,
-                        'email_orang_tua' => null, 
+                        'email_orang_tua' => null, // KOSONGKAN UNTUK TESTING MAILTRAP
                         'nomor_hp_orang_tua' => $faker->phoneNumber,
                         'alamat' => $faker->address,
                         'status' => 'aktif',
@@ -113,9 +112,10 @@ class DataDummy extends Seeder
 
         // 4. Generate Agenda (Yang sudah lewat / selesai)
         $agendas = [];
+        $semuaPengajarIds = Pengajar::pluck('id')->toArray();
 
         for ($minggu = 4; $minggu >= 1; $minggu--) {
-            $agendas[] = Agenda::firstOrCreate(
+            $agenda = Agenda::firstOrCreate(
                 [
                     'tanggal' => Carbon::now()->subWeeks($minggu)->toDateString(),
                     'nama_kegiatan' => 'Puja Bakti & Sekolah Minggu Ke-' . (5 - $minggu)
@@ -127,10 +127,19 @@ class DataDummy extends Seeder
                     'status' => 'selesai',
                 ]
             );
+            
+            // PERBAIKAN: Hubungkan PIC menggunakan tabel Pivot Many-to-Many
+            if (!empty($semuaPengajarIds)) {
+                // Ambil 1 atau 2 pengajar secara acak sebagai PIC
+                $randomPics = $faker->randomElements($semuaPengajarIds, rand(1, 2));
+                $agenda->penanggungJawab()->syncWithoutDetaching($randomPics);
+            }
+            
+            $agendas[] = $agenda;
         }
 
         // Generate Agenda untuk besok (Akan datang)
-        Agenda::firstOrCreate(
+        $agendaBesok = Agenda::firstOrCreate(
             [
                 'tanggal' => Carbon::tomorrow()->toDateString(),
                 'nama_kegiatan' => 'Kegiatan Belajar Mengajar'
@@ -142,6 +151,10 @@ class DataDummy extends Seeder
                 'status' => 'akan datang',
             ]
         );
+        
+        if (!empty($semuaPengajarIds)) {
+            $agendaBesok->penanggungJawab()->syncWithoutDetaching($faker->randomElements($semuaPengajarIds, rand(1, 2)));
+        }
 
         // 5. Generate Absensi dan Refleksi untuk Agenda yang sudah selesai
         $semuaSiswa = Siswa::all();
@@ -150,7 +163,6 @@ class DataDummy extends Seeder
         $statusSiswa = ['hadir', 'hadir', 'hadir', 'hadir', 'izin', 'sakit', 'alpa'];
         $statusPengajar = ['hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'izin', 'sakit'];
 
-        // Variasi teks dummy untuk refleksi agar tidak terlalu acak/aneh bahasanya
         $dummyRangkuman = [
             'Hari ini belajar tentang riwayat Sang Buddha.',
             'Mendengarkan Dhammadesana dan bermeditasi bersama.',
@@ -189,11 +201,9 @@ class DataDummy extends Seeder
                     ]
                 );
 
-                // TAMBAHAN: Generate Refleksi Siswa
-                // Jika siswa 'hadir', ada peluang 60% dia mengisi form refleksi
+                // Generate Refleksi Siswa (Peluang 60%)
                 if ($status === 'hadir' && rand(1, 100) <= 60) {
                     
-                    // Waktu pengisian dibuat realistis: sekitar jam 10 pagi - 12 siang pada hari tersebut
                     $waktuIsi = Carbon::parse($agenda->tanggal . ' 10:' . rand(10, 59) . ':00');
 
                     RefleksiSiswa::firstOrCreate(
@@ -203,8 +213,9 @@ class DataDummy extends Seeder
                         ],
                         [
                             'nama_siswa' => $siswa->nama_lengkap,
+                            'kelas_id' => $siswa->kelas_id, // PERBAIKAN: Menggunakan ID Kelas
                             'nama_orang_tua' => $siswa->nama_orang_tua,
-                            'email_orang_tua' => $faker->randomElement([null, strtolower(str_replace(' ', '', $siswa->nama_orang_tua)) . '@gmail.com']),
+                            'email_orang_tua' => null, // KOSONGKAN UNTUK TESTING MAILTRAP
                             'rangkuman' => $faker->randomElement($dummyRangkuman) . ' ' . $faker->sentence(3),
                             'bagian_disukai' => $faker->randomElement($dummyDisukai),
                             'bagian_kurang_disukai' => $faker->randomElement($dummyKurangDisukai),
