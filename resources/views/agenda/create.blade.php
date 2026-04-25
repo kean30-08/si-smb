@@ -19,6 +19,18 @@
                             {{-- KOLOM KIRI: Tanggal --}}
                             <div>
                                 <label class="block font-bold text-lg text-gray-800 mb-2">Tanggal Pelaksanaan *</label>
+
+                                {{-- PEMBERITAHUAN TAHUN AJARAN AKTIF --}}
+                                @php
+                                    $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+                                @endphp
+                                <p
+                                    class="text-xs font-bold text-indigo-700 bg-indigo-50 p-2 rounded border border-indigo-200 mb-3 w-full md:w-3/4">
+                                    Info: Jadwal ini akan otomatis dimasukkan ke dalam <br>
+                                    Tahun Ajaran:
+                                    {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'BELUM ADA TAHUN AJARAN AKTIF' }}
+                                </p>
+
                                 <input type="date" name="tanggal" value="{{ old('tanggal') }}"
                                     class="block w-full md:w-3/4 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     required>

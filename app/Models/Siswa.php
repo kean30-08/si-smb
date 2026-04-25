@@ -12,11 +12,21 @@ class Siswa extends Model
     protected $guarded = [];
 
     /**
-     * Summary of kelas
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Kelas, Siswa>
+     * Relasi ke seluruh riwayat nilai kehadiran (dari tahun ke tahun)
      */
-    public function kelas()
+    public function riwayatKehadiran()
     {
-        return $this->belongsTo(Kelas::class);
+        return $this->hasMany(NilaiKehadiran::class);
+    }
+
+    /**
+     * Relasi khusus untuk mengambil data kehadiran & kelas di Tahun Ajaran AKTIF saja.
+     * Ini sangat mempermudah kita saat memanggil data di view/tabel.
+     */
+    public function nilaiKehadiranAktif()
+    {
+        return $this->hasOne(NilaiKehadiran::class)->whereHas('tahunAjaran', function($query) {
+            $query->where('status', 'aktif');
+        });
     }
 }

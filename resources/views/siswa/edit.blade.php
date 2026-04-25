@@ -132,7 +132,7 @@
                                 </select>
                             </div>
 
-                            <div>
+                            {{-- <div>
                                 <label class="block font-medium text-sm text-gray-700">Total Poin/Nilai</label>
                                 <input type="number" name="total_poin"
                                     value="{{ old('total_poin', $siswa->total_poin) }}"
@@ -140,7 +140,7 @@
                                 @error('total_poin')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
-                            </div>
+                            </div> --}}
 
                             {{-- ALAMAT (Memakan 2 kolom supaya lebar) --}}
                             <div class="md:col-span-2">

@@ -1,8 +1,10 @@
 <div class="w-full md:shadow-md md:rounded-lg">
     <table class="w-full text-sm text-left text-gray-500">
         {{-- HEADER TABEL (Sembunyi di HP) --}}
-        <thead class="hidden md:table-header-group text-xs text-gray-700 uppercase bg-gray-50">
+        <thead class="hidden md:table-header-group text-xs text-gray-700 uppercase bg-gray-50 border-b">
             <tr>
+                {{-- TAMBAHKAN KOLOM TAHUN AJARAN DI SINI --}}
+                <th class="py-3 px-6">Tahun Ajaran</th>
                 <th class="py-3 px-6">Tanggal Kegiatan</th>
                 <th class="py-3 px-6">Total Rangkaian Acara</th>
                 <th class="py-3 px-6">Penanggung Jawab Absensi</th>
@@ -19,9 +21,22 @@
                 <tr onclick="window.location='{{ route('agenda.showDate', $group->tanggal) }}'"
                     class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-100 cursor-pointer transition mb-4 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none p-4 md:p-0">
 
+                    {{-- TAHUN AJARAN (KOLOM BARU) --}}
+                    <td
+                        class="block md:table-cell py-2 md:py-4 px-2 md:px-6 border-b md:border-none border-dashed border-gray-200 mb-3 md:mb-0 pb-3 md:pb-4">
+                        <div class="flex items-center justify-between md:justify-start">
+                            <span class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Tahun
+                                Ajaran</span>
+                            <span
+                                class="text-sm font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">
+                                {{ $group->tahunAjaran ? $group->tahunAjaran->tahun_ajaran : 'Tanpa Tahun' }}
+                            </span>
+                        </div>
+                    </td>
+
                     {{-- TANGGAL --}}
                     <td
-                        class="block md:table-cell py-2 md:py-4 px-2 md:px-6 border-b md:border-none border-dashed border-gray-200 mb-3 md:mb-0 pb-3 md:pb-4 font-bold text-gray-900 text-base md:text-sm">
+                        class="block md:table-cell py-2 md:py-4 px-2 md:px-6 font-bold text-gray-900 text-base md:text-sm">
                         {{ \Carbon\Carbon::parse($group->tanggal)->translatedFormat('l, d F Y') }}
                     </td>
 
@@ -44,8 +59,10 @@
                                 Absensi</span>
 
                             @php
-                                $pics = isset($agendasWithPics[$group->tanggal])
-                                    ? $agendasWithPics[$group->tanggal]->penanggungJawab
+                                // PERBAIKAN: Gunakan Array Key Kombinasi (Tanggal + Tahun Ajaran)
+                                $key = $group->tanggal . '_' . $group->tahun_ajaran_id;
+                                $pics = isset($agendasWithPics[$key])
+                                    ? $agendasWithPics[$key]->penanggungJawab
                                     : collect();
                             @endphp
 
@@ -82,9 +99,9 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" onclick="event.stopPropagation();"
-                                        class="text-red-600 hover:text-red-800 transition ml-2"
+                                        class="text-red-500 hover:text-red-700 transition ml-2 p-1 bg-red-50 rounded"
                                         title="Hapus semua agenda pada tanggal ini">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                             stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M3 6h18" />
@@ -101,8 +118,8 @@
                 </tr>
             @empty
                 <tr class="block md:table-row bg-white border border-gray-200 rounded-lg p-4">
-                    {{-- colspan diubah jadi 4 karena ada tambahan kolom Penanggung Jawab --}}
-                    <td colspan="4" class="block md:table-cell py-4 px-6 text-center text-gray-500">
+                    {{-- colspan diubah jadi 5 karena ada tambahan kolom Tahun Ajaran --}}
+                    <td colspan="5" class="block md:table-cell py-4 px-6 text-center text-gray-500">
                         Belum ada jadwal kegiatan.
                     </td>
                 </tr>

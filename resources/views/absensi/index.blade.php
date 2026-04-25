@@ -203,10 +203,11 @@
                                                     <div class="font-bold text-gray-900 text-base md:text-sm">
                                                         {{ $siswa->nama_lengkap }}</div>
                                                     <div class="text-xs text-indigo-600 md:hidden mt-1 font-semibold">
-                                                        {{ $siswa->kelas->nama_kelas ?? '-' }}</div>
+                                                        {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}
+                                                    </div>
                                                 </td>
                                                 <td class="hidden md:table-cell py-4 px-4">
-                                                    {{ $siswa->kelas->nama_kelas ?? '-' }}</td>
+                                                    {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</td>
                                                 <td
                                                     class="block md:table-cell py-2 md:py-4 px-2 md:px-4 md:text-center mb-2 md:mb-0">
                                                     <div class="flex items-center justify-between md:justify-center">

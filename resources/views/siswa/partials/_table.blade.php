@@ -35,7 +35,9 @@
                         <div class="flex items-center justify-between md:justify-start">
                             <span
                                 class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Kelas</span>
-                            <span class="text-sm text-gray-800">{{ $siswa->kelas->nama_kelas ?? '-' }}</span>
+                            <span class="text-sm text-gray-800">
+                                {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? 'Belum Masuk Kelas' }}
+                            </span>
                         </div>
                     </td>
 

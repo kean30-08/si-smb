@@ -7,35 +7,56 @@ use App\Models\Siswa;
 use App\Models\Pengajar;
 use App\Models\Agenda;
 use App\Models\Absensi;
+use App\Models\TahunAjaran;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    /**
-     * Menampilkan halaman dashboard utama dengan ringkasan statistik,
-     * grafik kehadiran, dan leaderboard siswa teladan.
-     */
     public function index(Request $request)
     {
-        // Pengaturan rentang waktu filter
+        $filter_type = $request->input('filter_type', 'bulan'); // Default 'bulan'
         $rentang_bulan = $request->input('rentang', 1);
-        $start_date = Carbon::now()->subMonths($rentang_bulan - 1)->startOfMonth()->toDateString();
-        $end_date = Carbon::now()->endOfMonth()->toDateString();
+
+        $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
+
+        // LOGIKA KUNCI: Buka gembok Tahun Ajaran jika memakai Filter Kustom
+        if ($filter_type == 'kustom') {
+            $start_date = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+            $end_date = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
+            
+            // Atur menjadi null agar query tidak dibatasi oleh Tahun Ajaran aktif
+            $tahun_ajaran_id = null; 
+        } else {
+            $start_date = Carbon::now()->subMonths($rentang_bulan - 1)->startOfMonth()->toDateString();
+            $end_date = Carbon::now()->endOfMonth()->toDateString();
+            
+            // Kunci query hanya untuk Tahun Ajaran yang sedang aktif
+            $tahun_ajaran_id = $tahunAktif ? $tahunAktif->id : 0; 
+        }
 
         // 1. KARTU RINGKASAN (KPI)
         $total_siswa = Siswa::where('status', 'aktif')->count();
         $total_pengajar = Pengajar::count();
         
-        // Menghitung jadwal unik (berdasarkan tanggal) untuk statistik keaktifan
-        $total_agenda_harian = Agenda::distinct('tanggal')->count('tanggal');
-
-        // Total jadwal khusus dalam periode filter untuk perhitungan persentase leaderboard
-        $total_jadwal_period = Agenda::whereBetween('tanggal', [$start_date, $end_date])
+        $total_agenda_harian = Agenda::when($tahun_ajaran_id, function($q) use ($tahun_ajaran_id) {
+                                        return $q->where('tahun_ajaran_id', $tahun_ajaran_id);
+                                     })
+                                     ->whereBetween('tanggal', [$start_date, $end_date])
                                      ->distinct('tanggal')
                                      ->count('tanggal');
 
-        // 2. DATA GRAFIK & REKAPITULASI (Sesuai Rentang Bulan)
-        $agendas_per_hari = Agenda::whereBetween('tanggal', [$start_date, $end_date])
+        $total_jadwal_period = Agenda::when($tahun_ajaran_id, function($q) use ($tahun_ajaran_id) {
+                                        return $q->where('tahun_ajaran_id', $tahun_ajaran_id);
+                                     })
+                                     ->whereBetween('tanggal', [$start_date, $end_date])
+                                     ->distinct('tanggal')
+                                     ->count('tanggal');
+
+        // 2. DATA GRAFIK & REKAPITULASI 
+        $agendas_per_hari = Agenda::when($tahun_ajaran_id, function($q) use ($tahun_ajaran_id) {
+                                    return $q->where('tahun_ajaran_id', $tahun_ajaran_id);
+                               })
+                               ->whereBetween('tanggal', [$start_date, $end_date])
                                ->orderBy('tanggal', 'asc')
                                ->get()
                                ->groupBy('tanggal');
@@ -50,7 +71,6 @@ class DashboardController extends Controller
             $label_grafik[] = Carbon::parse($tanggal)->format('d M');
             $agenda_ids = $agendas->pluck('id')->toArray();
             
-            // Mengambil jumlah siswa unik per status kehadiran dalam satu hari
             $hadir_count = Absensi::whereIn('agenda_id', $agenda_ids)
                                 ->where('status_kehadiran', 'hadir')
                                 ->distinct('siswa_id')
@@ -66,7 +86,6 @@ class DashboardController extends Controller
                                  ->distinct('siswa_id')
                                  ->count('siswa_id');
             
-            // Perhitungan Alpa: Total siswa aktif - (Hadir + Izin + Sakit)
             $alpa_count = max(0, $total_siswa - ($hadir_count + $izin_count + $sakit_count));
 
             $data_hadir[] = $hadir_count;
@@ -75,20 +94,20 @@ class DashboardController extends Controller
             $data_alpa[]  = $alpa_count;
         }
 
-        // Statistik total untuk ringkasan di bawah grafik
         $total_izin_period  = array_sum($data_izin);
         $total_sakit_period = array_sum($data_sakit);
         $total_alpa_period  = array_sum($data_alpa);
 
-        // 3. LEADERBOARD SISWA TELADAN (POIN & KEDISIPLINAN)
-        // Eager loading relasi kelas untuk efisiensi query
-        $siswas = Siswa::with('kelas')->where('status', 'aktif')->get();
+        // 3. LEADERBOARD SISWA TELADAN 
+        $siswas = Siswa::with('nilaiKehadiranAktif.kelas')->where('status', 'aktif')->get();
 
         foreach ($siswas as $siswa) {
-            // Mengambil riwayat absensi dalam periode filter
             $absensi_history = Absensi::where('siswa_id', $siswa->id)
-                ->whereHas('agenda', function($q) use ($start_date, $end_date) {
-                    $q->whereBetween('tanggal', [$start_date, $end_date]);
+                ->whereHas('agenda', function($q) use ($start_date, $end_date, $tahun_ajaran_id) {
+                    $q->whereBetween('tanggal', [$start_date, $end_date])
+                      ->when($tahun_ajaran_id, function($query, $ta_id) {
+                          return $query->where('tahun_ajaran_id', $ta_id);
+                      });
                 })
                 ->with('agenda')
                 ->get()
@@ -99,7 +118,6 @@ class DashboardController extends Controller
             $jumlah_scan = 0;
             
             foreach ($absensi_history as $tanggal => $records) {
-                // Mengambil status harian dari agenda pertama pada hari tersebut
                 $status = $records->first()->status_kehadiran;
                 $waktu_hadir = $records->first()->waktu_hadir;
 
@@ -116,30 +134,31 @@ class DashboardController extends Controller
                 }
             }
 
-            // Kalkulasi skor keaktifan
-            $siswa->poin_keaktifan = ($hadir * 100) + ($izin * 10) + ($sakit * 10);
-            $siswa->persentase = $total_jadwal_period > 0 ? round(($hadir / $total_jadwal_period) * 100) : 0;
-            
-            // Tie-breaker: Kecepatan waktu hadir (rata-rata detik sejak tengah malam)
-            $siswa->rata_rata_waktu_hadir = $jumlah_scan > 0 ? ($total_detik_kedatangan / $jumlah_scan) : 9999999; 
+            $siswa->setAttribute('poin_keaktifan', ($hadir * 100) + ($izin * 10) + ($sakit * 10));
+            $siswa->setAttribute('persentase', $total_jadwal_period > 0 ? round(($hadir / $total_jadwal_period) * 100) : 0);
+            $siswa->setAttribute('rata_rata_waktu_hadir', $jumlah_scan > 0 ? ($total_detik_kedatangan / $jumlah_scan) : 9999999); 
         }
 
-        // Proses pengurutan Leaderboard (Sorting: Poin Tinggi > Waktu Pagi > Nama Abjad)
         $top_siswas = $siswas->sort(function ($a, $b) {
-            if ($a->poin_keaktifan == $b->poin_keaktifan) {
-                if ($a->rata_rata_waktu_hadir == $b->rata_rata_waktu_hadir) {
+            $poinA = $a->poin_keaktifan ?? 0;
+            $poinB = $b->poin_keaktifan ?? 0;
+            $waktuA = $a->rata_rata_waktu_hadir ?? 9999999;
+            $waktuB = $b->rata_rata_waktu_hadir ?? 9999999;
+
+            if ($poinA == $poinB) {
+                if ($waktuA == $waktuB) {
                     return strcmp($a->nama_lengkap, $b->nama_lengkap);
                 }
-                return $a->rata_rata_waktu_hadir <=> $b->rata_rata_waktu_hadir;
+                return $waktuA <=> $waktuB;
             }
-            return $b->poin_keaktifan <=> $a->poin_keaktifan;
+            return $poinB <=> $poinA;
         })->take(5)->values();
 
         return view('dashboard', compact(
             'total_siswa', 'total_pengajar', 'total_agenda_harian', 
             'label_grafik', 'data_hadir', 'data_izin', 'data_sakit', 'data_alpa',
             'total_izin_period', 'total_sakit_period', 'total_alpa_period',
-            'top_siswas', 'rentang_bulan'
+            'top_siswas', 'filter_type', 'rentang_bulan', 'start_date', 'end_date'
         ));
     }
 }

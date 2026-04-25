@@ -1,27 +1,106 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard Statistik Utama') }}
-        </h2>
+        {{-- AMBIL DATA TAHUN AJARAN AKTIF LANGSUNG DARI MODEL --}}
+        @php
+            $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+        @endphp
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Dashboard Statistik Utama') }}
+            </h2>
+
+            {{-- INDIKATOR TAHUN AJARAN --}}
+            @if ($tahunAktif)
+                <div
+                    class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-sm w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-indigo-600" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Tahun Ajaran: {{ $tahunAktif->tahun_ajaran }}
+                </div>
+            @else
+                <div
+                    class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-red-100 text-red-800 border border-red-200 shadow-sm w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-red-600" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Belum Ada Tahun Ajaran Aktif
+                </div>
+            @endif
+        </div>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             {{-- FILTER DATA DI ATAS --}}
-            <div class="mb-6 flex justify-start ">
-                <form action="{{ route('dashboard') }}" method="GET"
-                    class="flex items-center bg-white p-2 rounded-lg shadow-sm border-l-4 border-indigo-500">
-                    <label class="mr-3 ml-2 text-sm font-bold text-gray-700">Filter Data:</label>
-                    <select name="rentang" onchange="this.form.submit()"
-                        class="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer bg-indigo-50 text-indigo-800 font-semibold border-none py-1.5 pl-3 pr-8">
-                        <option value="1" {{ $rentang_bulan == 1 ? 'selected' : '' }}>Bulan Ini</option>
-                        <option value="2" {{ $rentang_bulan == 2 ? 'selected' : '' }}>2 Bulan Terakhir</option>
-                        <option value="3" {{ $rentang_bulan == 3 ? 'selected' : '' }}>3 Bulan Terakhir</option>
-                        <option value="4" {{ $rentang_bulan == 4 ? 'selected' : '' }}>4 Bulan Terakhir</option>
-                        <option value="5" {{ $rentang_bulan == 5 ? 'selected' : '' }}>5 Bulan Terakhir</option>
-                        <option value="6" {{ $rentang_bulan == 6 ? 'selected' : '' }}>1 Semester (6 Bulan)</option>
-                    </select>
+            {{-- FILTER DATA DI ATAS DENGAN ALPINE.JS --}}
+            <div class="mb-6">
+                <form action="{{ route('dashboard') }}" method="GET" x-data="{ filterType: '{{ $filter_type }}' }"
+                    class="bg-white p-3 md:p-4 rounded-lg shadow-sm border-l-4 border-indigo-500 w-full lg:w-fit">
+
+                    <div class="flex flex-col md:flex-row md:items-center gap-4">
+
+                        {{-- Pilihan Radio Button --}}
+                        <div class="flex items-center space-x-4 border-b md:border-b-0 pb-3 md:pb-0 border-gray-100">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="filter_type" value="bulan" x-model="filterType"
+                                    class="text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="ml-2 text-sm font-bold text-gray-700">Filter Cepat (Bulan)</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="filter_type" value="kustom" x-model="filterType"
+                                    class="text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="ml-2 text-sm font-bold text-gray-700">Rentang Kustom</span>
+                            </label>
+                        </div>
+
+                        <div class="h-8 border-l border-gray-200 hidden md:block"></div>
+
+                        {{-- Opsi: Filter Cepat --}}
+                        <div x-show="filterType === 'bulan'" class="flex items-center gap-2 w-full md:w-auto"
+                            style="display: none;">
+                            <select name="rentang"
+                                class="w-full md:w-auto text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer bg-indigo-50 text-indigo-800 font-semibold border-none py-2 pl-3 pr-8">
+                                <option value="1" {{ $rentang_bulan == 1 ? 'selected' : '' }}>Bulan Ini</option>
+                                <option value="2" {{ $rentang_bulan == 2 ? 'selected' : '' }}>2 Bulan Terakhir
+                                </option>
+                                <option value="3" {{ $rentang_bulan == 3 ? 'selected' : '' }}>3 Bulan Terakhir
+                                </option>
+                                <option value="4" {{ $rentang_bulan == 4 ? 'selected' : '' }}>4 Bulan Terakhir
+                                </option>
+                                <option value="5" {{ $rentang_bulan == 5 ? 'selected' : '' }}>5 Bulan Terakhir
+                                </option>
+                                <option value="6" {{ $rentang_bulan == 6 ? 'selected' : '' }}>1 Semester (6 Bulan)
+                                </option>
+                            </select>
+                        </div>
+
+                        {{-- Opsi: Rentang Kustom --}}
+                        <div x-show="filterType === 'kustom'"
+                            class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full md:w-auto"
+                            style="display: none;">
+                            <input type="date" name="start_date" value="{{ $start_date }}"
+                                class="w-full sm:w-auto text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 text-gray-600">
+                            <span class="text-gray-400 text-sm font-bold hidden sm:block">s/d</span>
+                            <input type="date" name="end_date" value="{{ $end_date }}"
+                                class="w-full sm:w-auto text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 text-gray-600">
+                        </div>
+
+                        {{-- Tombol Submit --}}
+                        <div class="ml-auto w-full md:w-auto mt-2 md:mt-0">
+                            <button type="submit"
+                                class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-md text-sm transition shadow-sm">
+                                Terapkan Data
+                            </button>
+                        </div>
+
+                    </div>
                 </form>
             </div>
 
@@ -143,7 +222,8 @@
                                         </span>
                                         <div>
                                             <p class="font-bold text-sm text-gray-800">{{ $siswa->nama_lengkap }}</p>
-                                            <p class="text-xs text-gray-500">{{ $siswa->kelas->nama_kelas ?? '-' }}
+                                            <p class="text-xs text-gray-500">
+                                                {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}
                                             </p>
                                         </div>
                                     </div>

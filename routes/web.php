@@ -11,6 +11,9 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RefleksiController;
+// TAMBAHAN CONTROLLER BARU
+use App\Http\Controllers\TahunAjaranController;
+use App\Http\Controllers\NilaiKehadiranController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -44,7 +47,6 @@ Route::post('/refleksi/{tanggal}', [RefleksiController::class, 'store'])->name('
 Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(function () {
 
     // === AGENDA (Create, Update, Delete, Broadcast) ===
-    // PASTIKAN NAMA RUTE SESUAI DAN TIDAK BENTROK
     Route::get('/admin/agenda/create', [AgendaController::class, 'create'])->name('agenda.create');
     Route::post('/admin/agenda/store', [AgendaController::class, 'store'])->name('agenda.store');
     Route::get('/admin/agenda/{agenda}/edit', [AgendaController::class, 'edit'])->name('agenda.edit');
@@ -85,6 +87,24 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::delete('/kelas/{kelas}', [KelasController::class, 'destroy'])->name('kelas.destroy');
 
 
+    // === TAHUN AJARAN (BARU) ===
+    Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun_ajaran.index');
+    Route::get('/tahun-ajaran/create', [TahunAjaranController::class, 'create'])->name('tahun_ajaran.create');
+    Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun_ajaran.store');
+    Route::get('/tahun-ajaran/{tahun_ajaran}/edit', [TahunAjaranController::class, 'edit'])->name('tahun_ajaran.edit');
+    Route::put('/tahun-ajaran/{tahun_ajaran}', [TahunAjaranController::class, 'update'])->name('tahun_ajaran.update');
+    Route::delete('/tahun-ajaran/{tahun_ajaran}', [TahunAjaranController::class, 'destroy'])->name('tahun_ajaran.destroy');
+    Route::patch('/tahun-ajaran/{tahun_ajaran}/aktifkan', [TahunAjaranController::class, 'aktifkan'])->name('tahun_ajaran.aktifkan');
+
+
+    // === NILAI SISWA / NILAI KEHADIRAN (CRUD ADMIN) ===
+    Route::get('/nilai-siswa/create', [NilaiKehadiranController::class, 'create'])->name('nilai_kehadiran.create');
+    Route::post('/nilai-siswa', [NilaiKehadiranController::class, 'store'])->name('nilai_kehadiran.store');
+    Route::get('/nilai-siswa/{nilai_kehadiran}/edit', [NilaiKehadiranController::class, 'edit'])->name('nilai_kehadiran.edit');
+    Route::put('/nilai-siswa/{nilai_kehadiran}', [NilaiKehadiranController::class, 'update'])->name('nilai_kehadiran.update');
+    Route::delete('/nilai-siswa/{nilai_kehadiran}', [NilaiKehadiranController::class, 'destroy'])->name('nilai_kehadiran.destroy');
+
+
     // === LAPORAN ===
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
     Route::post('/laporan/cetak-kehadiran-siswa', [LaporanController::class, 'cetakKehadiranSiswa'])->name('laporan.cetakKehadiranSiswa');
@@ -122,6 +142,10 @@ Route::middleware('auth')->group(function () {
     // === SISWA (View) ===
     Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');
     Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
+
+    // === NILAI SISWA / NILAI KEHADIRAN (View) ===
+    Route::get('/nilai-siswa', [NilaiKehadiranController::class, 'index'])->name('nilai_kehadiran.index');
+    Route::get('/nilai-siswa/{nilai_kehadiran}', [NilaiKehadiranController::class, 'show'])->name('nilai_kehadiran.show');
 
     // === PENGAJAR (View) ===
     Route::get('/pengajar', [PengajarController::class, 'index'])->name('pengajar.index');

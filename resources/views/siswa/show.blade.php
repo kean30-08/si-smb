@@ -37,7 +37,9 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-500 font-semibold">Kelas</p>
-                            <p class="text-lg font-medium">{{ $siswa->kelas->nama_kelas ?? 'Belum memiliki kelas' }}</p>
+                            <p class="text-lg font-medium">
+                                {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? 'Belum terdaftar di kelas manapun' }}
+                            </p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500 font-semibold">Tempat, Tanggal Lahir</p>
@@ -50,10 +52,10 @@
                             <p class="text-sm text-gray-500 font-semibold">Status</p>
                             <p class="text-lg font-medium uppercase text-blue-600">{{ $siswa->status }}</p>
                         </div>
-                        <div>
+                        {{-- <div>
                             <p class="text-sm text-gray-500 font-semibold">Total Poin</p>
                             <p class="text-lg font-bold text-orange-500">{{ $siswa->total_poin }} Poin</p>
-                        </div>
+                        </div> --}}
                     </div>
 
                     <hr class="my-6">

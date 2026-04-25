@@ -34,6 +34,9 @@ class AbsensiController extends Controller
     /**
      * Menampilkan Halaman Kelola Absensi
      */
+    /**
+     * Menampilkan Halaman Kelola Absensi
+     */
     public function index(Request $request)
     {
         $tanggal = $request->input('tanggal', Carbon::now()->toDateString());
@@ -59,9 +62,12 @@ class AbsensiController extends Controller
 
         // TAB SISWA
         if ($type == 'siswa') {
-            $siswas = Siswa::with('kelas')
-                ->when($kelas_id, function($q, $kelas_id) { 
-                    return $q->where('kelas_id', $kelas_id); 
+            // PERBAIKAN: Gunakan relasi nilaiKehadiranAktif.kelas
+            $siswas = Siswa::with('nilaiKehadiranAktif.kelas')
+                ->when($kelas_id, function($query, $kelas_id) { 
+                    return $query->whereHas('nilaiKehadiranAktif', function($q) use ($kelas_id) {
+                        $q->where('kelas_id', $kelas_id);
+                    });
                 })
                 ->when($search, function($q, $search) {
                     return $q->where('nama_lengkap', 'like', "%{$search}%")

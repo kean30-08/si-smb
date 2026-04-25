@@ -15,4 +15,10 @@ class Agenda extends Model
         // Ubah dari belongsTo menjadi belongsToMany
         return $this->belongsToMany(Pengajar::class, 'agenda_pengajar', 'agenda_id', 'pengajar_id');
     }
+
+    // RELASI BARU
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id');
+    }
 }

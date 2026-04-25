@@ -12,11 +12,10 @@ class Kelas extends Model
     protected $guarded = [];
     
     /**
-     * Define the relationship to the Siswa model (One Kelas has Many Siswas)
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Siswa, Kelas>
+     * Relasi ke tabel pendaftaran/buku induk tahunan
      */
-    public function siswas()
+    public function nilaiKehadirans()
     {
-        return $this->hasMany(Siswa::class);
+        return $this->hasMany(NilaiKehadiran::class);
     }
 }

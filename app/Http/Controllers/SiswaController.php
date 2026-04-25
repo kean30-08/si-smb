@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Siswa;
 use App\Models\Kelas;
-use App\Models\Pengajar;
+use App\Models\TahunAjaran;
+use App\Models\NilaiKehadiran;
 
 class SiswaController extends Controller
 {
@@ -24,11 +26,10 @@ class SiswaController extends Controller
         $kelas_id = $request->input('kelas_id');
 
         $kelas = Kelas::all();
-        
-        // Identifikasi hak akses pengguna (Administrator check)
         $isAdmin = auth()->user()->isAdmin();
 
-        $siswas = Siswa::with('kelas')
+        // Ambil data siswa beserta relasi nilai aktif (untuk ditarik nama kelasnya di view)
+        $siswas = Siswa::with('nilaiKehadiranAktif.kelas')
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
                     $q->where('nama_lengkap', 'like', "%{$search}%")
@@ -38,8 +39,11 @@ class SiswaController extends Controller
             ->when($status, function ($query, $status) {
                 return $query->where('status', $status);
             })
+            // PERUBAHAN: Filter kelas sekarang harus mengecek ke tabel nilai_kehadirans yang aktif
             ->when($kelas_id, function ($query, $kelas_id) {
-                return $query->where('kelas_id', $kelas_id);
+                return $query->whereHas('nilaiKehadiranAktif', function($q) use ($kelas_id) {
+                    $q->where('kelas_id', $kelas_id);
+                });
             })
             ->latest()
             ->paginate(10)
@@ -49,7 +53,6 @@ class SiswaController extends Controller
                 'kelas_id' => $kelas_id
             ]); 
 
-        // Logika pengiriman partial view untuk request AJAX
         if ($request->ajax()) {
             return view('siswa.partials._table', compact('siswas', 'isAdmin'))->render();
         }
@@ -109,7 +112,23 @@ class SiswaController extends Controller
             'nomor_hp_orang_tua.regex' => 'Nomor HP orang tua hanya boleh berisi angka.',
         ]);
 
-        Siswa::create($request->all());
+        DB::transaction(function () use ($request) {
+            // 1. Simpan Data Diri Siswa (Kecuali kelas_id)
+            $siswa = Siswa::create($request->except(['kelas_id']));
+
+            // 2. Ambil Tahun Ajaran Aktif
+            $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
+
+            // 3. Daftarkan siswa ke kelas tersebut di Tahun Ajaran Aktif
+            if ($tahunAktif) {
+                NilaiKehadiran::create([
+                    'siswa_id' => $siswa->id,
+                    'kelas_id' => $request->kelas_id,
+                    'tahun_ajaran_id' => $tahunAktif->id,
+                    'total_poin' => 0
+                ]);
+            }
+        });
 
         return redirect()->route('siswa.index')->with('success', 'Data entitas siswa berhasil ditambahkan.');
     }
@@ -123,7 +142,10 @@ class SiswaController extends Controller
     public function edit(Siswa $siswa)
     {
         $kelas = Kelas::all();
-        return view('siswa.edit', compact('siswa', 'kelas'));
+        // Ambil kelas aktif saat ini untuk ditampilkan di form edit
+        $kelasSekarang = $siswa->nilaiKehadiranAktif->kelas_id ?? null;
+        
+        return view('siswa.edit', compact('siswa', 'kelas', 'kelasSekarang'));
     }
 
     /**
@@ -136,7 +158,7 @@ class SiswaController extends Controller
     public function update(Request $request, Siswa $siswa)
     {
         $request->validate([
-            'nama_lengkap' => 'required|unique:siswas,nama_lengkap,' . $siswa->id.'|regex:/^[a-zA-Z\s]+$/',
+            'nama_lengkap' => 'required|regex:/^[a-zA-Z\s]+$/|unique:siswas,nama_lengkap,' . $siswa->id,
             'nis' => 'required|regex:/^[0-9]+$/|unique:siswas,nis,' . $siswa->id,
             'jenis_kelamin' => 'required',
             'kelas_id' => 'required|exists:kelas,id',
@@ -146,19 +168,28 @@ class SiswaController extends Controller
             'nomor_hp_orang_tua' => 'required|regex:/^[0-9]+$/',
             'email_orang_tua' => 'required|email',
             'alamat' => 'required|string',
-            'total_poin' => 'nullable|integer|min:0|max:100',
-        ], [
-            'nis.unique' => 'NIS sudah terdaftar untuk entitas lain.',
-            'nis.regex' => 'NIS hanya diperbolehkan berisi angka.',
-            'email_orang_tua.email' => 'Pastikan format email sudah benar.',
-            'nomor_hp_orang_tua.regex' => 'Nomor HP orang tua hanya boleh berisi angka.',
-            'nama_lengkap.regex' => 'Format nama tidak valid (hanya huruf dan spasi).',
-            'nama_lengkap.unique' => 'Nama yang dimasukkan sudah terdaftar.',
-            'total_poin.max' => 'Total poin tidak boleh melebihi 100.',
-            'total_poin.min' => 'Total poin tidak boleh kurang dari 0.',
+            'status' => 'required|in:aktif,tidak aktif,lulus',
         ]);
 
-        $siswa->update($request->all());
+        DB::transaction(function () use ($request, $siswa) {
+            // 1. Update Profil Siswa
+            $siswa->update($request->except(['kelas_id']));
+
+            // 2. Update atau Buat data pendaftaran kelas di Tahun Ajaran Aktif
+            $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
+            
+            if ($tahunAktif) {
+                NilaiKehadiran::updateOrCreate(
+                    [
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $tahunAktif->id
+                    ],
+                    [
+                        'kelas_id' => $request->kelas_id
+                    ]
+                );
+            }
+        });
 
         return redirect()->route('siswa.index')->with('success', 'Informasi profil siswa berhasil diperbarui.');
     }
@@ -183,9 +214,8 @@ class SiswaController extends Controller
      */
     public function cetakKartu(Siswa $siswa)
     {
-        // Eager load relasi kelas untuk efisiensi render
-        $siswa->load('kelas'); 
-        
+        // Eager load relasi terbaru
+        $siswa->load('nilaiKehadiranAktif.kelas'); 
         return view('siswa.partials.cetak_kartu', compact('siswa'));
     }
 }
