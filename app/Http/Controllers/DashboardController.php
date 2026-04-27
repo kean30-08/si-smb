@@ -17,44 +17,51 @@ class DashboardController extends Controller
         $filter_type = $request->input('filter_type', 'bulan'); // Default 'bulan'
         $rentang_bulan = $request->input('rentang', 1);
 
+        // Ambil Semua Tahun Ajaran untuk Dropdown
         $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
+        $tahunAjarans = TahunAjaran::orderBy('created_at', 'desc')->get();
 
-        // LOGIKA KUNCI: Buka gembok Tahun Ajaran jika memakai Filter Kustom
+        // 1. TENTUKAN FILTER TAHUN AJARAN (Dari Dropdown Header)
+        $selected_ta_id = $request->input('tahun_ajaran_id');
+        
+        // Jika baru pertama kali buka halaman, default ke Tahun Ajaran Aktif
+        if ($selected_ta_id === null && $tahunAktif) {
+            $selected_ta_id = $tahunAktif->id;
+        }
+
+        // Jika user memilih "Semua Tahun Ajaran", nilai filternya kita lepas (null)
+        $filter_ta_id = ($selected_ta_id === 'semua') ? null : $selected_ta_id;
+
+        // 2. TENTUKAN RENTANG WAKTU
         if ($filter_type == 'kustom') {
             $start_date = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
             $end_date = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
-            
-            // Atur menjadi null agar query tidak dibatasi oleh Tahun Ajaran aktif
-            $tahun_ajaran_id = null; 
         } else {
             $start_date = Carbon::now()->subMonths($rentang_bulan - 1)->startOfMonth()->toDateString();
             $end_date = Carbon::now()->endOfMonth()->toDateString();
-            
-            // Kunci query hanya untuk Tahun Ajaran yang sedang aktif
-            $tahun_ajaran_id = $tahunAktif ? $tahunAktif->id : 0; 
         }
 
-        // 1. KARTU RINGKASAN (KPI)
+        // 3. KARTU RINGKASAN (KPI)
         $total_siswa = Siswa::where('status', 'aktif')->count();
         $total_pengajar = Pengajar::count();
         
-        $total_agenda_harian = Agenda::when($tahun_ajaran_id, function($q) use ($tahun_ajaran_id) {
-                                        return $q->where('tahun_ajaran_id', $tahun_ajaran_id);
+        $total_agenda_harian = Agenda::when($filter_ta_id, function($q) use ($filter_ta_id) {
+                                        return $q->where('tahun_ajaran_id', $filter_ta_id);
                                      })
                                      ->whereBetween('tanggal', [$start_date, $end_date])
                                      ->distinct('tanggal')
                                      ->count('tanggal');
 
-        $total_jadwal_period = Agenda::when($tahun_ajaran_id, function($q) use ($tahun_ajaran_id) {
-                                        return $q->where('tahun_ajaran_id', $tahun_ajaran_id);
+        $total_jadwal_period = Agenda::when($filter_ta_id, function($q) use ($filter_ta_id) {
+                                        return $q->where('tahun_ajaran_id', $filter_ta_id);
                                      })
                                      ->whereBetween('tanggal', [$start_date, $end_date])
                                      ->distinct('tanggal')
                                      ->count('tanggal');
 
-        // 2. DATA GRAFIK & REKAPITULASI 
-        $agendas_per_hari = Agenda::when($tahun_ajaran_id, function($q) use ($tahun_ajaran_id) {
-                                    return $q->where('tahun_ajaran_id', $tahun_ajaran_id);
+        // 4. DATA GRAFIK & REKAPITULASI 
+        $agendas_per_hari = Agenda::when($filter_ta_id, function($q) use ($filter_ta_id) {
+                                    return $q->where('tahun_ajaran_id', $filter_ta_id);
                                })
                                ->whereBetween('tanggal', [$start_date, $end_date])
                                ->orderBy('tanggal', 'asc')
@@ -98,14 +105,14 @@ class DashboardController extends Controller
         $total_sakit_period = array_sum($data_sakit);
         $total_alpa_period  = array_sum($data_alpa);
 
-        // 3. LEADERBOARD SISWA TELADAN 
+        // 5. LEADERBOARD SISWA TELADAN 
         $siswas = Siswa::with('nilaiKehadiranAktif.kelas')->where('status', 'aktif')->get();
 
         foreach ($siswas as $siswa) {
             $absensi_history = Absensi::where('siswa_id', $siswa->id)
-                ->whereHas('agenda', function($q) use ($start_date, $end_date, $tahun_ajaran_id) {
+                ->whereHas('agenda', function($q) use ($start_date, $end_date, $filter_ta_id) {
                     $q->whereBetween('tanggal', [$start_date, $end_date])
-                      ->when($tahun_ajaran_id, function($query, $ta_id) {
+                      ->when($filter_ta_id, function($query, $ta_id) {
                           return $query->where('tahun_ajaran_id', $ta_id);
                       });
                 })
@@ -158,7 +165,8 @@ class DashboardController extends Controller
             'total_siswa', 'total_pengajar', 'total_agenda_harian', 
             'label_grafik', 'data_hadir', 'data_izin', 'data_sakit', 'data_alpa',
             'total_izin_period', 'total_sakit_period', 'total_alpa_period',
-            'top_siswas', 'filter_type', 'rentang_bulan', 'start_date', 'end_date'
+            'top_siswas', 'filter_type', 'rentang_bulan', 'start_date', 'end_date',
+            'tahunAjarans', 'selected_ta_id'
         ));
     }
 }

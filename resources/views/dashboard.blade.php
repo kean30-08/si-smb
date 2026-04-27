@@ -1,47 +1,40 @@
 <x-app-layout>
     <x-slot name="header">
-        {{-- AMBIL DATA TAHUN AJARAN AKTIF LANGSUNG DARI MODEL --}}
-        @php
-            $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
-        @endphp
-
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Dashboard Statistik Utama') }}
             </h2>
 
-            {{-- INDIKATOR TAHUN AJARAN --}}
-            @if ($tahunAktif)
-                <div
-                    class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-sm w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-indigo-600" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Tahun Ajaran: {{ $tahunAktif->tahun_ajaran }}
-                </div>
-            @else
-                <div
-                    class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-red-100 text-red-800 border border-red-200 shadow-sm w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-red-600" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    Belum Ada Tahun Ajaran Aktif
-                </div>
-            @endif
+            {{-- DROPDOWN TAHUN AJARAN DI HEADER --}}
+            <div class="inline-flex items-center w-full md:w-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600 hidden md:block" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {{-- Dropdown ini terhubung ke id="filterForm" di bawah menggunakan atribut html form="id" --}}
+                <select name="tahun_ajaran_id" form="filterForm"
+                    onchange="document.getElementById('filterForm').submit()"
+                    class="bg-indigo-50 text-indigo-800 border border-indigo-200 text-sm font-bold rounded-full px-4 py-1.5 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm w-full md:w-auto outline-none">
+                    <option value="semua" {{ $selected_ta_id === 'semua' ? 'selected' : '' }}>Semua Tahun Ajaran
+                    </option>
+                    @foreach ($tahunAjarans as $ta)
+                        <option value="{{ $ta->id }}" {{ $selected_ta_id == $ta->id ? 'selected' : '' }}>
+                            {{ $ta->tahun_ajaran }} {{ $ta->status == 'aktif' ? '(Sedang Aktif)' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
         </div>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- FILTER DATA DI ATAS --}}
             {{-- FILTER DATA DI ATAS DENGAN ALPINE.JS --}}
             <div class="mb-6">
-                <form action="{{ route('dashboard') }}" method="GET" x-data="{ filterType: '{{ $filter_type }}' }"
+                {{-- ID form ini wajib ada agar dropdown di header bisa nge-submit form ini --}}
+                <form id="filterForm" action="{{ route('dashboard') }}" method="GET" x-data="{ filterType: '{{ $filter_type }}' }"
                     class="bg-white p-3 md:p-4 rounded-lg shadow-sm border-l-4 border-indigo-500 w-full lg:w-fit">
 
                     <div class="flex flex-col md:flex-row md:items-center gap-4">
@@ -272,8 +265,8 @@
                     datasets: [{
                             label: 'Hadir',
                             data: dataHadir,
-                            backgroundColor: 'rgba(34, 197, 94, 0.9)', // Opacity dinaikkan jadi 0.9 agar lebih solid
-                            borderWidth: 0, // Garis tepi dihilangkan
+                            backgroundColor: 'rgba(34, 197, 94, 0.9)',
+                            borderWidth: 0,
                             stack: 'stack1'
                         },
                         {
@@ -305,23 +298,23 @@
                     maintainAspectRatio: false,
                     // Mengaktifkan fitur interaksi bertumpuk
                     interaction: {
-                        mode: 'index', // Saat dihover, langsung menampilkan tooltip untuk seluruh stack
-                        intersect: false // Tidak perlu tepat kena bar
+                        mode: 'index',
+                        intersect: false
                     },
                     scales: {
                         y: {
-                            stacked: true, // AKTIFKAN STACK PADA SUMBU Y
+                            stacked: true,
                             beginAtZero: true,
                             ticks: {
                                 precision: 0
                             }
                         },
                         x: {
-                            stacked: true // AKTIFKAN STACK PADA SUMBU X
+                            stacked: true
                         }
                     },
                     plugins: {
-                        // Memunculkan Legenda agar Admin tahu arti warnanya
+                        // Memunculkan Legenda
                         legend: {
                             display: true,
                             position: 'bottom',
@@ -332,7 +325,6 @@
                                 padding: 15
                             }
                         },
-                        // Tooltip bawaan otomatis memuat rincian keempat status tersebut karena mode 'index'
                         tooltip: {
                             padding: 12,
                             titleFont: {
@@ -342,7 +334,7 @@
                             bodyFont: {
                                 size: 13
                             },
-                            boxPadding: 5 // Jarak warna kotak di dalam tooltip
+                            boxPadding: 5
                         }
                     }
                 }

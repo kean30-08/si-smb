@@ -37,9 +37,10 @@ Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
 Route::get('/materi/show/{materi}', [MateriController::class, 'show'])->name('materi.show');
 
 // Refleksi Form
+// PERBAIKAN: Rute 'send-otp' WAJIB ditaruh di atas rute '{tanggal}'
+Route::post('/refleksi/send-otp', [RefleksiController::class, 'sendOtp'])->name('refleksi.sendOtp');
 Route::get('/refleksi/{tanggal}', [RefleksiController::class, 'create'])->name('refleksi.create');
 Route::post('/refleksi/{tanggal}', [RefleksiController::class, 'store'])->name('refleksi.store');
-
 
 // =======================================================
 // RUTE KHUSUS ADMIN & KEPALA SEKOLAH
