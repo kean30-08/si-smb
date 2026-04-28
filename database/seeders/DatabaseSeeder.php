@@ -7,6 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Jabatan;
 use App\Models\Kelas;
+use App\Models\TahunAjaran; // <-- Jangan lupa import Model ini
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -18,14 +19,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // SEEDER AKUN ADMIN
+        // 1. SEEDER TAHUN AJARAN (SANGAT PENTING AGAR SISTEM BISA BERJALAN)
+        TahunAjaran::firstOrCreate(
+            ['tahun_ajaran' => '2025/2026 Ganjil'],
+            ['status' => 'aktif'] // Langsung set aktif
+        );
+
+        // 2. SEEDER AKUN ADMIN
         User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@gmail.com',
             'password' => Hash::make('admin123'), 
         ]);
 
-        // SEEDER TABEL JABATAN
+        // 3. SEEDER TABEL JABATAN
         $daftarJabatan = [
             'Guru Sekolah Minggu',
             'Kepala Sekolah Minggu',
@@ -36,14 +43,15 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($daftarJabatan as $nama) {
-            Jabatan::create([
+            Jabatan::firstOrCreate([
                 'nama_jabatan' => $nama
             ]);
         }
 
-        // Daftar kelas Sekolah Minggu yang akan di-generate
+        // 4. SEEDER DAFTAR KELAS (Disesuaikan dengan format baru agar Auto-Increment berfungsi)
         $daftarKelas = [
-            'Kelas PAUD & TK',
+            'Kelas PAUD',
+            'Kelas TK',
             'Kelas 1 SD',
             'Kelas 2 SD',
             'Kelas 3 SD',
