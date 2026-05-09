@@ -4,16 +4,8 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Profil Pengajar') }}: {{ $pengajar->nama_lengkap }}
             </h2>
-            @php
-                $isAdmin = auth()->user()->isAdmin();
-            @endphp
+
             <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
-                @if ($isAdmin)
-                    <a href="{{ route('pengajar.edit', $pengajar->id) }}"
-                        class="w-full sm:w-auto justify-center bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 flex items-center rounded">
-                        Edit Data
-                    </a>
-                @endif
                 <a href="{{ route('pengajar.index') }}"
                     class="w-full sm:w-auto justify-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 flex items-center rounded">
                     Kembali

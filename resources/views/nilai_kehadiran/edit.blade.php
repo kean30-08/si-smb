@@ -32,7 +32,7 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="block font-medium text-sm text-gray-700">Total Poin Saat Ini</label>
+                            <label class="block font-medium text-sm text-gray-700">Nilai Siswa</label>
                             <input type="number" name="total_poin"
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
                                 value="{{ old('total_poin', $nilai_kehadiran->total_poin) }}" min="0" required>

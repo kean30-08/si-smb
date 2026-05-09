@@ -21,7 +21,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-4 sm:p-6 text-gray-900 bg-gray-50 md:bg-white">
 
-                    {{-- Form Live Search & Filter --}}
+                    {{-- Form Manual Search & Filter --}}
                     <form id="searchForm" action="{{ route('pengajar.index') }}" method="GET"
                         class="mb-6 flex flex-col md:flex-row gap-4 w-full">
 
@@ -53,6 +53,15 @@
                                 </svg>
                             </button>
                         </div>
+
+                        {{-- Tombol Reset (Dikendalikan oleh Javascript) --}}
+                        <div id="resetButtonContainer"
+                            class="w-full sm:w-auto {{ request('search') || request('status') ? '' : 'hidden' }}">
+                            <a href="{{ route('pengajar.index') }}"
+                                class="block text-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-sm font-bold py-2 px-4 rounded-md transition shadow-sm h-full flex items-center justify-center">
+                                Reset
+                            </a>
+                        </div>
                     </form>
 
                     {{-- Tabel Data --}}
@@ -64,15 +73,24 @@
         </div>
     </div>
 
-    {{-- Script Auto Submit Live Search --}}
+    {{-- Script untuk Manual Submit & Filter (AJAX Tanpa Full Reload) --}}
     <script>
-        let typingTimer;
-        let doneTypingInterval = 500;
         let searchInput = document.getElementById('searchInput');
         let searchForm = document.getElementById('searchForm');
         let statusFilter = document.getElementById('statusFilter');
         let tableContainer = document.getElementById('table-container');
+        let resetButtonContainer = document.getElementById('resetButtonContainer');
 
+        // Fungsi baru untuk memunculkan/menyembunyikan tombol Reset secara realtime
+        function toggleResetButton() {
+            if (searchInput.value.trim() !== '' || statusFilter.value !== '') {
+                resetButtonContainer.classList.remove('hidden');
+            } else {
+                resetButtonContainer.classList.add('hidden');
+            }
+        }
+
+        // Fungsi untuk menarik data tanpa reload
         function fetchTableData(url) {
             tableContainer.style.opacity = '0.5';
             fetch(url, {
@@ -88,30 +106,28 @@
                 .catch(error => console.error('Error:', error));
         }
 
+        // Fungsi untuk mengambil parameter form dan membuat URL
         function updateData() {
             let url = new URL(searchForm.action);
             let params = new URLSearchParams(new FormData(searchForm));
             url.search = params.toString();
+
             fetchTableData(url);
             window.history.pushState({}, '', url);
+
+            toggleResetButton(); // Panggil fungsi reset setiap kali data diupdate
         }
 
-        searchInput.addEventListener('keyup', function() {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(updateData, doneTypingInterval);
-        });
-
-        searchInput.addEventListener('keydown', function() {
-            clearTimeout(typingTimer);
-        });
-
+        // 1. FILTER DROPDOWN TETAP OTOMATIS 
         statusFilter.addEventListener('change', updateData);
 
+        // 2. SEARCH BAR MENJADI MANUAL
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             updateData();
         });
 
+        // 3. PAGINATION AJAX
         document.addEventListener('click', function(e) {
             if (e.target.closest('.pagination-container a')) {
                 e.preventDefault();

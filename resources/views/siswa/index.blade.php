@@ -42,6 +42,14 @@
                                 </svg>
                             </button>
                         </div>
+                        {{-- tombol reset --}}
+                        <div id="resetButtonContainer"
+                            class="w-full sm:w-auto {{ request('search') || request('kelas_id') || request('status') ? '' : 'hidden' }}">
+                            <a href="{{ route('siswa.index') }}"
+                                class="block text-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-sm font-bold py-2 px-4 rounded-md transition shadow-sm h-full flex items-center justify-center">
+                                Reset
+                            </a>
+                        </div>
 
                         {{-- Dropdown Filter --}}
                         <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
@@ -69,6 +77,7 @@
                                 </option>
                             </select>
                         </div>
+
                     </form>
 
                     {{-- Tabel Data --}}
@@ -80,29 +89,34 @@
         </div>
     </div>
 
-    {{-- Script untuk Auto-Submit (Live Search & Filter) --}}
     <script>
-        let typingTimer;
-        let doneTypingInterval = 500;
         let searchInput = document.getElementById('searchInput');
         let searchForm = document.getElementById('searchForm');
         let kelasFilter = document.getElementById('kelasFilter');
         let statusFilter = document.getElementById('statusFilter');
         let tableContainer = document.getElementById('table-container');
+        let resetButtonContainer = document.getElementById('resetButtonContainer'); // Tambahan variabel
+
+        // Fungsi baru untuk memunculkan/menyembunyikan tombol Reset secara realtime
+        function toggleResetButton() {
+            if (searchInput.value.trim() !== '' || kelasFilter.value !== '' || statusFilter.value !== '') {
+                resetButtonContainer.classList.remove('hidden');
+            } else {
+                resetButtonContainer.classList.add('hidden');
+            }
+        }
 
         // Fungsi untuk menarik data tanpa reload
         function fetchTableData(url) {
-            // Tampilkan indikator loading ringan (opsional, bisa diganti efek lain)
             tableContainer.style.opacity = '0.5';
 
             fetch(url, {
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest' // Penting! Agar Laravel mendeteksi ini sebagai AJAX
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 })
                 .then(response => response.text())
                 .then(html => {
-                    // Ganti isi HTML lama dengan HTML baru dari controller
                     tableContainer.innerHTML = html;
                     tableContainer.style.opacity = '1';
                 })
@@ -116,43 +130,28 @@
             url.search = params.toString();
 
             fetchTableData(url);
-
-            // Opsional: Update URL di browser tanpa reload halamannya
             window.history.pushState({}, '', url);
+
+            toggleResetButton(); // Panggil fungsi reset setiap kali data diupdate
         }
 
-        // Event Listeners
-        searchInput.addEventListener('keyup', function() {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(updateData, doneTypingInterval);
-        });
-
-        searchInput.addEventListener('keydown', function() {
-            clearTimeout(typingTimer);
-        });
-
+        // 1. FILTER DROPDOWN TETAP OTOMATIS 
         kelasFilter.addEventListener('change', updateData);
         statusFilter.addEventListener('change', updateData);
 
-        // Mencegah form disubmit secara tradisional jika dienter
+        // 2. SEARCH BAR MENJADI MANUAL
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             updateData();
         });
 
-        // Menangani klik Pagination agar tidak full reload
+        // 3. PAGINATION AJAX
         document.addEventListener('click', function(e) {
-            // Jika yang diklik adalah link pagination
             if (e.target.closest('.pagination-container a')) {
                 e.preventDefault();
                 let url = e.target.closest('.pagination-container a').href;
                 fetchTableData(url);
                 window.history.pushState({}, '', url);
-                // Scroll sedikit ke atas otomatis saat pindah halaman
-                // window.scrollTo({
-                //     top: 0,
-                //     behavior: 'smooth'
-                // });
             }
         });
     </script>

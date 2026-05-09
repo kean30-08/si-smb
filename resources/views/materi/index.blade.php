@@ -54,6 +54,15 @@
                                 </option>
                             @endforeach
                         </select>
+
+                        {{-- Tombol Reset (Dikendalikan oleh Javascript) --}}
+                        <div id="resetButtonContainer"
+                            class="w-full sm:w-auto {{ request('search') || request('kelas_id') ? '' : 'hidden' }}">
+                            <a href="{{ route('materi.index') }}"
+                                class="block text-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-sm font-bold py-2 px-4 rounded-md transition shadow-sm h-full flex items-center justify-center">
+                                Reset
+                            </a>
+                        </div>
                     </form>
 
                     <div id="table-container">
@@ -66,13 +75,22 @@
     </div>
 
     <script>
-        let typingTimer;
-        let doneTypingInterval = 500;
         let searchInput = document.getElementById('searchInput');
         let searchForm = document.getElementById('searchForm');
         let kelasFilter = document.getElementById('kelasFilter');
         let tableContainer = document.getElementById('table-container');
+        let resetButtonContainer = document.getElementById('resetButtonContainer');
 
+        // Fungsi baru untuk memunculkan/menyembunyikan tombol Reset secara realtime
+        function toggleResetButton() {
+            if (searchInput.value.trim() !== '' || kelasFilter.value !== '') {
+                resetButtonContainer.classList.remove('hidden');
+            } else {
+                resetButtonContainer.classList.add('hidden');
+            }
+        }
+
+        // Fungsi untuk menarik data tanpa reload
         function fetchTableData(url) {
             tableContainer.style.opacity = '0.5';
 
@@ -89,6 +107,7 @@
                 .catch(error => console.error('Error:', error));
         }
 
+        // Fungsi untuk mengambil parameter form dan membuat URL
         function updateData() {
             let url = new URL(searchForm.action);
             let params = new URLSearchParams(new FormData(searchForm));
@@ -96,24 +115,21 @@
 
             fetchTableData(url);
             window.history.pushState({}, '', url);
+
+            toggleResetButton(); // Panggil fungsi reset setiap kali data diupdate
         }
 
-        searchInput.addEventListener('keyup', function() {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(updateData, doneTypingInterval);
-        });
+        // 1. FILTER DROPDOWN TETAP OTOMATIS
+        kelasFilter.addEventListener('change', updateData);
 
-        searchInput.addEventListener('keydown', function() {
-            clearTimeout(typingTimer);
-        });
-
-        kelasFilter.addEventListener('change', updateData); // Hanya ada kelasFilter
-
+        // 2. SEARCH BAR MENJADI MANUAL
+        // (Hanya memicu pencarian saat tombol "Enter" ditekan atau ikon "Cari" diklik)
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             updateData();
         });
 
+        // 3. PAGINATION AJAX
         document.addEventListener('click', function(e) {
             if (e.target.closest('.pagination-container a')) {
                 e.preventDefault();
