@@ -113,6 +113,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     
+    // --- TAMBAHAN RUTE OTP PROFIL ---
+    Route::post('/profile/send-otp', [ProfileController::class, 'sendOtp'])->name('profile.sendOtp');
+    Route::post('/profile/verify-otp', [ProfileController::class, 'verifyOtp'])->name('profile.verifyOtp');
+    
     // === AGENDA REFLEKSI ===
     Route::get('/agenda/detail/{tanggal}/refleksi', [RefleksiController::class, 'index'])->name('refleksi.index');
     Route::get('/refleksi/detail/{id}', [RefleksiController::class, 'show'])->name('refleksi.show');

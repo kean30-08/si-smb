@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         // 2. SEEDER AKUN ADMIN
         User::factory()->create([
             'name' => 'Admin',
-            'email' => 'admin@gmail.com',
+            'email' => 'admin.smb.vdc@gmail.com',
             'password' => Hash::make('admin123'), 
         ]);
 

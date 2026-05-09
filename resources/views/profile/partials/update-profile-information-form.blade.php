@@ -1,6 +1,5 @@
 <section>
     @php
-        // Definisikan dulu siapa itu Admin
         $isAdmin = auth()->user()->isAdmin();
     @endphp
 
@@ -17,94 +16,64 @@
         @csrf
     </form>
 
-    {{-- KELAS GRID DITERAPKAN DI SINI --}}
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+    {{-- TAMBAHKAN ID "profileForm" dan event onsubmit --}}
+    <form id="profileForm" method="post" action="{{ route('profile.update') }}" onsubmit="handleProfileSubmit(event)"
+        class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         @csrf
         @method('patch')
 
-        {{-- KOTAK 1 (Akan otomatis di Kiri) --}}
         <div>
             <x-input-label for="name" :value="__('Nama Lengkap')" />
             <x-text-input id="name" name="name" type="text"
                 class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="old('name', $user->name)" required
                 readonly />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
-        {{-- KOTAK 2 (Akan otomatis di Kanan) --}}
         <div>
             <x-input-label for="email" :value="__('Email Login')" />
-            <x-text-input id="email" name="email" type="email"
-                class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="old('email', $user->email)" required
-                readonly />
+            {{-- HAPUS readonly DAN cursor-not-allowed AGAR EMAIL BISA DIUBAH --}}
+            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)"
+                required />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
         </div>
 
-        {{-- DATA TAMBAHAN KHUSUS PENGAJAR --}}
         @if (!$isAdmin)
             @php
                 $dataPengajar = \App\Models\Pengajar::where('user_id', auth()->id())->first();
+                $jkAsli = old('jenis_kelamin', $dataPengajar->jenis_kelamin ?? '');
+                $teksJk = $jkAsli == 'L' ? 'Laki-laki' : ($jkAsli == 'P' ? 'Perempuan' : '');
             @endphp
 
-            {{-- KOTAK 3 (Otomatis turun ke baris baru, letaknya di Kiri) --}}
             <div>
                 <x-input-label for="nomor_hp" :value="__('Nomor HP / WA')" />
                 <x-text-input id="nomor_hp" name="nomor_hp" type="text"
                     class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="old('nomor_hp', $dataPengajar->nomor_hp ?? '')" readonly />
-                <x-input-error class="mt-2" :messages="$errors->get('nomor_hp')" />
             </div>
-
-            {{-- KOTAK 4 (Otomatis di Kanan, bersebelahan dengan No HP) --}}
-            @php
-                // Ambil data L atau P dari database / old input
-                $jkAsli = old('jenis_kelamin', $dataPengajar->jenis_kelamin ?? '');
-
-                // Terjemahkan huruf menjadi kata penuh
-                $teksJk = '';
-                if ($jkAsli == 'L') {
-                    $teksJk = 'Laki-laki';
-                } elseif ($jkAsli == 'P') {
-                    $teksJk = 'Perempuan';
-                }
-            @endphp
 
             <div>
                 <x-input-label for="jenis_kelamin_display" :value="__('Jenis Kelamin')" />
-
-                {{-- INPUT TAMPILAN (Menampilkan 'Laki-laki' atau 'Perempuan', tidak punya atribut 'name') --}}
                 <x-text-input id="jenis_kelamin_display" type="text"
-                    class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="$teksJk"
-                    readonly />
-
-                {{-- INPUT TERSEMBUNYI (Mengirim 'L' atau 'P' secara diam-diam ke Controller) --}}
+                    class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="$teksJk" readonly />
                 <input type="hidden" name="jenis_kelamin" value="{{ $jkAsli }}">
-
-                <x-input-error class="mt-2" :messages="$errors->get('jenis_kelamin')" />
             </div>
 
-            {{-- KOTAK 5 (ALAMAT). Kita gunakan md:col-span-2 agar memanjang full --}}
             <div class="md:col-span-2">
                 <x-input-label for="alamat" :value="__('Alamat Lengkap')" />
                 <textarea id="alamat" name="alamat" rows="3"
-                    class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 rounded-md shadow-sm"
                     readonly>{{ old('alamat', $dataPengajar->alamat ?? '') }}</textarea>
-                <x-input-error class="mt-2" :messages="$errors->get('alamat')" readonly />
             </div>
         @endif
 
-        {{-- AREA TOMBOL SIMPAN. Kita rentangkan juga 2 kolom --}}
-        {{-- <div class="flex items-center gap-4 md:col-span-2 mt-2">
+        {{-- AKTIFKAN KEMBALI TOMBOL SAVE --}}
+        <div class="flex items-center gap-4 md:col-span-2 mt-2">
             <x-primary-button>{{ __('Simpan Perubahan') }}</x-primary-button>
-
             @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-green-600 font-bold"
-                >{{ __('Data berhasil disimpan.') }}</p>
+                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
+                    class="text-sm text-green-600 font-bold">
+                    {{ __('Data berhasil disimpan.') }}
+                </p>
             @endif
-        </div> --}}
+        </div>
     </form>
 </section>
