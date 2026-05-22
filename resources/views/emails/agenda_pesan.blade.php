@@ -4,4 +4,4 @@
 <p>Mohon Bapak/Ibu dapat mempersiapkan dan mengingatkan putra-putrinya untuk hadir tepat waktu.</p>
 <br>
 <p>Terima kasih atas perhatiannya.</p>
-<p><strong>Admin Vihara Dharma Cakra Tabanan</strong></p>
+<p><strong>Admin Vihara Dharma Cattra Tabanan</strong></p>
