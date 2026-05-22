@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin.smb.vdc@gmail.com',
-            'password' => Hash::make('admin123'), 
+            'password' => Hash::make('admin81238'), 
         ]);
 
         // 3. SEEDER TABEL JABATAN

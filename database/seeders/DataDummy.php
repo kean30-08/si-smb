@@ -42,10 +42,10 @@ class DataDummy extends Seeder
 
         // 2. GENERATE AKUN ADMIN
         User::firstOrCreate(
-            ['email' => 'admin@gmail.com'],
+            ['email' => 'admin.smb.vdc@gmail.com'],
             [
                 'name' => 'Admin',
-                'password' => Hash::make('admin123'),
+                'password' => Hash::make('admin81238'),
                 'email_verified_at' => now(),
             ]
         );

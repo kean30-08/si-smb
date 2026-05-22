@@ -51,7 +51,7 @@ class RefleksiController extends Controller
             'siswa_id' => 'required|exists:siswas,id'
         ]);
 
-        // Tarik data siswa dari database (Murni kebenaran database, tidak bisa dimanipulasi frontend)
+        // Tarik data siswa dari database
         $siswa = Siswa::find($request->siswa_id);
 
         if (empty($siswa->email_orang_tua)) {
@@ -67,7 +67,7 @@ class RefleksiController extends Controller
         try {
             Mail::to($email)->send(new OtpRefleksiMail($otp));
             
-            // Sensor email untuk notifikasi agar aman (contoh: budi***@gmail.com)
+            // Sensor email untuk notifikasi agar aman
             $maskedEmail = preg_replace('/(?<=..)[^@]+(?=@)/', '***', $email);
             
             return response()->json(['success' => true, 'message' => 'Kode OTP berhasil dikirim ke email: ' . $maskedEmail]);
