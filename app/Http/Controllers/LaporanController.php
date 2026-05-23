@@ -39,9 +39,13 @@ class LaporanController extends Controller
                                ->distinct('tanggal')
                                ->count('tanggal');
 
-        $siswas = Siswa::with('kelas')
+        // PERBAIKAN: Gunakan relasi nilaiKehadiranAktif.kelas, bukan kelas langsung
+        $siswas = Siswa::with('nilaiKehadiranAktif.kelas')
             ->when($kelas_id != 'semua', function($q) use ($kelas_id) {
-                return $q->where('kelas_id', $kelas_id);
+                // Filter kelas_id harus masuk ke dalam tabel nilai_kehadirans yang aktif
+                return $q->whereHas('nilaiKehadiranAktif', function($query) use ($kelas_id) {
+                    $query->where('kelas_id', $kelas_id);
+                });
             })->get();
 
         foreach ($siswas as $siswa) {

@@ -7,7 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Jabatan;
 use App\Models\Kelas;
-use App\Models\TahunAjaran; // <-- Jangan lupa import Model ini
+use App\Models\TahunAjaran;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -19,20 +19,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. SEEDER TAHUN AJARAN (SANGAT PENTING AGAR SISTEM BISA BERJALAN)
+        // 1. SEEDER TAHUN AJARAN UTAMA
         TahunAjaran::firstOrCreate(
             ['tahun_ajaran' => '2025/2026 Ganjil'],
-            ['status' => 'aktif'] // Langsung set aktif
+            ['status' => 'aktif']
         );
 
-        // 2. SEEDER AKUN ADMIN
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin.smb.vdc@gmail.com',
-            'password' => Hash::make('admin81238'), 
-        ]);
+        // 2. SEEDER AKUN ADMIN MASTER
+        User::firstOrCreate(
+            ['email' => 'admin.smb.vdc@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('admin81238'), 
+                'email_verified_at' => now(),
+            ]
+        );
 
-        // 3. SEEDER TABEL JABATAN
+        // 3. SEEDER TABEL JABATAN RESMI
         $daftarJabatan = [
             'Guru Sekolah Minggu',
             'Kepala Sekolah Minggu',
@@ -43,12 +46,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($daftarJabatan as $nama) {
-            Jabatan::firstOrCreate([
-                'nama_jabatan' => $nama
-            ]);
+            Jabatan::firstOrCreate(['nama_jabatan' => $nama]);
         }
 
-        // 4. SEEDER DAFTAR KELAS (Disesuaikan dengan format baru agar Auto-Increment berfungsi)
+        // 4. SEEDER DAFTAR KELAS RESMI
         $daftarKelas = [
             'Kelas PAUD',
             'Kelas TK',
@@ -61,11 +62,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($daftarKelas as $kelas) {
-            // Menggunakan firstOrCreate agar tidak terjadi error duplikasi 
-            // jika seeder dijalankan lebih dari 1 kali
-            Kelas::firstOrCreate([
-                'nama_kelas' => $kelas
-            ]);
+            Kelas::firstOrCreate(['nama_kelas' => $kelas]);
         }
     }
 }

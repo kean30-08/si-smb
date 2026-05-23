@@ -142,3 +142,25 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Route khusus untuk MEMAKSA download file storage di shared hosting
+Route::get('/storage/{path}', function ($path) {
+    // Menggunakan base_path agar jalurnya absolut dan tidak meleset
+    $filePath = base_path('storage/app/public/' . $path);
+    
+    // Jika file fisik BENAR-BENAR ada, langsung download!
+    if (file_exists($filePath)) {
+        return response()->download($filePath);
+    }
+    
+    // Jika gagal, JANGAN tampilkan 404 gelap, tapi tampilkan teks detektif ini:
+    return "<div style='font-family:sans-serif; padding:20px;'>
+                <h2 style='color:red;'>Pencarian File Gagal!</h2>
+                <p>Laravel mencari file fisik PDF kamu persis di dalam server pada jalur berikut:</p>
+                <div style='background:#f4f4f4; padding:10px; border-left:4px solid red;'>
+                    <b>{$filePath}</b>
+                </div>
+                <p>Namun file tersebut <b>tidak ada</b> di folder itu. <br>
+                Silakan cek File Manager, apakah nama file atau foldernya sudah sesuai?</p>
+            </div>";
+})->where('path', '.*');

@@ -109,7 +109,7 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td class="left">{{ $siswa->nama_lengkap }}</td>
-                    <td>{{ $siswa->kelas->nama_kelas ?? '-' }}</td>
+                    <td>{{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</td>
                     <td>{{ $siswa->total_hadir }}</td>
                     <td>{{ $siswa->total_izin }}</td>
                     <td>{{ $siswa->total_sakit }}</td>
