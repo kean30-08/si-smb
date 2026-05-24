@@ -147,7 +147,14 @@
         <table class="kop-surat">
             <tr>
                 <td width="90" style="text-align: center;">
-                    <img src="{{ public_path('img/logo2_smb.jpg') }}" width="80" alt="Logo SMB">
+                    @php
+                        $path = public_path('img/logo2_smb.jpg');
+                        $type = pathinfo($path, PATHINFO_EXTENSION);
+                        $data = file_get_contents($path);
+                        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                    @endphp
+
+                    <img src="{{ $base64 }}" width="80" alt="Logo SMB">
                 </td>
                 <td class="kop-text">
                     <div class="kop-title-1">SEKOLAH MINGGU BUDDHA (SMB)</div>
