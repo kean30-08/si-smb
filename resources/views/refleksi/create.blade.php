@@ -46,10 +46,15 @@
 <body class="bg-gray-100 font-sans antialiased min-h-screen flex flex-col items-center pt-8 pb-12 px-4 sm:px-6 lg:px-8">
 
     <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="bg-indigo-600 px-6 py-8 text-center text-white">
-            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Form Refleksi Kegiatan</h1>
-            <p class="text-indigo-100 text-sm sm:text-base">Tanggal:
-                {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('l, d F Y') }}</p>
+        {{-- REVISI HEADER: Warna Merah Tua, Judul Baru, dan Tambahan Deskripsi --}}
+        <div class="bg-red-800 px-6 py-8 text-center text-white">
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Form Refleksi Kegiatan Siswa</h1>
+            <p class="text-red-100 text-sm sm:text-base mb-3">
+                Form ini diisi oleh siswa setelah melaksanakan kegiatan sekolah minggu
+            </p>
+            <p class="text-red-200 text-xs sm:text-sm font-semibold border-t border-red-700 pt-3 inline-block">
+                Tanggal Kegiatan: {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('l, d F Y') }}
+            </p>
         </div>
 
         <div class="px-6 py-8 sm:p-10">
@@ -58,7 +63,7 @@
                     <div class="text-6xl mb-4">⏳</div>
                     <h2 class="text-2xl font-bold text-gray-800">Sabar ya! Form Belum Dibuka</h2>
                     <p class="mt-2 text-gray-600">Form refleksi ini baru bisa diakses setelah acara dimulai pada:</p>
-                    <p class="mt-2 font-bold text-lg text-indigo-600">{{ $waktuBuka->translatedFormat('d F Y - H:i') }}
+                    <p class="mt-2 font-bold text-lg text-red-800">{{ $waktuBuka->translatedFormat('d F Y - H:i') }}
                     </p>
                 </div>
             @elseif ($statusForm === 'sudah_tutup')
@@ -71,10 +76,20 @@
                     </p>
                 </div>
             @else
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 text-sm text-blue-700">
-                    <strong>Informasi:</strong> Form ini otomatis ditutup pada
-                    <strong>{{ $waktuTutup->translatedFormat('d M Y, H:i') }}</strong>. Diperlukan Verifikasi OTP dari
-                    email orang tua untuk mengirim jawaban.
+                {{-- REVISI ALERT: Warna Kuning Peringatan + Ikon Logo --}}
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 text-sm text-amber-800 flex items-start">
+                    <svg class="w-6 h-6 text-amber-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                    <div>
+                        <strong class="font-bold">Peringatan:</strong> Form ini otomatis ditutup pada
+                        <strong class="font-bold">{{ $waktuTutup->translatedFormat('d M Y, H:i') }}</strong>. Diperlukan
+                        Verifikasi OTP dari
+                        email orang tua untuk mengirim jawaban.
+                    </div>
                 </div>
 
                 <form action="{{ route('refleksi.store', $tanggal) }}" method="POST" class="space-y-6">
@@ -82,7 +97,7 @@
 
                     {{-- Pencarian Nama Siswa dengan Select2 --}}
                     <div class="sm:col-span-2">
-                        <label class="block text-sm font-bold text-indigo-700 mb-1">Cari Nama Kamu *</label>
+                        <label class="block text-sm font-bold text-red-800 mb-1">Cari Nama Kamu *</label>
                         <select id="siswa_id" name="siswa_id" required class="select2-siswa w-full">
                             <option value="" disabled selected>-- Ketik dan Pilih Nama Kamu --</option>
                             @foreach ($siswas as $s)
@@ -126,7 +141,7 @@
                             <label class="block text-sm font-medium text-gray-700">Email Orang Tua untuk Tujuan
                                 OTP</label>
                             <input type="text" id="email_display" readonly placeholder="Pilih nama terlebih dahulu"
-                                class="mt-1 block w-full rounded-md border-gray-200 bg-indigo-50 text-indigo-700 shadow-sm cursor-not-allowed font-bold tracking-wider">
+                                class="mt-1 block w-full rounded-md border-gray-200 bg-red-50 text-red-800 shadow-sm cursor-not-allowed font-bold tracking-wider">
                         </div>
 
                         {{-- Input OTP --}}
@@ -134,7 +149,7 @@
                             <label class="block text-sm font-bold text-gray-700 mb-1">Verifikasi OTP *</label>
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <input type="number" name="otp" placeholder="Masukkan 6 Digit OTP" required
-                                    class="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 tracking-widest font-bold text-center sm:text-left text-lg sm:text-base">
+                                    class="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-800 focus:ring-red-800 tracking-widest font-bold text-center sm:text-left text-lg sm:text-base">
 
                                 <button type="button" id="btnRequestOtp" onclick="requestOtp()"
                                     class="sm:w-auto bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-md shadow-sm transition whitespace-nowrap">
@@ -150,7 +165,7 @@
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Rangkuman Kegiatan Hari Ini *</label>
                         <textarea name="rangkuman" rows="3" required placeholder="Ceritakan apa yang kamu pelajari hari ini..."
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('rangkuman') }}</textarea>
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-800 focus:ring-red-800">{{ old('rangkuman') }}</textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Bagian yang Disukai *</label>
@@ -165,7 +180,7 @@
                     </div>
 
                     <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                        class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-sm font-bold text-white bg-red-800 hover:bg-red-900 transition">
                         Verifikasi & Kirim Refleksi Saya
                     </button>
                 </form>
@@ -289,7 +304,7 @@
                 icon: 'success',
                 title: 'Berhasil!',
                 text: '{{ session('success') }}',
-                confirmButtonColor: '#4f46e5'
+                confirmButtonColor: '#991b1b'
             }).then(() => {
                 window.location.reload();
             });

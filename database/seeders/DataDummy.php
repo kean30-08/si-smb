@@ -10,6 +10,7 @@ use App\Models\Agenda;
 use App\Models\Absensi;
 use App\Models\TahunAjaran;
 use App\Models\NilaiKehadiran;
+use App\Models\AbsensiPengajar;
 use App\Models\Jabatan;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -151,6 +152,29 @@ class DataDummy extends Seeder
                 Absensi::firstOrCreate(
                     ['agenda_id' => $agenda->id, 'siswa_id' => $siswa->id],
                     ['status_kehadiran' => $status, 'waktu_hadir' => $waktuHadir, 'metode_absen' => $status === 'hadir' ? 'barcode' : 'manual']
+                );
+            }
+        }
+
+        // 6.5 GENERATE ABSENSI DUMMY PENGAJAR
+        $semuaPengajar = Pengajar::all();
+        // Probabilitas hadir dibuat lebih tinggi karena pengajar biasanya lebih rajin
+        $statusPengajar = ['hadir', 'hadir', 'hadir', 'hadir', 'izin', 'sakit', 'alpa']; 
+
+        foreach ($agendas as $agenda) {
+            foreach ($semuaPengajar as $pengajar) {
+                // Di semester lama (histori) rajin masuk 90%, di semester baru diacak biasa
+                $status = ($agenda->tahun_ajaran_id == $taLama->id) ? (rand(1,10) <= 9 ? 'hadir' : 'alpa') : $faker->randomElement($statusPengajar);
+                
+                // Waktu hadir pengajar dibuat lebih awal (07:15 - 07:45) dibanding siswa
+                $waktuHadir = $status === 'hadir' ? '07:' . str_pad(rand(15, 45), 2, '0', STR_PAD_LEFT) . ':00' : null;
+                
+                AbsensiPengajar::firstOrCreate(
+                    ['agenda_id' => $agenda->id, 'pengajar_id' => $pengajar->id],
+                    [
+                        'status_kehadiran' => $status, 
+                        'waktu_hadir' => $waktuHadir
+                    ]
                 );
             }
         }
