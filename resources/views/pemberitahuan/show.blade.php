@@ -17,9 +17,9 @@
 
                 {{-- Banner Gambar --}}
                 @if ($pemberitahuan->gambar)
-                    <div class="w-full h-64 sm:h-96 relative bg-gray-100">
-                        <img src="{{ asset('storage/' . $pemberitahuan->gambar) }}" alt="{{ $pemberitahuan->judul }}"
-                            class="w-full h-full object-cover">
+                    <div class="w-full bg-gray-100 flex justify-center items-center">
+                        <img src="{{ asset($pemberitahuan->gambar) }}" alt="{{ $pemberitahuan->judul }}"
+                            class="w-full h-auto max-h-[500px] object-contain"> {{-- h-auto dan max-h agar gambar proporsional --}}
                     </div>
                 @endif
 

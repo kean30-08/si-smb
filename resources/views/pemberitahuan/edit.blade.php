@@ -44,51 +44,52 @@
                         @if ($pemberitahuan->gambar)
                             <div class="mb-4 bg-white p-3 border border-gray-200 rounded-md inline-block">
                                 <p class="text-xs text-gray-500 font-semibold mb-2">Gambar Saat Ini:</p>
-                                <img src="{{ asset('storage/' . $pemberitahuan->gambar) }}" alt="Gambar"
-                                    class="h-32 sm:h-48 w-auto rounded shadow-sm object-cover">
+                                <img src="{{ asset($pemberitahuan->gambar) }}" alt="Gambar"
+                                    class="max-w-full h-auto rounded shadow-sm object-contain">
                             </div>
-                        @endif
-
-                        <div class="mt-2">
-                            <label for="gambar" class="block text-xs font-semibold text-gray-700 mb-1">Ganti Gambar
-                                Baru (Opsional)</label>
-                            <input type="file" name="gambar" id="gambar" accept="image/*"
-                                class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-yellow-100 file:text-yellow-800 hover:file:bg-yellow-200 cursor-pointer">
-                            <p class="text-xs text-gray-500 mt-2">Biarkan kosong jika tidak ingin mengubah gambar.</p>
-                        </div>
                     </div>
+                    @endif
 
-                    {{-- Status --}}
-                    <div class="mb-8">
-                        <label for="status" class="block text-sm font-bold text-gray-700 mb-1">Status Publikasi <span
-                                class="text-red-500">*</span></label>
-                        <select name="status" id="status" required
-                            class="w-full sm:w-1/3 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-medium">
-                            <option value="aktif"
-                                {{ old('status', $pemberitahuan->status) == 'aktif' ? 'selected' : '' }}>Aktif
-                                (Tampilkan)</option>
-                            <option value="arsip"
-                                {{ old('status', $pemberitahuan->status) == 'arsip' ? 'selected' : '' }}>Arsip
-                                (Sembunyikan)</option>
-                        </select>
+                    <div class="mt-2">
+                        <label for="gambar" class="block text-xs font-semibold text-gray-700 mb-1">Ganti Gambar
+                            Baru (Opsional)</label>
+                        <input type="file" name="gambar" id="gambar" accept="image/*"
+                            class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-yellow-100 file:text-yellow-800 hover:file:bg-yellow-200 cursor-pointer">
+                        <p class="text-xs text-gray-500 mt-2">Biarkan kosong jika tidak ingin mengubah gambar.</p>
                     </div>
-
-                    {{-- Tombol Submit --}}
-                    <div class="flex items-center gap-4 pt-5 border-t border-gray-200">
-                        <button type="submit"
-                            class="bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2.5 px-6 rounded shadow-md transition flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Perbarui Data
-                        </button>
-                    </div>
-                </form>
-
             </div>
+
+            {{-- Status --}}
+            <div class="mb-8">
+                <label for="status" class="block text-sm font-bold text-gray-700 mb-1">Status Publikasi <span
+                        class="text-red-500">*</span></label>
+                <select name="status" id="status" required
+                    class="w-full sm:w-1/3 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-medium">
+                    <option value="aktif" {{ old('status', $pemberitahuan->status) == 'aktif' ? 'selected' : '' }}>
+                        Aktif
+                        (Tampilkan)</option>
+                    <option value="arsip" {{ old('status', $pemberitahuan->status) == 'arsip' ? 'selected' : '' }}>
+                        Arsip
+                        (Sembunyikan)</option>
+                </select>
+            </div>
+
+            {{-- Tombol Submit --}}
+            <div class="flex items-center gap-4 pt-5 border-t border-gray-200">
+                <button type="submit"
+                    class="bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2.5 px-6 rounded shadow-md transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Perbarui Data
+                </button>
+            </div>
+            </form>
+
         </div>
+    </div>
     </div>
 
     {{-- SweetAlert untuk Error Validasi --}}

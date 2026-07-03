@@ -42,8 +42,8 @@
                             {{-- Container Gambar --}}
                             @if ($pemberitahuan->gambar)
                                 <div class="w-full h-48 bg-gray-100 flex-shrink-0 overflow-hidden relative">
-                                    <img src="{{ asset('storage/' . $pemberitahuan->gambar) }}"
-                                        alt="{{ $pemberitahuan->judul }}" class="w-full h-full object-cover">
+                                    <img src="{{ asset($pemberitahuan->gambar) }}" alt="{{ $pemberitahuan->judul }}"
+                                        class="w-full h-full object-contain">
                                     @if ($isAdmin)
                                         <div class="absolute top-2 right-2">
                                             <span

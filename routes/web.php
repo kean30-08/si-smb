@@ -26,6 +26,11 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 // =======================================================
 // RUTE PUBLIK (BISA DIAKSES SISWA TANPA LOGIN)
 // =======================================================
+
+// === PEMBERITAHUAN (VIEW ONLY UNTUK SEMUA) ===
+    Route::get('/pemberitahuan', [PemberitahuanController::class, 'index'])->name('pemberitahuan.index');
+    Route::get('/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'show'])->name('pemberitahuan.show');
+    
 Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
 Route::get('/agenda/detail/{tanggal}', [AgendaController::class, 'showDate'])->name('agenda.showDate');
 Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
@@ -120,12 +125,6 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-
-    // === PEMBERITAHUAN (VIEW ONLY UNTUK SEMUA) ===
-    Route::get('/pemberitahuan', [PemberitahuanController::class, 'index'])->name('pemberitahuan.index');
-    // === PEMBERITAHUAN (VIEW ONLY UNTUK SEMUA) ===
-    Route::get('/pemberitahuan', [PemberitahuanController::class, 'index'])->name('pemberitahuan.index');
-    Route::get('/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'show'])->name('pemberitahuan.show'); // TAMBAHKAN BARIS INI
     
     // --- TAMBAHAN RUTE OTP PROFIL ---
     Route::post('/profile/send-otp', [ProfileController::class, 'sendOtp'])->name('profile.sendOtp');
@@ -188,3 +187,15 @@ Route::get('/storage/{path}', function ($path) {
                 Silakan cek File Manager, apakah nama file atau foldernya sudah sesuai?</p>
             </div>";
 })->where('path', '.*');
+
+Route::get('/link-storage', function () {
+    $targetFolder = base_path('storage/app/public');
+    $linkFolder = $_SERVER['DOCUMENT_ROOT'] . '/storage';
+    
+    if (!file_exists($linkFolder)) {
+        symlink($targetFolder, $linkFolder);
+        return "Symlink berhasil dibuat!";
+    } else {
+        return "Symlink sudah ada.";
+    }
+});
