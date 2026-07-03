@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RefleksiController;
 use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\NilaiKehadiranController;
+use App\Http\Controllers\PemberitahuanController;   
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -40,6 +41,13 @@ Route::post('/refleksi/{tanggal}', [RefleksiController::class, 'store'])->name('
 // RUTE KHUSUS ADMIN & KEPALA SEKOLAH
 // =======================================================
 Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(function () {
+
+    // === PEMBERITAHUAN ===
+    Route::get('/admin/pemberitahuan/create', [PemberitahuanController::class, 'create'])->name('pemberitahuan.create');
+    Route::post('/admin/pemberitahuan/store', [PemberitahuanController::class, 'store'])->name('pemberitahuan.store');
+    Route::get('/admin/pemberitahuan/{pemberitahuan}/edit', [PemberitahuanController::class, 'edit'])->name('pemberitahuan.edit');
+    Route::put('/admin/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'update'])->name('pemberitahuan.update');
+    Route::delete('/admin/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'destroy'])->name('pemberitahuan.destroy');
 
     // === AGENDA ===
     Route::get('/admin/agenda/create', [AgendaController::class, 'create'])->name('agenda.create');
@@ -112,6 +120,12 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // === PEMBERITAHUAN (VIEW ONLY UNTUK SEMUA) ===
+    Route::get('/pemberitahuan', [PemberitahuanController::class, 'index'])->name('pemberitahuan.index');
+    // === PEMBERITAHUAN (VIEW ONLY UNTUK SEMUA) ===
+    Route::get('/pemberitahuan', [PemberitahuanController::class, 'index'])->name('pemberitahuan.index');
+    Route::get('/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'show'])->name('pemberitahuan.show'); // TAMBAHKAN BARIS INI
     
     // --- TAMBAHAN RUTE OTP PROFIL ---
     Route::post('/profile/send-otp', [ProfileController::class, 'sendOtp'])->name('profile.sendOtp');
@@ -143,20 +157,30 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Route khusus untuk MEMAKSA download file storage di shared hosting
+// Route khusus untuk menangani file storage di shared hosting
 Route::get('/storage/{path}', function ($path) {
-    // Menggunakan base_path agar jalurnya absolut dan tidak meleset
+    // Menggunakan base_path agar jalurnya absolut
     $filePath = base_path('storage/app/public/' . $path);
     
-    // Jika file fisik BENAR-BENAR ada, langsung download!
     if (file_exists($filePath)) {
+        $mimeType = mime_content_type($filePath);
+
+        // Jika file berupa gambar, tampilkan di browser
+        if (str_starts_with($mimeType, 'image/')) {
+            return response()->file($filePath, [
+                'Content-Type' => $mimeType,
+                'Cache-Control' => 'public, max-age=86400' // Opsi cache agar loading lebih cepat
+            ]);
+        }
+        
+        // Jika file bukan gambar (misal PDF), lakukan download
         return response()->download($filePath);
     }
     
-    // Jika gagal, JANGAN tampilkan 404 gelap, tapi tampilkan teks detektif ini:
+    // Jika gagal, tampilkan pesan error
     return "<div style='font-family:sans-serif; padding:20px;'>
                 <h2 style='color:red;'>Pencarian File Gagal!</h2>
-                <p>Laravel mencari file fisik PDF kamu persis di dalam server pada jalur berikut:</p>
+                <p>Laravel mencari file fisik persis di dalam server pada jalur berikut:</p>
                 <div style='background:#f4f4f4; padding:10px; border-left:4px solid red;'>
                     <b>{$filePath}</b>
                 </div>

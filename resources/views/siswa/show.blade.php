@@ -52,10 +52,28 @@
                             <p class="text-sm text-gray-500 font-semibold">Status</p>
                             <p class="text-lg font-medium uppercase text-blue-600">{{ $siswa->status }}</p>
                         </div>
+
                         {{-- <div>
-                            <p class="text-sm text-gray-500 font-semibold">Total Poin</p>
-                            <p class="text-lg font-bold text-orange-500">{{ $siswa->total_poin }} Poin</p>
+                            <p class="text-sm text-gray-500 font-semibold">Total Poin Kehadiran</p>
+                            @php
+                                $nilaiAktif = $siswa->nilaiKehadiranAktif;
+                            @endphp
+
+                            @if ($nilaiAktif)
+                                <p class="text-lg font-bold text-orange-500">
+                                    {{ $poin }} Pts
+                                </p>
+                                <p class="text-xs text-gray-400 font-medium italic">
+                                    Semester:
+                                    {{ $nilaiAktif->tahunAjaran->tahun_ajaran ?? 'Data Semester Tidak Ditemukan' }}
+                                </p>
+                            @else
+                                <p class="text-lg font-bold text-gray-400">0 Pts</p>
+                                <p class="text-xs text-gray-400 font-medium italic">Belum ada data kehadiran semester
+                                    ini</p>
+                            @endif
                         </div> --}}
+
                     </div>
 
                     <hr class="my-6">

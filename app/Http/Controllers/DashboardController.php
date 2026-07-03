@@ -141,7 +141,7 @@ class DashboardController extends Controller
                 }
             }
 
-            $siswa->setAttribute('poin_keaktifan', ($hadir * 100) + ($izin * 10) + ($sakit * 10));
+            $siswa->setAttribute('poin_keaktifan', ($hadir * 5) + ($izin * 1) + ($sakit * 1));
             $siswa->setAttribute('persentase', $total_jadwal_period > 0 ? round(($hadir / $total_jadwal_period) * 100) : 0);
             $siswa->setAttribute('rata_rata_waktu_hadir', $jumlah_scan > 0 ? ($total_detik_kedatangan / $jumlah_scan) : 9999999); 
         }

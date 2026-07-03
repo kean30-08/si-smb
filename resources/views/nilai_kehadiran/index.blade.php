@@ -62,7 +62,7 @@
                                     <th scope="col" class="py-3 px-6">Nama Siswa</th>
                                     <th scope="col" class="py-3 px-6">NIS</th>
                                     <th scope="col" class="py-3 px-6">Kelas</th>
-                                    <th scope="col" class="py-3 px-6 text-center">Total Poin</th>
+                                    <th scope="col" class="py-3 px-6 text-center">Nilai</th>
 
                                     {{-- HEADER AKSI HANYA UNTUK ADMIN --}}
                                     @if (auth()->user()->isAdmin())
@@ -104,7 +104,8 @@
                                             <div class="flex items-center justify-between md:justify-center">
                                                 <span
                                                     class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Total
-                                                    Poin</span>
+                                                    Poin
+                                                </span>
                                                 <span
                                                     class="px-2 py-1 font-bold text-orange-600 bg-orange-50 rounded-full text-xs border border-orange-100">
                                                     {{ $nilai->total_poin }}

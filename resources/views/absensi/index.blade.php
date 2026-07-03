@@ -6,7 +6,8 @@
             </h2>
             {{-- TOMBOL SCANNER HANYA MUNCUL JIKA USER ADALAH PIC / ADMIN --}}
             @if ($type == 'siswa' && isset($selectedAgenda) && $isPic)
-                <a href="{{ route('absensi.scanner', ['agenda_id' => $selectedAgenda->id]) }}"
+                <a href="{{ route('absensi.scanner', ['agenda_id' => $selectedAgenda->id]) }}" id="btnScanner"
+                    {{-- TAMBAHKAN ID INI --}}
                     class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -48,6 +49,42 @@
                 </div>
 
                 <div class="p-4 sm:p-6 text-gray-900">
+                    {{-- PERINGATAN JADWAL LAMPAU --}}
+                    @if (isset($selectedAgenda))
+                        @php
+                            $tglAgenda = \Carbon\Carbon::parse($selectedAgenda->tanggal);
+                            // Cek apakah tanggal sudah lewat dan bukan hari ini
+                            $isLewat = $tglAgenda->isPast() && !$tglAgenda->isToday();
+                        @endphp
+
+                        @if ($isLewat)
+                            <div
+                                class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 rounded shadow-sm">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                                    <div class="mb-3 sm:mb-0">
+                                        <div class="flex items-center font-bold">
+                                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v2z" />
+                                            </svg>
+                                            Informasi Sesi Lampau
+                                        </div>
+                                        <p class="text-sm mt-1">
+                                            Agenda ini sudah berlalu pada tanggal
+                                            <strong>{{ $tglAgenda->translatedFormat('d F Y') }}</strong>.
+                                            Data kehadiran bersifat historis.
+                                        </p>
+                                    </div>
+                                    @if ($isPic)
+                                        <button type="button" id="btnToggleEdit" onclick="toggleEditMode()"
+                                            class="bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-2 px-4 rounded shadow transition whitespace-nowrap">
+                                            Aktifkan Edit
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+                    @endif
 
                     {{-- FILTER BARIS 1: TANGGAL, KELAS, CARI --}}
                     <form action="{{ route('absensi.index') }}" method="GET"
@@ -193,7 +230,10 @@
                                     </thead>
                                     <tbody class="block md:table-row-group">
                                         @foreach ($siswas as $index => $siswa)
-                                            @php $absenSiswa = $absensis->where('siswa_id', $siswa->id)->first(); @endphp
+                                            @php
+                                                $absenSiswa = $absensis->where('siswa_id', $siswa->id)->first();
+                                                $statusSaatIni = $absenSiswa ? $absenSiswa->status_kehadiran : 'alpa';
+                                            @endphp
                                             <tr
                                                 class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-50 transition mb-4 md:mb-0 rounded-lg md:rounded-none p-4 md:p-0">
                                                 <td class="hidden md:table-cell py-4 px-4">
@@ -208,18 +248,18 @@
                                                 </td>
                                                 <td class="hidden md:table-cell py-4 px-4">
                                                     {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</td>
+
+                                                {{-- STATUS KEHADIRAN (FORM PER BARIS) --}}
                                                 <td
                                                     class="block md:table-cell py-2 md:py-4 px-2 md:px-4 md:text-center mb-2 md:mb-0">
                                                     <div class="flex items-center justify-between md:justify-center">
                                                         <span
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                             Absensi</span>
-                                                        @php $statusSaatIni = $absenSiswa ? $absenSiswa->status_kehadiran : 'alpa'; @endphp
 
-                                                        {{-- LOGIKA KEAMANAN PIC --}}
                                                         @if ($isPic)
                                                             <form action="{{ route('absensi.manual') }}"
-                                                                method="POST" class="m-0">
+                                                                method="POST" class="m-0 w-full sm:w-auto">
                                                                 @csrf
                                                                 <input type="hidden" name="siswa_id"
                                                                     value="{{ $siswa->id }}">
@@ -227,12 +267,15 @@
                                                                     value="{{ $agenda_id }}">
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
+
                                                                 <select name="status" onchange="this.form.submit()"
-                                                                    class="text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
+                                                                    disabled
+                                                                    class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
                                                                     @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
                                                                     @elseif($statusSaatIni == 'hadir') bg-green-100 text-green-800 border-green-200
                                                                     @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
-                                                                    @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif">
+                                                                    @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif"
+                                                                    style="opacity: {{ $isLewat ? '0.5' : '1' }};">
                                                                     <option value="alpa" class="bg-white text-black"
                                                                         {{ $statusSaatIni == 'alpa' ? 'selected' : '' }}>
                                                                         Alpa</option>
@@ -248,7 +291,6 @@
                                                                 </select>
                                                             </form>
                                                         @else
-                                                            {{-- Tampilan Read-Only Jika Bukan PIC --}}
                                                             <div
                                                                 class="px-3 py-1 rounded-full text-xs font-bold border shadow-sm text-center
                                                                 @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
@@ -258,9 +300,10 @@
                                                                 {{ ucfirst($statusSaatIni) }}
                                                             </div>
                                                         @endif
-
                                                     </div>
                                                 </td>
+
+                                                {{-- WAKTU KEHADIRAN --}}
                                                 <td
                                                     class="block md:table-cell py-2 md:py-4 px-2 md:px-4 md:text-center text-xs text-gray-600">
                                                     <div class="flex items-center justify-between md:justify-center">
@@ -270,10 +313,16 @@
                                                         <div
                                                             class="text-right md:text-center font-medium text-gray-800 md:text-gray-600">
                                                             @if ($absenSiswa && $absenSiswa->waktu_hadir)
-                                                                {{ \Carbon\Carbon::parse($absenSiswa->waktu_hadir)->format('H:i:s') }}
-                                                                <span class="hidden md:inline"><br></span>
+                                                                @php $dt = \Carbon\Carbon::parse($absenSiswa->waktu_hadir); @endphp
                                                                 <span
-                                                                    class="text-[10px] text-gray-400 ml-1 md:ml-0">({{ ucfirst($absenSiswa->metode_absen) }})</span>
+                                                                    class="block md:inline">{{ $dt->format('d/m/Y') }}</span>
+                                                                <span
+                                                                    class="hidden md:inline mx-1 text-gray-400 font-light">|</span>
+                                                                <span
+                                                                    class="block md:inline">{{ $dt->format('H:i:s') }}</span>
+                                                                <div class="text-[10px] text-gray-400">
+                                                                    ({{ ucfirst($absenSiswa->metode_absen) }})
+                                                                </div>
                                                             @else
                                                                 <span class="text-gray-400">-</span>
                                                             @endif
@@ -306,7 +355,14 @@
                                     </thead>
                                     <tbody class="block md:table-row-group">
                                         @foreach ($pengajars as $index => $pengajar)
-                                            @php $absenPengajar = $absensiPengajars->where('pengajar_id', $pengajar->id)->first(); @endphp
+                                            @php
+                                                $absenPengajar = $absensiPengajars
+                                                    ->where('pengajar_id', $pengajar->id)
+                                                    ->first();
+                                                $statusSaatIni = $absenPengajar
+                                                    ? $absenPengajar->status_kehadiran
+                                                    : 'alpa';
+                                            @endphp
                                             <tr
                                                 class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-50 transition mb-4 md:mb-0 rounded-lg md:rounded-none p-4 md:p-0">
                                                 <td class="hidden md:table-cell py-4 px-4">
@@ -320,18 +376,18 @@
                                                 </td>
                                                 <td class="hidden md:table-cell py-4 px-4">
                                                     {{ $pengajar->jabatan->nama_jabatan ?? '-' }}</td>
+
+                                                {{-- STATUS KEHADIRAN (FORM PER BARIS) --}}
                                                 <td
                                                     class="block md:table-cell py-2 md:py-4 px-2 md:px-4 md:text-center mb-2 md:mb-0">
                                                     <div class="flex items-center justify-between md:justify-center">
                                                         <span
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                             Absensi</span>
-                                                        @php $statusSaatIni = $absenPengajar ? $absenPengajar->status_kehadiran : 'alpa'; @endphp
 
-                                                        {{-- LOGIKA KEAMANAN PIC --}}
                                                         @if ($isPic)
                                                             <form action="{{ route('absensi.manualPengajar') }}"
-                                                                method="POST" class="m-0">
+                                                                method="POST" class="m-0 w-full sm:w-auto">
                                                                 @csrf
                                                                 <input type="hidden" name="pengajar_id"
                                                                     value="{{ $pengajar->id }}">
@@ -339,12 +395,15 @@
                                                                     value="{{ $agenda_id }}">
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
+
                                                                 <select name="status" onchange="this.form.submit()"
-                                                                    class="text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
+                                                                    disabled
+                                                                    class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
                                                                     @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
                                                                     @elseif($statusSaatIni == 'hadir') bg-amber-100 text-amber-800 border-amber-200
                                                                     @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
-                                                                    @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif">
+                                                                    @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif"
+                                                                    style="opacity: {{ $isLewat ? '0.5' : '1' }};">
                                                                     <option value="alpa" class="bg-white text-black"
                                                                         {{ $statusSaatIni == 'alpa' ? 'selected' : '' }}>
                                                                         Alpa</option>
@@ -360,7 +419,6 @@
                                                                 </select>
                                                             </form>
                                                         @else
-                                                            {{-- Tampilan Read-Only Jika Bukan PIC --}}
                                                             <div
                                                                 class="px-3 py-1 rounded-full text-xs font-bold border shadow-sm text-center
                                                                 @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
@@ -370,9 +428,10 @@
                                                                 {{ ucfirst($statusSaatIni) }}
                                                             </div>
                                                         @endif
-
                                                     </div>
                                                 </td>
+
+                                                {{-- WAKTU KEHADIRAN --}}
                                                 <td
                                                     class="block md:table-cell py-2 md:py-4 px-2 md:px-4 md:text-center text-xs text-gray-600">
                                                     <div class="flex items-center justify-between md:justify-center">
@@ -382,7 +441,13 @@
                                                         <div
                                                             class="text-right md:text-center font-medium text-gray-800 md:text-gray-600">
                                                             @if ($absenPengajar && $absenPengajar->waktu_hadir)
-                                                                {{ \Carbon\Carbon::parse($absenPengajar->waktu_hadir)->format('H:i:s') }}
+                                                                @php $dt = \Carbon\Carbon::parse($absenPengajar->waktu_hadir); @endphp
+                                                                <span
+                                                                    class="block md:inline">{{ $dt->format('d/m/Y') }}</span>
+                                                                <span
+                                                                    class="hidden md:inline mx-1 text-gray-400 font-light">|</span>
+                                                                <span
+                                                                    class="block md:inline">{{ $dt->format('H:i:s') }}</span>
                                                             @else
                                                                 <span class="text-gray-400">-</span>
                                                             @endif
@@ -402,4 +467,50 @@
             </div>
         </div>
     </div>
+
+    {{-- SCRIPT UNTUK MEMPERTAHANKAN STATUS EDIT MODE --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnToggleEdit = document.getElementById('btnToggleEdit');
+
+            // Jika tidak ada tombol "Aktifkan Edit", berarti ini bukan jadwal lampau (hari ini/akan datang).
+            // Hentikan script agar dropdown dan tombol scanner tetap terbuka normal.
+            if (!btnToggleEdit) return;
+
+            const isEditMode = localStorage.getItem('editMode') === 'true';
+            applyEditMode(isEditMode);
+        });
+
+        function toggleEditMode() {
+            const isCurrentlyEnabled = localStorage.getItem('editMode') === 'true';
+            const newState = !isCurrentlyEnabled;
+            localStorage.setItem('editMode', newState);
+            applyEditMode(newState);
+        }
+
+        function applyEditMode(enabled) {
+            const dropdowns = document.querySelectorAll('.status-dropdown');
+            const btnToggleEdit = document.getElementById('btnToggleEdit');
+            const btnScanner = document.getElementById('btnScanner'); // Mengambil elemen tombol scanner
+
+            // 1. Atur dropdown absensi
+            dropdowns.forEach(el => {
+                el.disabled = !enabled;
+                el.style.opacity = enabled ? "1" : "0.5";
+            });
+
+            // 2. Atur gaya tombol edit
+            if (btnToggleEdit) {
+                btnToggleEdit.innerText = enabled ? 'Mode Edit Aktif' : 'Aktifkan Edit';
+                btnToggleEdit.className = enabled ?
+                    'bg-green-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition' :
+                    'bg-yellow-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition';
+            }
+
+            // 3. Tampilkan atau Sembunyikan Tombol Kamera Scanner
+            if (btnScanner) {
+                btnScanner.style.display = enabled ? 'flex' : 'none';
+            }
+        }
+    </script>
 </x-app-layout>

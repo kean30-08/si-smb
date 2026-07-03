@@ -22,7 +22,15 @@
                         </x-nav-link>
                     @endauth
 
+                    {{-- ================================================== --}}
                     {{-- MENU UNTUK SEMUA ORANG (PUBLIK & LOGIN) --}}
+                    {{-- ================================================== --}}
+
+                    {{-- 1. Tambahan Tab Pemberitahuan --}}
+                    <x-nav-link :href="route('pemberitahuan.index')" :active="request()->routeIs('pemberitahuan.*')">
+                        {{ __('Pemberitahuan') }}
+                    </x-nav-link>
+
                     <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
                         {{ __('Agenda') }}
                     </x-nav-link>
@@ -31,7 +39,9 @@
                         {{ __('Materi') }}
                     </x-nav-link>
 
+                    {{-- ================================================== --}}
                     {{-- MENU LAINNYA HANYA UNTUK YANG LOGIN --}}
+                    {{-- ================================================== --}}
                     @auth
                         <x-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
                             {{ __('Absensi') }}
@@ -64,12 +74,10 @@
                                 </x-slot>
 
                                 <x-slot name="content">
-                                    {{-- Ganti URL '#' dengan route jika sudah dibuat, misal: route('tahun_ajaran.index') --}}
                                     <x-dropdown-link href="{{ route('tahun_ajaran.index') }}">
                                         {{ __('Tahun Ajaran') }}
                                     </x-dropdown-link>
 
-                                    {{-- Ganti URL '#' dengan route jika sudah dibuat, misal: route('nilai_kehadiran.index') --}}
                                     <x-dropdown-link href="{{ route('nilai_kehadiran.index') }}">
                                         {{ __('Nilai Siswa') }}
                                     </x-dropdown-link>
@@ -149,6 +157,9 @@
         </div>
     </div>
 
+    {{-- ========================================================= --}}
+    {{-- MENU MOBILE (RESPONSIVE) --}}
+    {{-- ========================================================= --}}
     <div :class="{ 'block': open, 'hidden': !open }" class="hidden lg:hidden">
         <div class="pt-2 pb-3 space-y-1">
 
@@ -157,6 +168,11 @@
                     {{ __('Dashboard') }}
                 </x-responsive-nav-link>
             @endauth
+
+            {{-- Tab Pemberitahuan Mobile --}}
+            <x-responsive-nav-link :href="route('pemberitahuan.index')" :active="request()->routeIs('pemberitahuan.*')">
+                {{ __('Pemberitahuan') }}
+            </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
                 {{ __('Agenda') }}

@@ -67,9 +67,30 @@ class SiswaController extends Controller
      * @return \Illuminate\View\View
      */
     public function show(Siswa $siswa)
-    {
-        return view('siswa.show', compact('siswa'));
+{
+    // 1. Load relasi tahun ajaran agar bisa menampilkan nama semester
+    $siswa->load('nilaiKehadiranAktif.kelas', 'nilaiKehadiranAktif.tahunAjaran');
+
+    // 2. Hitung poin secara dinamis menggunakan rumus yang sama dengan Dashboard
+    $poin = 0;
+    $nilaiAktif = $siswa->nilaiKehadiranAktif;
+
+    if ($nilaiAktif) {
+        $absensi = \App\Models\Absensi::where('siswa_id', $siswa->id)
+            ->whereHas('agenda', function($q) use ($nilaiAktif) {
+                $q->where('tahun_ajaran_id', $nilaiAktif->tahun_ajaran_id);
+            })->get();
+
+        $hadir = $absensi->where('status_kehadiran', 'hadir')->count();
+        $izin = $absensi->where('status_kehadiran', 'izin')->count();
+        $sakit = $absensi->where('status_kehadiran', 'sakit')->count();
+
+        // RUMUS YANG SAMA DENGAN DASHBOARD
+        $poin = ($hadir * 5) + ($izin * 1) + ($sakit * 1);
     }
+
+    return view('siswa.show', compact('siswa', 'poin'));
+}
 
     /**
      * Menampilkan formulir pendaftaran siswa baru.

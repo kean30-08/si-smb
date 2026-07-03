@@ -16,12 +16,58 @@ use Illuminate\Validation\Rule;
 class AgendaController extends Controller
 {
     /**
+     * FUNGSI BANTUAN (HELPER) UNTUK MENGUBAH STRING TAHUN AJARAN JADI ANGKA
+     * Contoh: "2025/2026 Ganjil" -> 20251
+     * "2025/2026 Genap"  -> 20252
+     * Berguna untuk menentukan mana semester yang lampau dan mana yang baru.
+     */
+    private function getTaWeight($taString)
+    {
+        $parts = explode(' ', $taString);
+        if (count($parts) < 2) return 0;
+
+        $years = explode('/', $parts[0]);
+        $baseYear = (int)$years[0]; 
+        
+        $semester = strtolower($parts[1]) == 'ganjil' ? 1 : 2;
+        
+        return ($baseYear * 10) + $semester; 
+    }
+
+    /**
      * FUNGSI BANTUAN (HELPER) UNTUK VALIDASI RENTANG SEMESTER
-     * Mencegah penyisipan jadwal di antara tanggal awal dan akhir semester lain.
+     * Mencegah penyisipan jadwal di antara tanggal lain & Menjaga Urutan Kronologis
      */
     private function checkSemesterOverlap($tanggal, $currentTaId)
     {
         if (!$currentTaId) return null;
+
+        $currentTa = TahunAjaran::find($currentTaId);
+        if (!$currentTa) return null;
+
+        // =====================================================================
+        // ATURAN 0: Validasi Tahun Input vs Rentang Tahun Ajaran
+        // Memastikan tanggal tidak melenceng dari tahun yang tertera di nama TA
+        // Contoh: "2025/2026 Genap" -> hanya menerima tahun 2025 atau 2026
+        // =====================================================================
+        $taString = $currentTa->tahun_ajaran;
+        $parts = explode(' ', $taString);
+        if (count($parts) >= 1) {
+            $years = explode('/', $parts[0]);
+            if (count($years) == 2) {
+                $startYear = (int)$years[0];
+                $endYear = (int)$years[1];
+                $inputYear = (int) Carbon::parse($tanggal)->year;
+
+                if ($inputYear < $startYear || $inputYear > $endYear) {
+                    $tanggalFormat = Carbon::parse($tanggal)->translatedFormat('d M Y');
+                    return "Gagal! Tanggal $tanggalFormat (Tahun $inputYear) tidak valid karena berada di luar cakupan Tahun Ajaran yang dipilih ($startYear - $endYear).";
+                }
+            }
+        }
+        
+        // Dapatkan "Bobot Umur" semester saat ini
+        $currentWeight = $this->getTaWeight($currentTa->tahun_ajaran);
 
         // Cari rentang wilayah (Tanggal Awal s/d Tanggal Akhir) dari SETIAP Tahun Ajaran LAIN
         $rentangSemesterLain = Agenda::select('tahun_ajaran_id', DB::raw('MIN(tanggal) as start_date'), DB::raw('MAX(tanggal) as end_date'))
@@ -31,13 +77,29 @@ class AgendaController extends Controller
             ->get();
 
         foreach ($rentangSemesterLain as $rentang) {
-            // Jika tanggal yang diinput jatuh di DALAM wilayah semester lain, BLOKIR!
+            $lainTa = TahunAjaran::find($rentang->tahun_ajaran_id);
+            if (!$lainTa) continue;
+            
+            $lainWeight = $this->getTaWeight($lainTa->tahun_ajaran);
+            $namaTaLain = $lainTa->tahun_ajaran;
+            
+            $startFormat = Carbon::parse($rentang->start_date)->translatedFormat('d M Y');
+            $endFormat = Carbon::parse($rentang->end_date)->translatedFormat('d M Y');
+            $tanggalFormat = Carbon::parse($tanggal)->translatedFormat('d M Y');
+
+            // ATURAN 1: Tidak boleh menyusup (Overlap langsung di tengah-tengah jadwal lain)
             if ($tanggal >= $rentang->start_date && $tanggal <= $rentang->end_date) {
-                $namaTa = TahunAjaran::find($rentang->tahun_ajaran_id)->tahun_ajaran ?? 'Semester Lain';
-                $startFormat = Carbon::parse($rentang->start_date)->translatedFormat('d M Y');
-                $endFormat = Carbon::parse($rentang->end_date)->translatedFormat('d M Y');
-                
-                return "Gagal! Tanggal $tanggal menyusup di dalam rentang waktu $namaTa ($startFormat s/d $endFormat). Silakan pilih tanggal setelah semester tersebut berakhir.";
+                return "Gagal! Tanggal $tanggalFormat menyusup di dalam rentang waktu $namaTaLain ($startFormat s/d $endFormat).";
+            }
+
+            // ATURAN 2: Kronologis Logis (Semester Lama tidak boleh melangkahi Semester Baru)
+            if ($currentWeight < $lainWeight && $tanggal >= $rentang->start_date) {
+                return "Gagal kronologis! Semester {$currentTa->tahun_ajaran} adalah semester lampau, tidak boleh membuat agenda pada $tanggalFormat yang melangkahi jadwal masa depan ($namaTaLain yang dimulai sejak $startFormat).";
+            }
+
+            // ATURAN 3: Kronologis Logis (Semester Baru tidak boleh mundur mendahului Semester Lama)
+            if ($currentWeight > $lainWeight && $tanggal <= $rentang->end_date) {
+                return "Gagal kronologis! Semester {$currentTa->tahun_ajaran} adalah semester baru, tidak boleh membuat agenda pada $tanggalFormat yang mundur mendahului jadwal lampau ($namaTaLain yang baru berakhir pada $endFormat).";
             }
         }
         
@@ -45,7 +107,7 @@ class AgendaController extends Controller
         $existing = Agenda::where('tanggal', $tanggal)->where('tahun_ajaran_id', '!=', $currentTaId)->first();
         if ($existing) {
              $namaTa = $existing->tahunAjaran->tahun_ajaran ?? 'Semester Lain';
-             return "Gagal! Tanggal $tanggal sudah dimiliki oleh $namaTa.";
+             return "Gagal! Tanggal " . Carbon::parse($tanggal)->translatedFormat('d M Y') . " sudah di-booking oleh $namaTa.";
         }
 
         return null;

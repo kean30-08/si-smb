@@ -180,14 +180,33 @@ class DataDummy extends Seeder
         }
 
         // 7. FINALISASI REKAPITULASI POIN KEHADIRAN DUMMY
+        // 7. FINALISASI REKAPITULASI POIN KEHADIRAN DUMMY
         foreach(NilaiKehadiran::all() as $nk) {
-            $totalHadirSemesterIni = Absensi::where('siswa_id', $nk->siswa_id)
+            // Hitung Hadir
+            $totalHadir = Absensi::where('siswa_id', $nk->siswa_id)
                 ->where('status_kehadiran', 'hadir')
                 ->whereHas('agenda', function($q) use ($nk) {
                     $q->where('tahun_ajaran_id', $nk->tahun_ajaran_id);
                 })->count();
             
-            $nk->update(['total_poin' => $totalHadirSemesterIni * 10]);
+            // Hitung Izin
+            $totalIzin = Absensi::where('siswa_id', $nk->siswa_id)
+                ->where('status_kehadiran', 'izin')
+                ->whereHas('agenda', function($q) use ($nk) {
+                    $q->where('tahun_ajaran_id', $nk->tahun_ajaran_id);
+                })->count();
+
+            // Hitung Sakit
+            $totalSakit = Absensi::where('siswa_id', $nk->siswa_id)
+                ->where('status_kehadiran', 'sakit')
+                ->whereHas('agenda', function($q) use ($nk) {
+                    $q->where('tahun_ajaran_id', $nk->tahun_ajaran_id);
+                })->count();
+
+            // Update Poin (Hadir*5, Izin*1, Sakit*1)
+            $nk->update([
+                'total_poin' => ($totalHadir * 5) + ($totalIzin * 1) + ($totalSakit * 1)
+            ]);
         }
     }
 }

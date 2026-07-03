@@ -136,7 +136,7 @@
                 <div
                     class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500 font-semibold mb-1">Total Agenda Harian</p>
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Total Agenda</p>
                         <h3 class="text-2xl font-bold text-gray-800">{{ $total_agenda_harian }} <span
                                 class="text-xs font-normal text-gray-400">Jadwal</span></h3>
                     </div>
