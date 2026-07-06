@@ -71,36 +71,70 @@ class ProfileController extends Controller
         return Redirect::to('/');
     }
 
-    // Fungsi Mengirim OTP ke Email Lama
+    /**
+     * Fungsi Mengirim OTP untuk Verifikasi Keamanan Profil
+     * Mendukung 2 tahap (Target 'old' dan 'new')
+     */
     public function sendOtp(Request $request)
     {
         $user = auth()->user();
+        $target = $request->input('target', 'old'); // default ke 'old'
         $otp = rand(100000, 999999);
 
+        // Tentukan email tujuan dan nama kunci cache berdasarkan target
+        if ($target === 'new') {
+            $request->validate([
+                'new_email' => 'required|email|unique:users,email',
+            ]);
+            $emailToSend = $request->new_email;
+            $cacheKey = 'otp_profile_new_' . $user->id;
+        } else {
+            $emailToSend = $user->email;
+            $cacheKey = 'otp_profile_old_' . $user->id;
+        }
+
         // Simpan OTP di Cache selama 5 menit
-        Cache::put('otp_profile_' . $user->id, $otp, now()->addMinutes(5));
+        Cache::put($cacheKey, $otp, now()->addMinutes(5));
+
+        // Sensor email untuk ditampilkan di respons
+        $maskedEmail = preg_replace('/(?<=..)[^@]+(?=@)/', '***', $emailToSend);
 
         try {
-            Mail::to($user->email)->send(new OtpProfileMail($otp));
+            // Kirim OTP
+            Mail::to($emailToSend)->send(new OtpProfileMail($otp));
             
-            // Sensor email untuk ditampilkan di alert
-            $maskedEmail = preg_replace('/(?<=..)[^@]+(?=@)/', '***', $user->email);
-            return response()->json(['success' => true, 'message' => 'Kode OTP berhasil dikirim ke email lama Anda: ' . $maskedEmail]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode OTP berhasil dikirim ke: ' . $maskedEmail
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengirim email OTP. Pastikan koneksi internet aktif.']);
+            Cache::forget($cacheKey);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim email OTP. Pastikan koneksi internet aktif atau coba lagi nanti.'
+            ]);
         }
     }
 
-    // Fungsi Validasi OTP
+    /**
+     * Fungsi Validasi OTP
+     * Mendukung pemisahan verifikasi antara email lama dan baru
+     */
     public function verifyOtp(Request $request)
     {
-        $request->validate(['otp' => 'required']);
+        $request->validate([
+            'otp' => 'required',
+            'target' => 'required'
+        ]);
+
         $user = auth()->user();
+        $target = $request->target;
+        $cacheKey = $target === 'new' ? 'otp_profile_new_' . $user->id : 'otp_profile_old_' . $user->id;
         
-        $cachedOtp = Cache::get('otp_profile_' . $user->id);
+        $cachedOtp = Cache::get($cacheKey);
 
         if ($cachedOtp && $cachedOtp == $request->otp) {
-            Cache::forget('otp_profile_' . $user->id); // Hapus OTP setelah sukses terpakai
+            Cache::forget($cacheKey); // Hapus OTP setelah sukses terpakai
             return response()->json(['success' => true]);
         }
 

@@ -169,4 +169,65 @@ class DashboardController extends Controller
             'tahunAjarans', 'selected_ta_id'
         ));
     }
+    
+    public function peringkatDetail(Request $request)
+    {
+        $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $sort = $request->input('sort', 'desc'); // default: 'desc' (tertinggi)
+
+        // Ambil data siswa dengan relasi kelas
+        $query = \App\Models\Siswa::with('nilaiKehadiranAktif.kelas');
+
+        if ($search) {
+            $query->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%");
+        }
+
+        $siswas = $query->get();
+
+        // Hitung poin dan kehadiran berdasarkan rentang tanggal
+        $peringkat = $siswas->map(function ($siswa) use ($startDate, $endDate) {
+            $absensiQuery = \App\Models\Absensi::where('siswa_id', $siswa->id);
+
+            // Filter rentang waktu jika diisi
+            if ($startDate && $endDate) {
+                $absensiQuery->whereHas('agenda', function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('tanggal', [$startDate, $endDate]);
+                });
+            }
+
+            $absensi = $absensiQuery->get();
+
+            $hadir = $absensi->where('status_kehadiran', 'hadir')->count();
+            $izin = $absensi->where('status_kehadiran', 'izin')->count();
+            $sakit = $absensi->where('status_kehadiran', 'sakit')->count();
+            $alpa = $absensi->where('status_kehadiran', 'alpa')->count();
+
+            $total = $hadir + $izin + $sakit + $alpa;
+            $persentase = $total > 0 ? round(($hadir / $total) * 100) : 0;
+            
+            // Rumus Poin (Sesuai dengan yang Anda buat sebelumnya)
+            $poin = ($hadir * 5) + ($izin * 1) + ($sakit * 1); 
+
+            $siswa->total_hadir = $hadir;
+            $siswa->total_izin = $izin;
+            $siswa->total_sakit = $sakit;
+            $siswa->total_alpa = $alpa;
+            $siswa->persentase = $persentase;
+            $siswa->poin_keaktifan = $poin;
+
+            return $siswa;
+        });
+
+        // Urutkan berdasarkan filter
+        if ($sort === 'asc') {
+            $peringkat = $peringkat->sortBy('poin_keaktifan')->values();
+        } else {
+            $peringkat = $peringkat->sortByDesc('poin_keaktifan')->values();
+        }
+
+        return view('dashboard.peringkat', compact('peringkat', 'search', 'startDate', 'endDate', 'sort'));
+    }
 }

@@ -81,6 +81,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::put('/siswa/{siswa}', [SiswaController::class, 'update'])->name('siswa.update');
     Route::delete('/siswa/{siswa}', [SiswaController::class, 'destroy'])->name('siswa.destroy');
     Route::get('/siswa/{siswa}/cetak-kartu', [SiswaController::class, 'cetakKartu'])->name('siswa.cetakKartu');
+    Route::get('/siswa/cetak-massal', [SiswaController::class, 'cetakMassal'])->name('siswa.cetakMassal');
 
     // === KELAS ===
     Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
@@ -125,6 +126,8 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/dashboard/peringkat', [DashboardController::class, 'peringkatDetail'])->name('dashboard.peringkat');
     
     // --- TAMBAHAN RUTE OTP PROFIL ---
     Route::post('/profile/send-otp', [ProfileController::class, 'sendOtp'])->name('profile.sendOtp');

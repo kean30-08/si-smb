@@ -23,7 +23,7 @@
                 </div>
             </div>
 
-            {{-- Form Ganti Password (Sudah di-uncomment) --}}
+            {{-- Form Ganti Password --}}
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <div class="w-full md:max-w-4xl mx-auto">
                     @include('profile.partials.update-password-form')
@@ -78,59 +78,86 @@
         </div>
     </div>
 
-    {{-- SCRIPT PENCEGAT FORM & AJAX OTP --}}
-    {{-- SCRIPT PENCEGAT FORM & AJAX OTP DENGAN SWEETALERT --}}
     <script>
         let pendingForm = null;
         let currentEmail = "{{ auth()->user()->email }}";
         let otpModal = document.getElementById('otpModal');
         let otpMessage = document.getElementById('otpMessage');
         let btnVerifikasi = document.getElementById('btnVerifikasi');
+        let otpInput = document.getElementById('otpInput');
 
-        // Pencegat Form Email
+        // State Manajemen OTP
+        let isChangingEmail = false;
+        let currentOtpStep = 1; // 1: Verif Email Lama, 2: Verif Email Baru
+        let newEmailInputVal = "";
+
+        /**
+         * Pencegat Form Email
+         */
         function handleProfileSubmit(e) {
-            let newEmail = document.getElementById('email').value;
-            // Jika email diubah, cegat dan minta OTP
-            if (newEmail.trim() !== currentEmail.trim()) {
+            newEmailInputVal = document.getElementById('email').value;
+            // Jika email diubah, mulai dari step 1 (email lama)
+            if (newEmailInputVal.trim() !== currentEmail.trim()) {
                 e.preventDefault();
                 pendingForm = document.getElementById('profileForm');
-                openOtpModal();
+                isChangingEmail = true;
+                currentOtpStep = 1;
+                triggerSendOtp();
             }
-            // Jika email tidak berubah, biarkan form ter-submit secara normal
         }
 
-        // Pencegat Form Password
+        /**
+         * Pencegat Form Password
+         */
         function handlePasswordSubmit(e) {
-            e.preventDefault(); // Selalu cegat jika mau ganti password
+            e.preventDefault();
             pendingForm = document.getElementById('passwordForm');
-            openOtpModal();
+            isChangingEmail = false;
+            currentOtpStep = 1; // Hanya butuh 1 step untuk ganti password
+            triggerSendOtp();
         }
 
-        function openOtpModal() {
+        /**
+         * Mengirim request pengiriman OTP ke backend
+         */
+        function triggerSendOtp() {
             otpModal.classList.remove('hidden');
-            document.getElementById('otpInput').value = '';
-
-            btnVerifikasi.innerHTML = 'Mengirim OTP...';
+            otpInput.value = '';
+            btnVerifikasi.innerHTML = 'Mengirim...';
             btnVerifikasi.disabled = true;
-            otpMessage.innerHTML = 'Sedang mengirimkan kode ke email lama Anda...';
+
+            // Tentukan target: Jika sedang ganti email & sudah step 2, targetnya 'new'
+            let target = (isChangingEmail && currentOtpStep === 2) ? 'new' : 'old';
+            let data = {
+                target: target
+            };
+
+            if (target === 'new') {
+                data.new_email = newEmailInputVal;
+                otpMessage.innerHTML = 'Tahap 2/2: Sedang mengirimkan kode ke email BARU Anda...';
+            } else {
+                otpMessage.innerHTML = (isChangingEmail ? 'Tahap 1/2: ' : '') +
+                    'Sedang mengirimkan kode keamanan ke email LAMA Anda...';
+            }
 
             fetch("{{ route('profile.sendOtp') }}", {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Accept': 'application/json'
-                }
-            }).then(r => r.json()).then(data => {
-                if (data.success) {
+                },
+                body: JSON.stringify(data)
+            }).then(r => r.json()).then(res => {
+                if (res.success) {
                     btnVerifikasi.innerHTML = 'Verifikasi';
                     btnVerifikasi.disabled = false;
-                    otpMessage.innerHTML = data.message;
+                    otpMessage.innerHTML = res.message;
 
-                    // Notif Pop-up Berhasil Kirim
                     Swal.fire({
                         icon: 'info',
-                        title: 'Cek Email Anda',
-                        text: data.message,
+                        title: target === 'new' ? 'Cek Email Baru' : 'Cek Email Lama',
+                        text: res.message,
                         confirmButtonColor: '#3085d6',
                     });
                 } else {
@@ -138,17 +165,15 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Gagal!',
-                        text: data.message,
-                        confirmButtonColor: '#d33',
+                        text: res.message
                     });
                 }
             }).catch(err => {
                 closeOtpModal();
                 Swal.fire({
                     icon: 'error',
-                    title: 'Kesalahan Jaringan',
-                    text: 'Gagal terhubung ke server. Periksa koneksi internet Anda.',
-                    confirmButtonColor: '#d33',
+                    title: 'Error Jaringan',
+                    text: 'Gagal terhubung ke server.'
                 });
             });
         }
@@ -159,19 +184,20 @@
         }
 
         function submitOtp() {
-            let otp = document.getElementById('otpInput').value;
+            let otp = otpInput.value;
             if (otp.length < 6) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Perhatian',
-                    text: 'Masukkan 6 digit OTP terlebih dahulu.',
-                    confirmButtonColor: '#f8bb86',
+                    text: 'Masukkan 6 digit OTP.'
                 });
                 return;
             }
 
             btnVerifikasi.innerHTML = 'Mengecek...';
             btnVerifikasi.disabled = true;
+
+            let target = (isChangingEmail && currentOtpStep === 2) ? 'new' : 'old';
 
             fetch("{{ route('profile.verifyOtp') }}", {
                 method: 'POST',
@@ -181,42 +207,52 @@
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    otp: otp
+                    otp: otp,
+                    target: target
                 })
-            }).then(r => r.json()).then(data => {
-                if (data.success) {
-                    // OTP Valid! Sembunyikan modal dan tampilkan animasi sukses SweetAlert
-                    otpModal.classList.add('hidden');
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Verifikasi Berhasil!',
-                        text: 'Menyimpan perubahan data Anda...',
-                        showConfirmButton: false,
-                        timer: 1500,
-                        timerProgressBar: true
-                    }).then(() => {
-                        pendingForm.submit(); // Lepaskan form setelah animasi SweetAlert selesai
-                    });
-
+            }).then(r => r.json()).then(res => {
+                if (res.success) {
+                    if (isChangingEmail && currentOtpStep === 1) {
+                        // Verifikasi tahap 1 berhasil, lanjut ke tahap 2 (Email Baru)
+                        currentOtpStep = 2;
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Email Lama Terverifikasi',
+                            text: 'Memproses pengiriman ke email baru...',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            triggerSendOtp
+                        (); // Panggil fungsi kirim OTP lagi, sekarang otomatis target="new"
+                        });
+                    } else {
+                        // Selesai! (Bisa karena ganti password saja, atau sudah melalui step 2 ganti email)
+                        otpModal.classList.add('hidden');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Verifikasi Tuntas!',
+                            text: 'Menyimpan perubahan data Anda...',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            pendingForm.submit();
+                        });
+                    }
                 } else {
-                    // OTP Salah
                     Swal.fire({
                         icon: 'error',
                         title: 'Akses Ditolak!',
-                        text: data.message,
-                        confirmButtonColor: '#d33',
+                        text: res.message
                     });
                     btnVerifikasi.innerHTML = 'Verifikasi';
                     btnVerifikasi.disabled = false;
-                    document.getElementById('otpInput').value = ''; // Kosongkan input
+                    otpInput.value = '';
                 }
             }).catch(err => {
                 Swal.fire({
                     icon: 'error',
                     title: 'Terjadi Kesalahan',
-                    text: 'Gagal memverifikasi OTP. Coba lagi.',
-                    confirmButtonColor: '#d33',
+                    text: 'Gagal memverifikasi OTP.'
                 });
                 btnVerifikasi.innerHTML = 'Verifikasi';
                 btnVerifikasi.disabled = false;

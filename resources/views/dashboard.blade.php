@@ -236,6 +236,12 @@
                                 <p class="text-sm text-gray-500 italic text-center py-4">Belum ada data absensi.</p>
                             @endif
                         </ul>
+                        <div class="mt-6 text-center">
+                            <a href="{{ route('dashboard.peringkat') }}"
+                                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 transition ease-in-out duration-150">
+                                Lihat Detail Peringkat &rarr;
+                            </a>
+                        </div>
                     </div>
                 </div>
 

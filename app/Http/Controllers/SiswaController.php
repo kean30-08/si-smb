@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Siswa;
 use App\Models\Kelas;
 use App\Models\TahunAjaran;
@@ -239,4 +240,13 @@ class SiswaController extends Controller
         $siswa->load('nilaiKehadiranAktif.kelas'); 
         return view('siswa.partials.cetak_kartu', compact('siswa'));
     }
+
+   public function cetakMassal()
+{
+    // Mengambil semua siswa beserta relasi kelasnya
+    $siswa = \App\Models\Siswa::with('nilaiKehadiranAktif.kelas')->get();
+
+    // Mengarahkan ke file view untuk cetak massal
+    return view('siswa.partials.cetak_massal', compact('siswa'));
+}
 }

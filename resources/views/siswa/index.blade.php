@@ -6,6 +6,11 @@
                 {{ __('Daftar Siswa') }}
             </h2>
 
+            <a href="{{ route('siswa.cetakMassal') }}"
+                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Cetak Semua Kartu
+            </a>
+
             @if ($isAdmin)
                 <div class="w-full sm:w-auto flex">
                     <a href="{{ route('siswa.create') }}"

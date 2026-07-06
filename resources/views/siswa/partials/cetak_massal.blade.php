@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Identitas Pelajar - {{ $siswa->nama_lengkap }}</title>
+    <title>Cetak Massal Kartu Pelajar</title>
     <style>
         /* Mengatur kertas A4 Portrait */
         @page {
@@ -20,15 +20,19 @@
             padding: 0;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-
-            /* Untuk cetak individu, posisikan kartu di tengah layar saat preview */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding-top: 20mm;
         }
 
-        /* Ukuran standar ID Card (90mm x 55mm) - SAMA PERSIS DENGAN CETAK MASSAL */
+        /* Container utama menggunakan Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            /* 2 Kolom */
+            gap: 5mm;
+            /* Jarak antar kartu */
+            justify-items: center;
+        }
+
+        /* Ukuran standar ID Card (90mm x 55mm) */
         .kartu {
             width: 90mm;
             height: 55mm;
@@ -39,6 +43,7 @@
             display: flex;
             flex-direction: column;
             page-break-inside: avoid;
+            /* PENTING: Mencegah kartu terpotong di tengah halaman */
         }
 
         /* Bagian Header Kartu */
@@ -111,38 +116,46 @@
 
 <body onload="window.print()">
 
-    <div class="kartu">
-        <div class="header">
-            <h1>Kartu Identitas</h1>
-            <p>Pendidikan Anak Sekolah Minggu Buddha</p>
-        </div>
+    <div class="grid-container">
+        {{-- Looping semua data siswa --}}
+        @foreach ($siswa as $s)
+            <div class="kartu">
 
-        <div class="content">
-            {{-- QR Code diubah ukurannya menjadi 55 --}}
-            <div class="qr-section">
-                {!! QrCode::size(55)->margin(1)->generate('SMB-' . $siswa->id) !!}
-            </div>
+                <div class="header">
+                    <h1>Kartu Identitas</h1>
+                    <p>Pendidikan Anak Sekolah Minggu Buddha</p>
+                </div>
 
-            <div class="details-section">
-                <div class="details-row">
-                    <div class="details-label">Nama</div>
-                    <div class="details-value">: {{ Str::limit($siswa->nama_lengkap, 20) }}</div>
+                <div class="content">
+                    {{-- QR Code diubah ukurannya menjadi 55 --}}
+                    <div class="qr-section">
+                        {!! QrCode::size(55)->margin(1)->generate('SMB-' . $s->id) !!}
+                    </div>
+
+                    <div class="details-section">
+                        <div class="details-row">
+                            <div class="details-label">Nama</div>
+                            <div class="details-value">: {{ Str::limit($s->nama_lengkap, 20) }}</div>
+                        </div>
+                        <div class="details-row">
+                            <div class="details-label">NIS</div>
+                            <div class="details-value">: {{ $s->nis }}</div>
+                        </div>
+                        <div class="details-row">
+                            {{-- Menggunakan ?? '-' untuk menghindari error jika kelas null --}}
+                            <div class="details-label">Kelas</div>
+                            <div class="details-value">: {{ $s->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</div>
+                        </div>
+                        <div class="details-row">
+                            <div class="details-label">L/P</div>
+                            <div class="details-value">: {{ $s->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="details-row">
-                    <div class="details-label">NIS</div>
-                    <div class="details-value">: {{ $siswa->nis }}</div>
-                </div>
-                <div class="details-row">
-                    {{-- Pastikan ini mengarah ke relasi yang sama dengan cetak massal --}}
-                    <div class="details-label">Kelas</div>
-                    <div class="details-value">: {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</div>
-                </div>
-                <div class="details-row">
-                    <div class="details-label">L/P</div>
-                    <div class="details-value">: {{ $siswa->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
-                </div>
+
             </div>
-        </div>
+        @endforeach
     </div>
 
 </body>
