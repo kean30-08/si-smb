@@ -64,7 +64,7 @@
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- INFORMASI AGENDA YANG SEDANG DI-SCAN --}}
+            {{-- INFORMASI TANGGAL YANG SEDANG DI-SCAN --}}
             <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 shadow-sm rounded-r-lg">
                 <div class="flex items-center mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -75,18 +75,15 @@
                         <line x1="8" x2="8" y1="2" y2="6" />
                         <line x1="3" x2="21" y1="10" y2="10" />
                     </svg>
-                    <h3 class="font-bold text-blue-800 text-lg">Sesi Absensi: {{ $agenda->nama_kegiatan }}</h3>
+                    <h3 class="font-bold text-blue-800 text-lg">Absensi</h3>
                 </div>
 
                 <div class="ml-7 text-sm text-blue-700">
                     <p><strong>Tanggal:</strong>
                         {{ \Carbon\Carbon::parse($agenda->tanggal)->translatedFormat('l, d F Y') }}</p>
-                    <p><strong>Waktu:</strong> {{ \Carbon\Carbon::parse($agenda->waktu_mulai)->format('H:i') }} -
-                        {{ $agenda->waktu_selesai ? \Carbon\Carbon::parse($agenda->waktu_selesai)->format('H:i') : 'Selesai' }}
-                    </p>
                 </div>
                 <p class="text-xs text-blue-600 mt-3 italic">*Pindai barcode siswa untuk merekam kehadiran khusus pada
-                    sesi kegiatan ini saja.</p>
+                    hari ini.</p>
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border-t-4 border-indigo-500">

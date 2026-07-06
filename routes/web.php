@@ -54,17 +54,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminOnly::class])->group(functi
     Route::put('/admin/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'update'])->name('pemberitahuan.update');
     Route::delete('/admin/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'destroy'])->name('pemberitahuan.destroy');
 
-    // === AGENDA ===
+    // === AGENDA (SUDAH DIBERSIHKAN) ===
     Route::get('/admin/agenda/create', [AgendaController::class, 'create'])->name('agenda.create');
     Route::post('/admin/agenda/store', [AgendaController::class, 'store'])->name('agenda.store');
-    Route::get('/admin/agenda/{agenda}/edit', [AgendaController::class, 'edit'])->name('agenda.edit');
-    Route::put('/admin/agenda/{agenda}', [AgendaController::class, 'update'])->name('agenda.update');
-    Route::delete('/admin/agenda/{agenda}', [AgendaController::class, 'destroy'])->name('agenda.destroy');
     Route::delete('/admin/agenda/date/{tanggal}', [AgendaController::class, 'destroyDate'])->name('agenda.destroyDate');
-    
-    Route::post('/admin/agenda/broadcast/{tanggal}', [AgendaController::class, 'broadcastPdf'])->name('agenda.broadcast');
-    Route::get('/admin/agenda/detail/{tanggal}/tambah', [AgendaController::class, 'createDetail'])->name('agenda.createDetail');
-    Route::post('/admin/agenda/detail/store', [AgendaController::class, 'storeDetail'])->name('agenda.storeDetail');
     Route::put('/admin/agenda/detail/{tanggal}/update-pic', [AgendaController::class, 'updatePic'])->name('agenda.updatePic');
 
     // === PENGAJAR ===
@@ -133,9 +126,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/send-otp', [ProfileController::class, 'sendOtp'])->name('profile.sendOtp');
     Route::post('/profile/verify-otp', [ProfileController::class, 'verifyOtp'])->name('profile.verifyOtp');
     
-    // === AGENDA REFLEKSI ===
-    Route::get('/agenda/detail/{tanggal}/refleksi', [RefleksiController::class, 'index'])->name('refleksi.index');
-    Route::get('/refleksi/detail/{id}', [RefleksiController::class, 'show'])->name('refleksi.show');
+    
 
     // === ABSENSI ===
     Route::get('/absensi/scanner', [AbsensiController::class, 'scanner'])->name('absensi.scanner');

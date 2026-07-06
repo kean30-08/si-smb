@@ -3,7 +3,6 @@
         {{-- HEADER TABEL (Sembunyi di HP) --}}
         <thead class="hidden md:table-header-group text-xs text-gray-700 uppercase bg-gray-50 border-b">
             <tr>
-                {{-- TAMBAHKAN KOLOM TAHUN AJARAN DI SINI --}}
                 <th class="py-3 px-6">Tahun Ajaran</th>
                 <th class="py-3 px-6">Tanggal Kegiatan</th>
                 <th class="py-3 px-6">Total Rangkaian Acara</th>
@@ -17,11 +16,11 @@
         {{-- BODY TABEL --}}
         <tbody class="block md:table-row-group">
             @forelse ($agendasGrouped as $group)
-                {{-- BARIS TABEL: Berubah jadi Kartu di HP --}}
-                <tr onclick="window.location='{{ route('agenda.showDate', $group->tanggal) }}'"
+                {{-- BARIS TABEL: PERUBAHAN ONCLICK KE HALAMAN ABSENSI --}}
+                <tr onclick="window.location='{{ route('absensi.index', ['tanggal' => $group->tanggal]) }}'"
                     class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-100 cursor-pointer transition mb-4 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none p-4 md:p-0">
 
-                    {{-- TAHUN AJARAN (KOLOM BARU) --}}
+                    {{-- TAHUN AJARAN --}}
                     <td
                         class="block md:table-cell py-2 md:py-4 px-2 md:px-6 border-b md:border-none border-dashed border-gray-200 mb-3 md:mb-0 pb-3 md:pb-4">
                         <div class="flex items-center justify-between md:justify-start">
@@ -59,7 +58,6 @@
                                 Absensi</span>
 
                             @php
-                                // PERBAIKAN: Gunakan Array Key Kombinasi (Tanggal + Tahun Ajaran)
                                 $key = $group->tanggal . '_' . $group->tahun_ajaran_id;
                                 $pics = isset($agendasWithPics[$key])
                                     ? $agendasWithPics[$key]->penanggungJawab
@@ -89,17 +87,33 @@
 
                     {{-- AKSI --}}
                     @if ($isAdmin)
-                        <td class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center text-blue-600 font-medium mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4"
+                        <td class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4"
                             onclick="event.stopPropagation();">
 
                             <div class="flex items-center justify-end md:justify-center gap-2">
+
+                                {{-- TOMBOL EDIT / ATUR PIC --}}
+                                <a href="{{ route('agenda.showDate', $group->tanggal) }}"
+                                    onclick="event.stopPropagation();"
+                                    class="text-blue-500 hover:text-blue-700 transition p-1.5 bg-blue-50 hover:bg-blue-100 rounded"
+                                    title="Atur PIC">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                        <path
+                                            d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+                                    </svg>
+                                </a>
+
+                                {{-- TOMBOL HAPUS --}}
                                 <form action="{{ route('agenda.destroyDate', $group->tanggal) }}" method="POST"
                                     onsubmit="return confirm('Yakin ingin menghapus SEMUA agenda pada tanggal ini?');"
                                     class="m-0">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" onclick="event.stopPropagation();"
-                                        class="text-red-500 hover:text-red-700 transition ml-2 p-1 bg-red-50 rounded"
+                                        class="text-red-500 hover:text-red-700 transition p-1.5 bg-red-50 hover:bg-red-100 rounded"
                                         title="Hapus semua agenda pada tanggal ini">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -112,13 +126,13 @@
                                         </svg>
                                     </button>
                                 </form>
+
                             </div>
                         </td>
                     @endif
                 </tr>
             @empty
                 <tr class="block md:table-row bg-white border border-gray-200 rounded-lg p-4">
-                    {{-- colspan diubah jadi 5 karena ada tambahan kolom Tahun Ajaran --}}
                     <td colspan="5" class="block md:table-cell py-4 px-6 text-center text-gray-500">
                         Belum ada jadwal kegiatan.
                     </td>

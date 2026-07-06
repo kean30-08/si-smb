@@ -32,10 +32,7 @@ class AbsensiController extends Controller
     }
 
     /**
-     * Menampilkan Halaman Kelola Absensi
-     */
-    /**
-     * Menampilkan Halaman Kelola Absensi
+     * Menampilkan Halaman Kelola Absensi (BERBASIS TANGGAL HARIAN)
      */
     public function index(Request $request)
     {
@@ -45,24 +42,19 @@ class AbsensiController extends Controller
         $search = $request->input('search'); 
 
         $kelas = Kelas::all();
-        $agendas = Agenda::with('penanggungJawab')->where('tanggal', $tanggal)->orderBy('waktu_mulai')->get();
+        
+        // Karena sekarang absensi berbasis Harian (Tanggal), kita jadikan kegiatan pertama 
+        // di hari tersebut sebagai "Jangkar" penyimpanan database.
+        $selectedAgenda = Agenda::with('penanggungJawab')->where('tanggal', $tanggal)->orderBy('waktu_mulai', 'asc')->first();
+        $agenda_id = $selectedAgenda ? $selectedAgenda->id : null;
 
-        // TENTUKAN AGENDA TERPILIH (Default ke agenda pertama jika tidak ada yang dipilih)
-        $agenda_id = $request->input('agenda_id');
-        if (!$agenda_id && $agendas->isNotEmpty()) {
-            $agenda_id = $agendas->first()->id;
-        }
-
-        // Ambil objek agenda yang sedang dipilih saat ini
-        $selectedAgenda = $agendas->where('id', $agenda_id)->first();
         $penanggungJawab = $selectedAgenda ? $selectedAgenda->penanggungJawab : collect();
 
-        // CEK HAK AKSES: Apakah yang login ini adalah PIC untuk agenda ini?
+        // CEK HAK AKSES
         $isPic = $selectedAgenda ? $this->isAuthorizedPic($selectedAgenda) : false;
 
         // TAB SISWA
         if ($type == 'siswa') {
-            // PERBAIKAN: Gunakan relasi nilaiKehadiranAktif.kelas
             $siswas = Siswa::with('nilaiKehadiranAktif.kelas')
                 ->when($kelas_id, function($query, $kelas_id) { 
                     return $query->whereHas('nilaiKehadiranAktif', function($q) use ($kelas_id) {
@@ -74,13 +66,13 @@ class AbsensiController extends Controller
                              ->orWhere('nis', 'like', "%{$search}%");
                 })
                 ->orderBy('nama_lengkap', 'asc')
-                ->paginate(8)
-                ->appends(['tanggal' => $tanggal, 'agenda_id' => $agenda_id, 'kelas_id' => $kelas_id, 'type' => 'siswa', 'search' => $search]);
+                ->paginate(15)
+                ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'type' => 'siswa', 'search' => $search]);
             
-            // HANYA AMBIL ABSENSI UNTUK AGENDA TERPILIH SAJA
-            $absensis = Absensi::where('agenda_id', $agenda_id)->get();
+            // Ambil absensi berdasarkan jangkar harian
+            $absensis = $agenda_id ? Absensi::where('agenda_id', $agenda_id)->get() : collect();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab', 'isPic'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab', 'isPic'));
         
         // TAB PENGAJAR
         } else {
@@ -88,13 +80,12 @@ class AbsensiController extends Controller
                 ->when($search, function($q, $search) {
                     return $q->where('nama_lengkap', 'like', "%{$search}%");
                 })
-                ->paginate(8)
-                ->appends(['tanggal' => $tanggal, 'agenda_id' => $agenda_id, 'type' => 'pengajar', 'search' => $search]);
+                ->paginate(15)
+                ->appends(['tanggal' => $tanggal, 'type' => 'pengajar', 'search' => $search]);
                 
-            // HANYA AMBIL ABSENSI PENGAJAR UNTUK AGENDA TERPILIH SAJA
-            $absensiPengajars = AbsensiPengajar::where('agenda_id', $agenda_id)->get();
+            $absensiPengajars = $agenda_id ? AbsensiPengajar::where('agenda_id', $agenda_id)->get() : collect();
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agendas', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab', 'isPic'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab', 'isPic'));
         }
     }
 
@@ -111,7 +102,7 @@ class AbsensiController extends Controller
 
         $agenda = Agenda::find($request->agenda_id);
         if (!$agenda || !$this->isAuthorizedPic($agenda)) {
-            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk sesi ini.');
+            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk hari ini.');
         }
 
         $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
@@ -121,7 +112,7 @@ class AbsensiController extends Controller
             ['status_kehadiran' => $request->status, 'waktu_hadir' => $waktu]
         );
 
-        return back()->with('success', 'Status kehadiran Pengajar pada sesi ini berhasil diperbarui!');
+        return back()->with('success', 'Status kehadiran Pengajar berhasil diperbarui!');
     }
 
     /**
@@ -137,7 +128,7 @@ class AbsensiController extends Controller
 
         $agenda = Agenda::find($request->agenda_id);
         if (!$agenda || !$this->isAuthorizedPic($agenda)) {
-            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk sesi ini.');
+            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk hari ini.');
         }
 
         $waktu = ($request->status == 'hadir') ? Carbon::now()->toTimeString() : null;
@@ -154,7 +145,7 @@ class AbsensiController extends Controller
             ]
         );
 
-        return back()->with('success', 'Status kehadiran siswa pada sesi ini berhasil diperbarui!');
+        return back()->with('success', 'Status kehadiran siswa berhasil diperbarui!');
     }
 
     /**
@@ -166,11 +157,11 @@ class AbsensiController extends Controller
         $agenda = Agenda::with('penanggungJawab')->find($agenda_id);
 
         if (!$agenda) {
-            return redirect()->route('absensi.index')->with('error', 'Pilih kegiatan/agenda terlebih dahulu sebelum membuka scanner!');
+            return redirect()->route('absensi.index')->with('error', 'Tidak ada data kegiatan pada tanggal ini!');
         }
 
         if (!$this->isAuthorizedPic($agenda)) {
-            return redirect()->route('absensi.index')->with('error', 'Akses Ditolak! Fitur Scanner hanya bisa dibuka oleh PIC Absensi yang ditugaskan.');
+            return redirect()->route('absensi.index')->with('error', 'Akses Ditolak! Fitur Scanner hanya bisa dibuka oleh PIC Absensi.');
         }
 
         return view('absensi.scanner', compact('agenda'));
@@ -186,12 +177,12 @@ class AbsensiController extends Controller
 
         $agenda = Agenda::with('penanggungJawab')->find($agenda_id);
         if (!$agenda) {
-            return response()->json(['success' => false, 'message' => 'Agenda tidak valid atau tidak ditemukan!']);
+            return response()->json(['success' => false, 'message' => 'Jangkar data tidak valid!']);
         }
 
         // Lapis keamanan Scanner via AJAX
         if (!$this->isAuthorizedPic($agenda)) {
-            return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda tidak memiliki izin memindai untuk sesi ini.']);
+            return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda tidak memiliki izin memindai pada hari ini.']);
         }
 
         $parts = explode('-', $barcode);
@@ -212,7 +203,7 @@ class AbsensiController extends Controller
         if ($absen && $absen->status_kehadiran == 'hadir') {
             return response()->json([
                 'success' => true, 
-                'message' => $siswa->nama_lengkap . ' sudah melakukan absensi untuk sesi ' . $agenda->nama_kegiatan
+                'message' => $siswa->nama_lengkap . ' sudah melakukan absensi hari ini.'
             ]);
         }
 
@@ -227,7 +218,7 @@ class AbsensiController extends Controller
 
         return response()->json([
             'success' => true, 
-            'message' => $siswa->nama_lengkap . ' Berhasil Hadir di Sesi ' . $agenda->nama_kegiatan . '!'
+            'message' => $siswa->nama_lengkap . ' Berhasil Hadir!'
         ]);
     }
 }

@@ -2,12 +2,11 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Kelola Data Kehadiran') }}
+                {{ __('Kelola Kehadiran Harian') }}
             </h2>
             {{-- TOMBOL SCANNER HANYA MUNCUL JIKA USER ADALAH PIC / ADMIN --}}
-            @if ($type == 'siswa' && isset($selectedAgenda) && $isPic)
-                <a href="{{ route('absensi.scanner', ['agenda_id' => $selectedAgenda->id]) }}" id="btnScanner"
-                    {{-- TAMBAHKAN ID INI --}}
+            @if ($type == 'siswa' && $selectedAgenda && $isPic)
+                <a href="{{ route('absensi.scanner', ['agenda_id' => $agenda_id]) }}" id="btnScanner"
                     class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -34,13 +33,13 @@
                 <div class="border-b border-gray-200 bg-gray-50 pt-2 px-2 sm:px-4">
                     <ul class="flex flex-wrap -mb-px text-xs sm:text-sm font-medium text-center">
                         <li class="mr-1 sm:mr-2">
-                            <a href="{{ route('absensi.index', ['type' => 'siswa', 'tanggal' => $tanggal, 'agenda_id' => $agenda_id]) }}"
+                            <a href="{{ route('absensi.index', ['type' => 'siswa', 'tanggal' => $tanggal]) }}"
                                 class="inline-block p-3 sm:p-4 border-b-2 rounded-t-lg transition {{ $type == 'siswa' ? 'border-indigo-600 text-indigo-600 font-bold bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                                 Absensi Siswa
                             </a>
                         </li>
                         <li class="mr-1 sm:mr-2">
-                            <a href="{{ route('absensi.index', ['type' => 'pengajar', 'tanggal' => $tanggal, 'agenda_id' => $agenda_id]) }}"
+                            <a href="{{ route('absensi.index', ['type' => 'pengajar', 'tanggal' => $tanggal]) }}"
                                 class="inline-block p-3 sm:p-4 border-b-2 rounded-t-lg transition {{ $type == 'pengajar' ? 'border-amber-500 text-amber-600 font-bold bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                                 Absensi Pengajar
                             </a>
@@ -50,9 +49,13 @@
 
                 <div class="p-4 sm:p-6 text-gray-900">
                     {{-- PERINGATAN JADWAL LAMPAU --}}
-                    @if (isset($selectedAgenda))
+                    @php
+                        $isLewat = false;
+                    @endphp
+
+                    @if ($selectedAgenda)
                         @php
-                            $tglAgenda = \Carbon\Carbon::parse($selectedAgenda->tanggal);
+                            $tglAgenda = \Carbon\Carbon::parse($tanggal);
                             // Cek apakah tanggal sudah lewat dan bukan hari ini
                             $isLewat = $tglAgenda->isPast() && !$tglAgenda->isToday();
                         @endphp
@@ -67,12 +70,11 @@
                                                 <path
                                                     d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v2z" />
                                             </svg>
-                                            Informasi Sesi Lampau
+                                            Informasi Data Historis
                                         </div>
                                         <p class="text-sm mt-1">
-                                            Agenda ini sudah berlalu pada tanggal
-                                            <strong>{{ $tglAgenda->translatedFormat('d F Y') }}</strong>.
-                                            Data kehadiran bersifat historis.
+                                            Data kehadiran untuk tanggal
+                                            <strong>{{ $tglAgenda->translatedFormat('d F Y') }}</strong> sudah berlalu.
                                         </p>
                                     </div>
                                     @if ($isPic)
@@ -86,7 +88,7 @@
                         @endif
                     @endif
 
-                    {{-- FILTER BARIS 1: TANGGAL, KELAS, CARI --}}
+                    {{-- FILTER TANGGAL, KELAS, CARI --}}
                     <form action="{{ route('absensi.index') }}" method="GET"
                         class="mb-4 flex flex-col lg:flex-row gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 lg:items-end">
                         <input type="hidden" name="type" value="{{ $type }}">
@@ -115,10 +117,10 @@
                         @endif
 
                         {{-- TAMPILAN NAMA PIC ABSENSI --}}
-                        @if ($agendas->isNotEmpty() && $penanggungJawab && $penanggungJawab->isNotEmpty())
+                        @if ($selectedAgenda && $penanggungJawab->isNotEmpty())
                             <div class="w-full lg:w-auto hidden md:block">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab
-                                    Absensi</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab Hari
+                                    Ini</label>
                                 <div
                                     class="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-md text-indigo-800 font-semibold text-sm flex items-center min-h-[42px]">
                                     <i data-lucide="users" class="w-4 h-4 mr-2 shrink-0"></i>
@@ -149,70 +151,23 @@
 
                         @if (!empty($search))
                             <div class="flex justify-end w-full lg:w-auto">
-                                <a href="{{ route('absensi.index', ['type' => $type, 'tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'agenda_id' => $agenda_id]) }}"
+                                <a href="{{ route('absensi.index', ['type' => $type, 'tanggal' => $tanggal, 'kelas_id' => $kelas_id]) }}"
                                     class="w-full lg:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium border border-indigo-600">Reset</a>
                             </div>
                         @endif
                     </form>
 
-                    {{-- JIKA TIDAK ADA JADWAL --}}
-                    @if ($agendas->isEmpty())
+                    {{-- JIKA TIDAK ADA JANGKAR KEGIATAN --}}
+                    @if (!$selectedAgenda)
                         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-sm">
                             <p class="font-bold">Perhatian</p>
-                            <p>Tidak ada jadwal kegiatan yang terdaftar pada tanggal
+                            <p>Tidak ada jadwal terdaftar pada tanggal
                                 <strong>{{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}</strong>.
+                                Pastikan setidaknya ada satu agenda pada hari ini agar sistem dapat menyimpan data
+                                absensi.
                             </p>
                         </div>
                     @else
-                        {{-- FILTER BARIS 2: DETAIL AGENDA --}}
-                        <form action="{{ route('absensi.index') }}" method="GET"
-                            class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <input type="hidden" name="tanggal" value="{{ $tanggal }}">
-                            <input type="hidden" name="type" value="{{ $type }}">
-                            <input type="hidden" name="kelas_id" value="{{ $kelas_id }}">
-
-                            <div class="md:col-span-1">
-                                <label class="block text-sm font-bold text-indigo-700 mb-1">Pilih Sesi Kegiatan</label>
-                                <select name="agenda_id"
-                                    class="w-full border-indigo-300 bg-indigo-50 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-sm"
-                                    onchange="this.form.submit()">
-                                    @foreach ($agendas as $agenda)
-                                        <option value="{{ $agenda->id }}"
-                                            {{ $agenda_id == $agenda->id ? 'selected' : '' }}>
-                                            {{ $agenda->nama_kegiatan }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">Status</label>
-                                <input type="text" disabled
-                                    class="w-full rounded-md shadow-sm text-sm font-bold
-                                    @if (!$selectedAgenda) bg-gray-100 text-gray-500 border-gray-200
-                                    @elseif ($selectedAgenda->status == 'akan datang') bg-blue-100 text-blue-700 border-blue-300
-                                    @elseif ($selectedAgenda->status == 'sedang berlangsung') bg-yellow-100 text-yellow-700 border-yellow-300
-                                    @elseif ($selectedAgenda->status == 'selesai') bg-green-100 text-green-700 border-green-300
-                                    @elseif ($selectedAgenda->status == 'batal') bg-red-100 text-red-700 border-red-300 @endif"
-                                    value="{{ $selectedAgenda ? ucwords(str_replace('_', ' ', $selectedAgenda->status)) : '-' }}">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">Waktu Mulai</label>
-                                <input type="text" disabled
-                                    class="w-full border-gray-200 bg-gray-100 rounded-md shadow-sm text-sm text-gray-500"
-                                    value="{{ $selectedAgenda ? \Carbon\Carbon::parse($selectedAgenda->waktu_mulai)->format('H:i') : '-' }}">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-500 mb-1">Waktu Selesai</label>
-                                <input type="text" disabled
-                                    class="w-full border-gray-200 bg-gray-100 rounded-md shadow-sm text-sm text-gray-500"
-                                    value="{{ $selectedAgenda && $selectedAgenda->waktu_selesai ? \Carbon\Carbon::parse($selectedAgenda->waktu_selesai)->format('H:i') : 'Selesai' }}">
-                            </div>
-                        </form>
-
-
                         {{-- ============================== --}}
                         {{-- TAB 1: KONTEN ABSENSI SISWA    --}}
                         {{-- ============================== --}}
@@ -269,8 +224,9 @@
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
 
+                                                                {{-- KUNCI PERBAIKAN DROPDOWN: Hapus 'disabled' hardcoded, gunakan kondisi $isLewat --}}
                                                                 <select name="status" onchange="this.form.submit()"
-                                                                    disabled
+                                                                    {{ $isLewat ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
                                                                     @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
                                                                     @elseif($statusSaatIni == 'hadir') bg-green-100 text-green-800 border-green-200
@@ -397,11 +353,12 @@
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
 
+                                                                {{-- KUNCI PERBAIKAN DROPDOWN: Hapus 'disabled' hardcoded, gunakan kondisi $isLewat --}}
                                                                 <select name="status" onchange="this.form.submit()"
-                                                                    disabled
+                                                                    {{ $isLewat ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
                                                                     @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
-                                                                    @elseif($statusSaatIni == 'hadir') bg-amber-100 text-amber-800 border-amber-200
+                                                                    @elseif($statusSaatIni == 'hadir') bg-green-100 text-green-800 border-green-200
                                                                     @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
                                                                     @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif"
                                                                     style="opacity: {{ $isLewat ? '0.5' : '1' }};">
@@ -462,7 +419,6 @@
                             </div>
                             <div class="mt-4">{{ $pengajars->links() }}</div>
                         @endif
-
                     @endif
                 </div>
             </div>
@@ -474,9 +430,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             const btnToggleEdit = document.getElementById('btnToggleEdit');
 
-            // Jika tidak ada tombol "Aktifkan Edit", berarti ini bukan jadwal lampau (hari ini/akan datang).
-            // Hentikan script agar dropdown dan tombol scanner tetap terbuka normal.
-            if (!btnToggleEdit) return;
+            // Jika tidak ada tombol "Aktifkan Edit" (berarti hari ini/mendatang), 
+            // Jangan jalankan applyEditMode() agar dropdown terbuka otomatis.
+            if (!btnToggleEdit) {
+                localStorage.removeItem('editMode'); // Bersihkan state sisa dari hari lampau
+                return;
+            }
 
             const isEditMode = localStorage.getItem('editMode') === 'true';
             applyEditMode(isEditMode);
@@ -492,23 +451,20 @@
         function applyEditMode(enabled) {
             const dropdowns = document.querySelectorAll('.status-dropdown');
             const btnToggleEdit = document.getElementById('btnToggleEdit');
-            const btnScanner = document.getElementById('btnScanner'); // Mengambil elemen tombol scanner
+            const btnScanner = document.getElementById('btnScanner');
 
-            // 1. Atur dropdown absensi
             dropdowns.forEach(el => {
                 el.disabled = !enabled;
                 el.style.opacity = enabled ? "1" : "0.5";
             });
 
-            // 2. Atur gaya tombol edit
             if (btnToggleEdit) {
-                btnToggleEdit.innerText = enabled ? 'Mode Edit Aktif' : 'Aktifkan Edit';
+                btnToggleEdit.innerText = enabled ? 'Tutup Mode Edit' : 'Aktifkan Edit';
                 btnToggleEdit.className = enabled ?
-                    'bg-green-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition' :
-                    'bg-yellow-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition';
+                    'bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition' :
+                    'bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition';
             }
 
-            // 3. Tampilkan atau Sembunyikan Tombol Kamera Scanner
             if (btnScanner) {
                 btnScanner.style.display = enabled ? 'flex' : 'none';
             }
