@@ -117,7 +117,8 @@
                         {{-- TAMPILAN NAMA PIC ABSENSI --}}
                         @if ($agendas->isNotEmpty() && $penanggungJawab && $penanggungJawab->isNotEmpty())
                             <div class="w-full lg:w-auto hidden md:block">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">PIC Absensi</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab
+                                    Absensi</label>
                                 <div
                                     class="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-md text-indigo-800 font-semibold text-sm flex items-center min-h-[42px]">
                                     <i data-lucide="users" class="w-4 h-4 mr-2 shrink-0"></i>

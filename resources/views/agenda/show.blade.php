@@ -143,7 +143,7 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-sm font-bold text-indigo-900">Daftar PIC Absensi</h3>
+                                        <h3 class="text-sm font-bold text-indigo-900">Daftar Penanggung Jawab Absensi</h3>
                                         <p class="text-xs text-indigo-700 mt-0.5">Pengajar yang memindai kehadiran hari
                                             ini.</p>
                                     </div>
@@ -152,7 +152,7 @@
                                 @if ($isAdmin)
                                     <button type="button" onclick="tambahPic()"
                                         class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-md text-xs font-bold border border-blue-300 shadow-sm transition flex items-center shrink-0">
-                                        + Tambah PIC
+                                        + Tambah Penanggung Jawab Absensi
                                     </button>
                                 @endif
                             </div>
@@ -216,7 +216,7 @@
                                     <div class="flex justify-end">
                                         <button type="submit"
                                             class="bg-indigo-600 hover:bg-indigo-800 text-white px-6 py-2 rounded-md text-sm font-bold shadow transition duration-150">
-                                            Simpan PIC
+                                            Simpan Penanggung Jawab Absensi
                                         </button>
                                     </div>
                                 </form>
