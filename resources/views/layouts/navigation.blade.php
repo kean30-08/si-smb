@@ -28,7 +28,7 @@
                     </x-nav-link>
 
                     <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
-                        {{ __('Agenda') }}
+                        {{ __('Jadwal') }}
                     </x-nav-link>
 
                     <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
@@ -144,7 +144,7 @@
             </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
-                {{ __('Agenda') }}
+                {{ __('Jadwal') }}
             </x-responsive-nav-link>
 
             <x-responsive-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
