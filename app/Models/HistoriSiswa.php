@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class NilaiKehadiran extends Model
+class HistoriSiswa extends Model
 {
+    use HasFactory;
+
     protected $guarded = [];
 
     public function siswa()

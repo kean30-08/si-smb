@@ -106,7 +106,7 @@ class DashboardController extends Controller
         $total_alpa_period  = array_sum($data_alpa);
 
         // 5. LEADERBOARD SISWA TELADAN 
-        $siswas = Siswa::with('nilaiKehadiranAktif.kelas')->where('status', 'aktif')->get();
+        $siswas = Siswa::with('historiAktif.kelas')->where('status', 'aktif')->get();
 
         foreach ($siswas as $siswa) {
             $absensi_history = Absensi::where('siswa_id', $siswa->id)
@@ -178,7 +178,7 @@ class DashboardController extends Controller
         $sort = $request->input('sort', 'desc'); // default: 'desc' (tertinggi)
 
         // Ambil data siswa dengan relasi kelas
-        $query = \App\Models\Siswa::with('nilaiKehadiranAktif.kelas');
+        $query = \App\Models\Siswa::with('historiAktif.kelas');
 
         if ($search) {
             $query->where('nama_lengkap', 'like', "%{$search}%")

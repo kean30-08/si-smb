@@ -11,22 +11,17 @@ class Siswa extends Model
 
     protected $guarded = [];
 
-    /**
-     * Relasi ke seluruh riwayat nilai kehadiran (dari tahun ke tahun)
-     */
-    public function riwayatKehadiran()
+    public function riwayatHistori()
     {
-        return $this->hasMany(NilaiKehadiran::class);
+        return $this->hasMany(HistoriSiswa::class);
     }
 
     /**
-     * Relasi khusus untuk mengambil data kehadiran & kelas di Tahun Ajaran AKTIF saja.
-     * Ini sangat mempermudah kita saat memanggil data di view/tabel.
+     * PERBAIKAN: Relasi ini sekarang akan SELALU mengambil kelas TERBARU siswa.
+     * Tidak peduli Admin sedang mengaktifkan Tahun Ajaran lampau atau masa depan.
      */
-    public function nilaiKehadiranAktif()
+    public function historiAktif()
     {
-        return $this->hasOne(NilaiKehadiran::class)->whereHas('tahunAjaran', function($query) {
-            $query->where('status', 'aktif');
-        });
+        return $this->hasOne(HistoriSiswa::class)->latestOfMany();
     }
 }

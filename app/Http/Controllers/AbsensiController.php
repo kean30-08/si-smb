@@ -55,10 +55,22 @@ class AbsensiController extends Controller
 
         // TAB SISWA
         if ($type == 'siswa') {
-            $siswas = Siswa::with('nilaiKehadiranAktif.kelas')
-                ->when($kelas_id, function($query, $kelas_id) { 
-                    return $query->whereHas('nilaiKehadiranAktif', function($q) use ($kelas_id) {
+            // Ambil ID Tahun Ajaran dari agenda yang sedang dibuka
+            $agendaTaId = $selectedAgenda ? $selectedAgenda->tahun_ajaran_id : null;
+
+            $siswas = Siswa::with(['historiAktif' => function($q) use ($agendaTaId) {
+                    // Paksa relasi hanya memuat data kelas pada Tahun Ajaran agenda ini
+                    if ($agendaTaId) {
+                        $q->where('tahun_ajaran_id', $agendaTaId);
+                    }
+                }, 'historiAktif.kelas'])
+                ->when($kelas_id, function($query, $kelas_id) use ($agendaTaId) { 
+                    // Filter: Hanya cari siswa yang masuk kelas X pada Tahun Ajaran ini
+                    return $query->whereHas('riwayatKehadiran', function($q) use ($kelas_id, $agendaTaId) {
                         $q->where('kelas_id', $kelas_id);
+                        if ($agendaTaId) {
+                            $q->where('tahun_ajaran_id', $agendaTaId);
+                        }
                     });
                 })
                 ->when($search, function($q, $search) {
@@ -69,11 +81,10 @@ class AbsensiController extends Controller
                 ->paginate(15)
                 ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'type' => 'siswa', 'search' => $search]);
             
-            // Ambil absensi berdasarkan jangkar harian
             $absensis = $agenda_id ? Absensi::where('agenda_id', $agenda_id)->get() : collect();
             
             return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab', 'isPic'));
-        
+            
         // TAB PENGAJAR
         } else {
             $pengajars = Pengajar::orderBy('nama_lengkap', 'asc')

@@ -6,14 +6,14 @@
                 {{ __('Daftar Materi Pembelajaran') }}
             </h2>
 
-            @if ($isAdmin)
-                <div class="w-full sm:w-auto flex">
-                    <a href="{{ route('materi.create') }}"
-                        class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                        + Tambah Materi
-                    </a>
-                </div>
-            @endif
+
+            <div class="w-full sm:w-auto flex">
+                <a href="{{ route('materi.create') }}"
+                    class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    + Tambah Materi
+                </a>
+            </div>
+
 
         </div>
     </x-slot>

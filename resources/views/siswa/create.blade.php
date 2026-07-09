@@ -28,11 +28,12 @@
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">NIS</label>
+                                <label class="block font-medium text-sm text-gray-700">NIK</label>
                                 <input type="text" name="nis"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic class:@error('nis') border-red-500 @enderror
 "
-                                    value="{{ old('nis') }}" placeholder="Masukkan Nomor Induk Siswa ..." required>
+                                    value="{{ old('nis') }}" placeholder="Masukkan Nomor Induk Kependudukan ..."
+                                    required>
                                 @error('nis')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -84,29 +85,49 @@
                                     value="{{ old('tanggal_lahir') }}" required>
                             </div>
 
+                            {{-- PENDIDIKAN & KONTAK PRIBADI --}}
+                            <div>
+                                <label class="block font-medium text-sm text-gray-700">Asal Sekolah</label>
+                                <input type="text" name="asal_sekolah"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
+                                    value="{{ old('asal_sekolah') }}" placeholder="Contoh: SDN 1 Gianyar...">
+                            </div>
+
+                            <div>
+                                <label class="block font-medium text-sm text-gray-700">Nomor HP / WA Pribadi
+                                    (Siswa)</label>
+                                <input type="text" name="nomor_hp_siswa"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
+                                    value="{{ old('nomor_hp_siswa') }}"
+                                    placeholder="Opsional (Kosongkan Bila Tidak Ada)...">
+                                @error('nomor_hp_siswa')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             {{-- KONTAK & ORANG TUA --}}
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">Nama Orang Tua</label>
+                                <label class="block font-medium text-sm text-gray-700">Nama OrangTua/Wali</label>
                                 <input type="text" name="nama_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('nama_orang_tua') }}" placeholder="Masukkan Nama Orang Tua ..."
+                                    value="{{ old('nama_orang_tua') }}" placeholder="Masukkan Nama OrangTua/Wali ..."
                                     required>
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">Email Orang Tua</label>
+                                <label class="block font-medium text-sm text-gray-700">Email OrangTua/Wali</label>
                                 <input type="email" name="email_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('email_orang_tua') }}" placeholder="Masukkan Email Orang Tua ..."
-                                    required>
+                                    value="{{ old('email_orang_tua') }}"
+                                    placeholder="(Opsional) Masukkan Email OrangTua/Wali ...">
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">No HP / WA Orang Tua</label>
+                                <label class="block font-medium text-sm text-gray-700">No HP / WA OrangTua/Wali</label>
                                 <input type="tel" name="nomor_hp_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic class:@error('nomor_hp_orang_tua') border-red-500 @enderror"
                                     value="{{ old('nomor_hp_orang_tua') }}"
-                                    placeholder="Masukkan No HP / WA Orang Tua ..." required>
+                                    placeholder="Masukkan No HP / WA OrangTua/Wali ..." required>
                                 @error('nomor_hp_orang_tua')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror

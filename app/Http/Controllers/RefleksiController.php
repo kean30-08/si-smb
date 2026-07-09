@@ -37,7 +37,7 @@ class RefleksiController extends Controller
         $kelas = Kelas::orderBy('nama_kelas', 'asc')->get();
         
         // AMBIL DATA SISWA AKTIF UNTUK DROPDOWN
-        $siswas = Siswa::with('nilaiKehadiranAktif')->where('status', 'aktif')->orderBy('nama_lengkap', 'asc')->get();
+        $siswas = Siswa::with('historiAktif')->where('status', 'aktif')->orderBy('nama_lengkap', 'asc')->get();
 
         return view('refleksi.create', compact('tanggal', 'statusForm', 'waktuBuka', 'waktuTutup', 'kelas', 'siswas'));
     }
@@ -97,7 +97,7 @@ class RefleksiController extends Controller
             'otp.required' => 'Kode OTP wajib diisi untuk verifikasi.'
         ]);
 
-        $siswa = Siswa::with('nilaiKehadiranAktif')->find($request->siswa_id);
+        $siswa = Siswa::with('historiAktif')->find($request->siswa_id);
 
         // VERIFIKASI OTP BERDASARKAN ID SISWA
         $cachedOtp = Cache::get('otp_refleksi_siswa_' . $siswa->id);
@@ -114,7 +114,7 @@ class RefleksiController extends Controller
             'tanggal' => $tanggal,
             'nama_siswa' => $siswa->nama_lengkap,
             'nis' => $siswa->nis,
-            'kelas_id' => $siswa->nilaiKehadiranAktif->kelas_id ?? null,
+            'kelas_id' => $siswa->historiAktif->kelas_id ?? null,
             'nama_orang_tua' => $siswa->nama_orang_tua ?? '-',
             'email_orang_tua' => $siswa->email_orang_tua,
             'rangkuman' => $request->rangkuman,

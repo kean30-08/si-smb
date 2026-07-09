@@ -2,211 +2,113 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Pengajar;
-use App\Models\Kelas;
+use Illuminate\Database\Seeder;
 use App\Models\Siswa;
+use App\Models\TahunAjaran;
+use App\Models\HistoriSiswa;
 use App\Models\Agenda;
 use App\Models\Absensi;
-use App\Models\TahunAjaran;
-use App\Models\NilaiKehadiran;
-use App\Models\AbsensiPengajar;
-use App\Models\Jabatan;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Faker\Factory as Faker;
 
 class DataDummy extends Seeder
 {
     public function run(): void
     {
-        $faker = Faker::create('id_ID');
+        DB::transaction(function () {
+            // 1. Setup Tahun Ajaran
+            $ta1 = TahunAjaran::updateOrCreate(['tahun_ajaran' => '2024/2025 Ganjil'], ['status' => 'tidak aktif']);
+            $ta2 = TahunAjaran::updateOrCreate(['tahun_ajaran' => '2024/2025 Genap'], ['status' => 'tidak aktif']);
+            $ta3 = TahunAjaran::updateOrCreate(['tahun_ajaran' => '2025/2026 Ganjil'], ['status' => 'aktif']);
 
-        $safeLastNames = [
-            'Santoso', 'Wijaya', 'Pratama', 'Kusuma', 'Saputra', 
-            'Hidayat', 'Setiawan', 'Gunawan', 'Nugroho', 'Putra', 
-            'Lestari', 'Sari', 'Rahmawati', 'Indah', 'Susanti',
-            'Purnama', 'Wahyudi', 'Kurniawan', 'Wibowo', 'Permana'
-        ];
+            $daftarTa = [$ta1, $ta2, $ta3];
+            $agendaMap = [];
 
-        // 1. GENERATE TAHUN AJARAN SIMULASI (Untuk keperluan histori absensi dummy)
-        // Gunakan updateOrCreate agar menimpa status 'aktif' dari DatabaseSeeder menjadi 'tidak aktif'
-        $taLama = TahunAjaran::updateOrCreate(
-            ['tahun_ajaran' => '2025/2026 Ganjil'],
-            ['status' => 'tidak aktif'] 
-        );
-        
-        $taBaru = TahunAjaran::updateOrCreate(
-            ['tahun_ajaran' => '2025/2026 Genap'],
-            ['status' => 'aktif']
-        );
+            // 2. Buat Minimal 5 Agenda per Tahun Ajaran
+            // Kita atur tanggal mundur agar tidak berbenturan dengan waktu saat ini
+            $baseDate = Carbon::now()->subMonths(18); // Mundur 1.5 tahun untuk TA 2024/2025 Ganjil
 
-        // 2. AMBIL ID JABATAN GURU YANG SUDAH ADA DARI DATABASE SEEDER
-        $jabatanGuru = Jabatan::where('nama_jabatan', 'Guru Sekolah Minggu')->first()->id ?? 1;
+            foreach ($daftarTa as $index => $ta) {
+                // Majukan tanggal 6 bulan untuk tiap semester baru
+                $taDate = $baseDate->copy()->addMonths($index * 6); 
+                $agendaMap[$ta->id] = [];
 
-        // 3. GENERATE AKUN & DATA PENGAJAR DUMMY
-        for ($i = 1; $i <= 3; $i++) {
-            $jk = $faker->randomElement(['L', 'P']);
-            $namaPengajar = ($jk == 'L' ? $faker->firstNameMale : $faker->firstNameFemale) . ' ' . $faker->randomElement($safeLastNames);
-            
-            $userPengajar = User::firstOrCreate(
-                ['email' => "pengajardummy{$i}@gmail.com"],
-                ['name' => $namaPengajar, 'password' => Hash::make('pengajar123')]
-            );
+                for ($i = 1; $i <= 5; $i++) {
+                    // Buat kegiatan yang berjarak 1 minggu tiap pertemuannya
+                    $tanggalAgenda = $taDate->copy()->addWeeks($i)->format('Y-m-d');
+                    
+                    $agenda = Agenda::firstOrCreate(
+                        [
+                            'tanggal' => $tanggalAgenda,
+                            'tahun_ajaran_id' => $ta->id
+                        ],
+                        [
+                            'nama_kegiatan' => 'Sekolah Minggu Pekan ke-' . $i . ' (' . $ta->tahun_ajaran . ')',
+                            'waktu_mulai' => '08:00:00',
+                            'waktu_selesai' => '11:00:00',
+                            'status' => 'selesai'
+                        ]
+                    );
 
-            Pengajar::firstOrCreate(
-                ['user_id' => $userPengajar->id],
-                [
-                    'jabatan_id' => $jabatanGuru, 
-                    'nama_lengkap' => $namaPengajar,
-                    'nomor_hp' => $faker->phoneNumber,
-                    'jenis_kelamin' => $jk,
-                    'alamat' => $faker->address,
-                    'status' => 'aktif', 
-                ]
-            );
-        }
-
-        // 4. GENERATE DATA SISWA DUMMY BERDASARKAN KELAS YANG SUDAH ADA
-        $semuaKelas = Kelas::all();
-        $lastSiswa = Siswa::orderBy('id', 'desc')->first();
-        $nisCounter = $lastSiswa ? (int) substr($lastSiswa->nis, 2) + 1 : 1;
-
-        foreach ($semuaKelas as $kelas) {
-            for ($i = 1; $i <= 3; $i++) {
-                $jkSiswa = $faker->randomElement(['L', 'P']);
-                $namaSiswa = ($jkSiswa == 'L' ? $faker->firstNameMale : $faker->firstNameFemale) . ' ' . $faker->randomElement($safeLastNames);
-                $nis = date('y') . str_pad($nisCounter, 3, '0', STR_PAD_LEFT); 
-
-                $siswa = Siswa::firstOrCreate(
-                    ['nis' => $nis],
-                    [
-                        'nama_lengkap' => $namaSiswa,
-                        'jenis_kelamin' => $jkSiswa,
-                        'tempat_lahir' => $faker->city,
-                        'tanggal_lahir' => $faker->dateTimeBetween('-12 years', '-6 years')->format('Y-m-d'),
-                        'nama_orang_tua' => $faker->randomElement(['Bapak ', 'Ibu ']) . $faker->firstName . ' ' . $faker->randomElement($safeLastNames),
-                        'email_orang_tua' => null,
-                        'nomor_hp_orang_tua' => $faker->phoneNumber,
-                        'alamat' => $faker->address,
-                        'status' => 'aktif',
-                    ]
-                );
-
-                NilaiKehadiran::firstOrCreate(['siswa_id' => $siswa->id, 'tahun_ajaran_id' => $taLama->id], ['kelas_id' => $kelas->id, 'total_poin' => 0]);
-                NilaiKehadiran::firstOrCreate(['siswa_id' => $siswa->id, 'tahun_ajaran_id' => $taBaru->id], ['kelas_id' => $kelas->id, 'total_poin' => 0]);
-                $nisCounter++;
+                    $agendaMap[$ta->id][] = $agenda;
+                }
             }
-        }
 
-        // 5. GENERATE AGENDA DUMMY
-        $agendas = [];
-        $semuaPengajarIds = Pengajar::pluck('id')->toArray();
+            // 3. Setup Data Dummy Siswa
+            $siswaList = [
+                ['nama' => 'Metta', 'nis' => '24001', 'jk' => 'P'],
+                ['nama' => 'Samitta', 'nis' => '24002', 'jk' => 'P']
+            ];
 
-        // A. Agenda Semester Ganjil (Histori)
-        for ($minggu = 50; $minggu >= 30; $minggu--) {
-            $agenda = Agenda::firstOrCreate(
-                [
-                    'tanggal' => Carbon::now()->subWeeks($minggu)->toDateString(),
-                    'nama_kegiatan' => 'Kegiatan Semester Ganjil Ke-' . (51 - $minggu)
-                ], 
-                [
-                    'tahun_ajaran_id' => $taLama->id,
-                    'waktu_mulai' => '08:00:00',
-                    'waktu_selesai' => '10:00:00',
-                    'status' => 'selesai',
-                ]
-            );
-            if (!empty($semuaPengajarIds)) $agenda->penanggungJawab()->syncWithoutDetaching($faker->randomElements($semuaPengajarIds, rand(1, 2)));
-            $agendas[] = $agenda;
-        }
+            // Pilihan kehadiran (Hadir diperbanyak agar probabilitasnya lebih besar)
+            $pilihanKehadiran = ['hadir', 'hadir', 'hadir', 'hadir', 'izin', 'sakit', 'alpa'];
 
-        // B. Agenda Semester Genap (Sekarang)
-        for ($minggu = 20; $minggu >= 1; $minggu--) {
-            $agenda = Agenda::firstOrCreate(
-                [
-                    'tanggal' => Carbon::now()->subWeeks($minggu)->toDateString(),
-                    'nama_kegiatan' => 'Puja Bakti Semester Genap Ke-' . (21 - $minggu)
-                ], 
-                [
-                    'tahun_ajaran_id' => $taBaru->id,
-                    'waktu_mulai' => '08:00:00',
-                    'waktu_selesai' => '10:00:00',
-                    'status' => 'selesai',
-                ]
-            );
-            if (!empty($semuaPengajarIds)) $agenda->penanggungJawab()->syncWithoutDetaching($faker->randomElements($semuaPengajarIds, rand(1, 2)));
-            $agendas[] = $agenda;
-        }
+            foreach ($siswaList as $s) {
+                $siswa = Siswa::firstOrCreate(['nis' => $s['nis']], [
+                    'nama_lengkap' => $s['nama'],
+                    'jenis_kelamin' => $s['jk'],
+                    'tempat_lahir' => 'Tabanan',
+                    'tanggal_lahir' => '2016-01-01',
+                    'alamat' => 'Alamat Dummy',
+                    'status' => 'aktif'
+                ]);
 
-        // 6. GENERATE ABSENSI DUMMY SISWA
-        $semuaSiswa = Siswa::all();
-        $statusSiswa = ['hadir', 'hadir', 'hadir', 'izin', 'sakit', 'alpa'];
+                // Setup Histori (Naik Kelas)
+                // Catatan ID Kelas: 1 = PG, 2 = TK A, 4 = 1 SD, 5 = 2 SD
+                $historiData = ($s['nama'] == 'Metta') 
+                    ? [['ta' => $ta1, 'kls' => 4], ['ta' => $ta2, 'kls' => 4], ['ta' => $ta3, 'kls' => 5]]
+                    : [['ta' => $ta1, 'kls' => 1], ['ta' => $ta2, 'kls' => 1], ['ta' => $ta3, 'kls' => 2]];
 
-        foreach ($agendas as $agenda) {
-            foreach ($semuaSiswa as $siswa) {
-                $status = ($agenda->tahun_ajaran_id == $taLama->id) ? (rand(1,10) <= 8 ? 'hadir' : 'alpa') : $faker->randomElement($statusSiswa);
-                $waktuHadir = $status === 'hadir' ? '07:' . str_pad(rand(30, 59), 2, '0', STR_PAD_LEFT) . ':00' : null;
-                
-                Absensi::firstOrCreate(
-                    ['agenda_id' => $agenda->id, 'siswa_id' => $siswa->id],
-                    ['status_kehadiran' => $status, 'waktu_hadir' => $waktuHadir, 'metode_absen' => $status === 'hadir' ? 'barcode' : 'manual']
-                );
+                foreach ($historiData as $h) {
+                    // Masukkan ke Histori Siswa
+                    HistoriSiswa::firstOrCreate([
+                        'siswa_id' => $siswa->id,
+                        'tahun_ajaran_id' => $h['ta']->id,
+                        'kelas_id' => $h['kls']
+                    ]);
+
+                    // 4. Masukkan Absensi Bervariasi Untuk Tiap Agenda di Semester Tersebut
+                    $agendas = $agendaMap[$h['ta']->id];
+                    
+                    foreach ($agendas as $agenda) {
+                        // Mengambil status secara acak dari array $pilihanKehadiran
+                        $randomStatus = $pilihanKehadiran[array_rand($pilihanKehadiran)];
+                        
+                        Absensi::firstOrCreate(
+                            [
+                                'agenda_id' => $agenda->id, 
+                                'siswa_id' => $siswa->id
+                            ],
+                            [
+                                'status_kehadiran' => $randomStatus, 
+                                'metode_absen' => 'manual',
+                                'waktu_hadir' => ($randomStatus == 'hadir') ? '08:15:00' : null,
+                                'keterangan' => ($randomStatus != 'hadir') ? 'Testing Seeder' : null
+                            ]
+                        );
+                    }
+                }
             }
-        }
-
-        // 6.5 GENERATE ABSENSI DUMMY PENGAJAR
-        $semuaPengajar = Pengajar::all();
-        // Probabilitas hadir dibuat lebih tinggi karena pengajar biasanya lebih rajin
-        $statusPengajar = ['hadir', 'hadir', 'hadir', 'hadir', 'izin', 'sakit', 'alpa']; 
-
-        foreach ($agendas as $agenda) {
-            foreach ($semuaPengajar as $pengajar) {
-                // Di semester lama (histori) rajin masuk 90%, di semester baru diacak biasa
-                $status = ($agenda->tahun_ajaran_id == $taLama->id) ? (rand(1,10) <= 9 ? 'hadir' : 'alpa') : $faker->randomElement($statusPengajar);
-                
-                // Waktu hadir pengajar dibuat lebih awal (07:15 - 07:45) dibanding siswa
-                $waktuHadir = $status === 'hadir' ? '07:' . str_pad(rand(15, 45), 2, '0', STR_PAD_LEFT) . ':00' : null;
-                
-                AbsensiPengajar::firstOrCreate(
-                    ['agenda_id' => $agenda->id, 'pengajar_id' => $pengajar->id],
-                    [
-                        'status_kehadiran' => $status, 
-                        'waktu_hadir' => $waktuHadir
-                    ]
-                );
-            }
-        }
-
-        // 7. FINALISASI REKAPITULASI POIN KEHADIRAN DUMMY
-        // 7. FINALISASI REKAPITULASI POIN KEHADIRAN DUMMY
-        foreach(NilaiKehadiran::all() as $nk) {
-            // Hitung Hadir
-            $totalHadir = Absensi::where('siswa_id', $nk->siswa_id)
-                ->where('status_kehadiran', 'hadir')
-                ->whereHas('agenda', function($q) use ($nk) {
-                    $q->where('tahun_ajaran_id', $nk->tahun_ajaran_id);
-                })->count();
-            
-            // Hitung Izin
-            $totalIzin = Absensi::where('siswa_id', $nk->siswa_id)
-                ->where('status_kehadiran', 'izin')
-                ->whereHas('agenda', function($q) use ($nk) {
-                    $q->where('tahun_ajaran_id', $nk->tahun_ajaran_id);
-                })->count();
-
-            // Hitung Sakit
-            $totalSakit = Absensi::where('siswa_id', $nk->siswa_id)
-                ->where('status_kehadiran', 'sakit')
-                ->whereHas('agenda', function($q) use ($nk) {
-                    $q->where('tahun_ajaran_id', $nk->tahun_ajaran_id);
-                })->count();
-
-            // Update Poin (Hadir*5, Izin*1, Sakit*1)
-            $nk->update([
-                'total_poin' => ($totalHadir * 5) + ($totalIzin * 1) + ($totalSakit * 1)
-            ]);
-        }
+        });
     }
 }

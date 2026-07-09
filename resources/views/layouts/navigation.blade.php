@@ -10,10 +10,7 @@
 
                 <div class="hidden space-x-8 lg:-my-px lg:ml-10 lg:flex">
 
-                    @php
-                        // Cek dengan aman apakah user login dan apakah dia admin
-                        $isAdmin = auth()->check() ? auth()->user()->isAdmin() : false;
-                    @endphp
+
 
                     {{-- MENU UNTUK YANG LOGIN SAJA --}}
                     @auth
@@ -26,7 +23,6 @@
                     {{-- MENU UNTUK SEMUA ORANG (PUBLIK & LOGIN) --}}
                     {{-- ================================================== --}}
 
-                    {{-- 1. Tambahan Tab Pemberitahuan --}}
                     <x-nav-link :href="route('pemberitahuan.index')" :active="request()->routeIs('pemberitahuan.*')">
                         {{ __('Pemberitahuan') }}
                     </x-nav-link>
@@ -55,46 +51,20 @@
                             {{ __('Siswa') }}
                         </x-nav-link>
 
-                        {{-- DROPDOWN MENU: AKADEMIK --}}
-                        <div class="hidden sm:flex sm:items-center">
-                            <x-dropdown align="left" width="48">
-                                <x-slot name="trigger">
-                                    <button
-                                        class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('tahun_ajaran.*', 'nilai_kehadiran.*') ? 'border-indigo-400 text-gray-900 focus:border-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:text-gray-700 focus:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out h-16">
-                                        <div>{{ __('Akademik') }}</div>
-                                        <div class="ms-1">
-                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                                viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd"
-                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    </button>
-                                </x-slot>
-
-                                <x-slot name="content">
-                                    <x-dropdown-link href="{{ route('tahun_ajaran.index') }}">
-                                        {{ __('Tahun Ajaran') }}
-                                    </x-dropdown-link>
-
-                                    <x-dropdown-link href="{{ route('nilai_kehadiran.index') }}">
-                                        {{ __('Nilai Siswa') }}
-                                    </x-dropdown-link>
-                                </x-slot>
-                            </x-dropdown>
-                        </div>
+                        <x-nav-link :href="route('tahun_ajaran.index')" :active="request()->routeIs('tahun_ajaran.*')">
+                            {{ __('Tahun Ajaran') }}
+                        </x-nav-link>
 
                         {{-- MENU KHUSUS ADMIN --}}
-                        @if ($isAdmin)
-                            <x-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
-                                {{ __('Kelas') }}
-                            </x-nav-link>
 
-                            <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                                {{ __('Laporan') }}
-                            </x-nav-link>
-                        @endif
+                        <x-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
+                            {{ __('Kelas') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                            {{ __('Laporan') }}
+                        </x-nav-link>
+
                     @endauth
                 </div>
             </div>
@@ -169,7 +139,6 @@
                 </x-responsive-nav-link>
             @endauth
 
-            {{-- Tab Pemberitahuan Mobile --}}
             <x-responsive-nav-link :href="route('pemberitahuan.index')" :active="request()->routeIs('pemberitahuan.*')">
                 {{ __('Pemberitahuan') }}
             </x-responsive-nav-link>
@@ -195,38 +164,19 @@
                     {{ __('Siswa') }}
                 </x-responsive-nav-link>
 
-                {{-- DROPDOWN AKADEMIK MOBILE --}}
-                <div x-data="{ openAkademik: false }" class="space-y-1 border-l-4 border-transparent">
-                    <button @click="openAkademik = !openAkademik"
-                        class="w-full flex justify-between items-center ps-3 pe-4 py-2 text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out">
-                        <span>{{ __('Akademik') }}</span>
-                        <svg class="h-4 w-4 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': openAkademik }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                            fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                    <div x-show="openAkademik" class="bg-gray-50 space-y-1 pb-1" style="display: none;">
-                        <x-responsive-nav-link href="{{ route('tahun_ajaran.index') }}" class="pl-8">
-                            {{ __('Tahun Ajaran') }}
-                        </x-responsive-nav-link>
-                        <x-responsive-nav-link href="{{ route('nilai_kehadiran.index') }}" class="pl-8">
-                            {{ __('Nilai Siswa') }}
-                        </x-responsive-nav-link>
-                    </div>
-                </div>
+                <x-responsive-nav-link :href="route('tahun_ajaran.index')" :active="request()->routeIs('tahun_ajaran.*')">
+                    {{ __('Tahun Ajaran') }}
+                </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('kelas.index')" :active="request()->routeIs('kelas.*')">
                     {{ __('Kelas') }}
                 </x-responsive-nav-link>
 
-                @if ($isAdmin)
-                    <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                        {{ __('Laporan') }}
-                    </x-responsive-nav-link>
-                @endif
+
+                <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                    {{ __('Laporan') }}
+                </x-responsive-nav-link>
+
             @endauth
         </div>
 

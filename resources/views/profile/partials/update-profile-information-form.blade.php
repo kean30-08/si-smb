@@ -1,7 +1,5 @@
 <section>
-    @php
-        $isAdmin = auth()->user()->isAdmin();
-    @endphp
+
 
     <header>
         <h2 class="text-lg font-medium text-gray-900">
@@ -37,33 +35,33 @@
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
         </div>
 
-        @if (!$isAdmin)
-            @php
-                $dataPengajar = \App\Models\Pengajar::where('user_id', auth()->id())->first();
-                $jkAsli = old('jenis_kelamin', $dataPengajar->jenis_kelamin ?? '');
-                $teksJk = $jkAsli == 'L' ? 'Laki-laki' : ($jkAsli == 'P' ? 'Perempuan' : '');
-            @endphp
 
-            <div>
-                <x-input-label for="nomor_hp" :value="__('Nomor HP / WA')" />
-                <x-text-input id="nomor_hp" name="nomor_hp" type="text"
-                    class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="old('nomor_hp', $dataPengajar->nomor_hp ?? '')" readonly />
-            </div>
+        @php
+            $dataPengajar = \App\Models\Pengajar::where('user_id', auth()->id())->first();
+            $jkAsli = old('jenis_kelamin', $dataPengajar->jenis_kelamin ?? '');
+            $teksJk = $jkAsli == 'L' ? 'Laki-laki' : ($jkAsli == 'P' ? 'Perempuan' : '');
+        @endphp
 
-            <div>
-                <x-input-label for="jenis_kelamin_display" :value="__('Jenis Kelamin')" />
-                <x-text-input id="jenis_kelamin_display" type="text"
-                    class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="$teksJk" readonly />
-                <input type="hidden" name="jenis_kelamin" value="{{ $jkAsli }}">
-            </div>
+        <div>
+            <x-input-label for="nomor_hp" :value="__('Nomor HP / WA')" />
+            <x-text-input id="nomor_hp" name="nomor_hp" type="text"
+                class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="old('nomor_hp', $dataPengajar->nomor_hp ?? '')" readonly />
+        </div>
 
-            <div class="md:col-span-2">
-                <x-input-label for="alamat" :value="__('Alamat Lengkap')" />
-                <textarea id="alamat" name="alamat" rows="3"
-                    class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 rounded-md shadow-sm"
-                    readonly>{{ old('alamat', $dataPengajar->alamat ?? '') }}</textarea>
-            </div>
-        @endif
+        <div>
+            <x-input-label for="jenis_kelamin_display" :value="__('Jenis Kelamin')" />
+            <x-text-input id="jenis_kelamin_display" type="text"
+                class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed" :value="$teksJk" readonly />
+            <input type="hidden" name="jenis_kelamin" value="{{ $jkAsli }}">
+        </div>
+
+        <div class="md:col-span-2">
+            <x-input-label for="alamat" :value="__('Alamat Lengkap')" />
+            <textarea id="alamat" name="alamat" rows="3"
+                class="mt-1 block w-full bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 rounded-md shadow-sm"
+                readonly>{{ old('alamat', $dataPengajar->alamat ?? '') }}</textarea>
+        </div>
+
 
         {{-- AKTIFKAN KEMBALI TOMBOL SAVE --}}
         <div class="flex items-center gap-4 md:col-span-2 mt-2">

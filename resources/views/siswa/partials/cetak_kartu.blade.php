@@ -135,7 +135,7 @@
                 <div class="details-row">
                     {{-- Pastikan ini mengarah ke relasi yang sama dengan cetak massal --}}
                     <div class="details-label">Kelas</div>
-                    <div class="details-value">: {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</div>
+                    <div class="details-value">: {{ $siswa->historiAktif->kelas->nama_kelas ?? '-' }}</div>
                 </div>
                 <div class="details-row">
                     <div class="details-label">L/P</div>

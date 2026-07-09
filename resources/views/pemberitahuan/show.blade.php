@@ -26,7 +26,8 @@
                 <div class="p-6 sm:p-10">
                     <div class="mb-6 pb-6 border-b border-gray-100">
                         <p class="text-sm text-indigo-600 font-bold mb-2 uppercase tracking-widest">
-                            Dipublikasikan: {{ $pemberitahuan->created_at->translatedFormat('l, d F Y - H:i') }}
+                            Dipublikasikan:
+                            {{ \Carbon\Carbon::parse($pemberitahuan->created_at)->translatedFormat('l, d F Y - H:i') }}
                         </p>
                         <h1 class="text-3xl font-extrabold text-gray-900 leading-tight">
                             {{ $pemberitahuan->judul }}

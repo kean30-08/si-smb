@@ -13,8 +13,8 @@ class TahunAjaran extends Model
         return $this->hasMany(Agenda::class);
     }
 
-    public function nilaiKehadiran()
+    public function historiSiswas()
     {
-        return $this->hasMany(NilaiKehadiran::class);
+        return $this->hasMany(HistoriSiswa::class);
     }
 }

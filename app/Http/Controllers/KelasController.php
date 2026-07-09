@@ -12,14 +12,15 @@ class KelasController extends Controller
     {
         $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
         
-        $kelas = Kelas::withCount(['nilaiKehadirans' => function($query) use ($tahunAktif) {
+        // PERBAIKAN: Gunakan nama relasi 'historiSiswas' sesuai dengan yang ada di Model Kelas
+        $kelas = \App\Models\Kelas::withCount(['historiSiswas as jumlah_siswa' => function($query) use ($tahunAktif) {
             if ($tahunAktif) {
                 $query->where('tahun_ajaran_id', $tahunAktif->id)
                       ->whereHas('siswa', function($q) {
-                          $q->where('status', 'aktif');
+                          $q->where('status', 'aktif'); // Hanya hitung siswa yang statusnya aktif
                       });
             } else {
-                $query->where('id', 0); 
+                $query->where('id', 0); // Jika tidak ada TA aktif, jangan hitung apapun
             }
         }])->get(); 
                 
@@ -33,17 +34,15 @@ class KelasController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validasi awal untuk dropdown Jenjang
+        // 1. Validasi Jenjang Baru (Memasukkan TK A dan TK B)
         $request->validate([
-            'jenjang' => 'required|in:SD,SMP,SMA,TK,PAUD'
+            'jenjang' => 'required|in:SD,SMP,SMA,TK A,TK B,PG'
         ]);
 
         // 2. Logika Pembuatan Nama Kelas & Limit Angka
-        if (in_array($request->jenjang, ['TK', 'PAUD'])) {
-            // Jika TK/PAUD, abaikan input 'tingkat/nomor'
+        if (in_array($request->jenjang, ['TK A', 'TK B', 'PG'])) {
             $nama_kelas = 'Kelas ' . $request->jenjang;
         } else {
-            // Jika SD/SMP/SMA, tentukan limit maksimalnya
             $maxTingkat = $request->jenjang == 'SD' ? 6 : 3;
             
             $request->validate([
@@ -62,7 +61,7 @@ class KelasController extends Controller
         $request->validate([
             'nama_kelas' => 'unique:kelas,nama_kelas',
         ], [
-            'nama_kelas.unique' => 'Untuk '. $nama_kelas .' sudah terdaftar dalam sistem.',
+            'nama_kelas.unique' => 'Kelas '. $nama_kelas .' sudah terdaftar dalam sistem.',
         ]);
 
         Kelas::create(['nama_kelas' => $nama_kelas]);
@@ -78,10 +77,10 @@ class KelasController extends Controller
     public function update(Request $request, Kelas $kelas)
     {
         $request->validate([
-            'jenjang' => 'required|in:SD,SMP,SMA,TK,PAUD'
+            'jenjang' => 'required|in:SD,SMP,SMA,TK A,TK B,PG'
         ]);
 
-        if (in_array($request->jenjang, ['TK', 'PAUD'])) {
+        if (in_array($request->jenjang, ['TK A', 'TK B', 'PG'])) {
             $nama_kelas = 'Kelas ' . $request->jenjang;
         } else {
             $maxTingkat = $request->jenjang == 'SD' ? 6 : 3;
@@ -101,7 +100,7 @@ class KelasController extends Controller
         $request->validate([
             'nama_kelas' => 'unique:kelas,nama_kelas,' . $kelas->id,
         ], [
-            'nama_kelas.unique' => 'Untuk '. $nama_kelas .' sudah ada dalam basis data.',
+            'nama_kelas.unique' => 'Kelas '. $nama_kelas .' sudah ada dalam basis data.',
         ]);
 
         $kelas->update(['nama_kelas' => $nama_kelas]);

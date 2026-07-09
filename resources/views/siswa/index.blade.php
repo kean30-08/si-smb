@@ -1,24 +1,37 @@
 <x-app-layout>
     <x-slot name="header">
-        {{-- PERBAIKAN HEADER: Flex-col untuk HP, tombol memanjang --}}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Daftar Siswa') }}
-            </h2>
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Daftar Siswa') }}
+                </h2>
+                {{-- INFO TAHUN AJARAN AKTIF --}}
+                @php
+                    $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+                @endphp
+                <p class="text-sm text-indigo-600 font-bold mt-1 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
+                </p>
+            </div>
 
-            <a href="{{ route('siswa.cetakMassal') }}"
-                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                Cetak Semua Kartu
-            </a>
+            <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+                <a href="{{ route('siswa.cetakMassal') }}"
+                    class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    Cetak Semua Kartu
+                </a>
 
-            @if ($isAdmin)
-                <div class="w-full sm:w-auto flex">
-                    <a href="{{ route('siswa.create') }}"
-                        class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                        + Tambah Siswa
-                    </a>
-                </div>
-            @endif
+
+                <a href="{{ route('siswa.create') }}"
+                    class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    + Tambah Siswa
+                </a>
+
+            </div>
         </div>
     </x-slot>
 
@@ -31,10 +44,10 @@
                     <form id="searchForm" action="{{ route('siswa.index') }}" method="GET"
                         class="mb-6 flex flex-col md:flex-row gap-4 w-full">
 
-                        {{-- Input Search dengan Logo Lucide --}}
+                        {{-- Input Search --}}
                         <div class="flex-1 flex w-full">
                             <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
-                                placeholder="Cari nama atau NIS siswa..."
+                                placeholder="Cari nama atau NIK siswa..."
                                 class="w-full border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <button type="submit"
                                 class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r-md flex items-center justify-center transition"
@@ -47,7 +60,8 @@
                                 </svg>
                             </button>
                         </div>
-                        {{-- tombol reset --}}
+
+                        {{-- Tombol Reset --}}
                         <div id="resetButtonContainer"
                             class="w-full sm:w-auto {{ request('search') || request('kelas_id') || request('status') ? '' : 'hidden' }}">
                             <a href="{{ route('siswa.index') }}"
@@ -56,21 +70,8 @@
                             </a>
                         </div>
 
-                        {{-- Dropdown Filter --}}
+                        {{-- Dropdown Filter Status --}}
                         <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                            {{-- Filter Kelas --}}
-                            <select id="kelasFilter" name="kelas_id"
-                                class="w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">Semua Kelas</option>
-                                @foreach ($kelas as $k)
-                                    <option value="{{ $k->id }}"
-                                        {{ request('kelas_id') == $k->id ? 'selected' : '' }}>
-                                        {{ $k->nama_kelas }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            {{-- Filter Status --}}
                             <select id="statusFilter" name="status"
                                 class="w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">Semua Status</option>
@@ -82,7 +83,6 @@
                                 </option>
                             </select>
                         </div>
-
                     </form>
 
                     {{-- Tabel Data --}}
@@ -97,24 +97,20 @@
     <script>
         let searchInput = document.getElementById('searchInput');
         let searchForm = document.getElementById('searchForm');
-        let kelasFilter = document.getElementById('kelasFilter');
         let statusFilter = document.getElementById('statusFilter');
         let tableContainer = document.getElementById('table-container');
-        let resetButtonContainer = document.getElementById('resetButtonContainer'); // Tambahan variabel
+        let resetButtonContainer = document.getElementById('resetButtonContainer');
 
-        // Fungsi baru untuk memunculkan/menyembunyikan tombol Reset secara realtime
         function toggleResetButton() {
-            if (searchInput.value.trim() !== '' || kelasFilter.value !== '' || statusFilter.value !== '') {
+            if (searchInput.value.trim() !== '' || statusFilter.value !== '') {
                 resetButtonContainer.classList.remove('hidden');
             } else {
                 resetButtonContainer.classList.add('hidden');
             }
         }
 
-        // Fungsi untuk menarik data tanpa reload
         function fetchTableData(url) {
             tableContainer.style.opacity = '0.5';
-
             fetch(url, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -128,29 +124,21 @@
                 .catch(error => console.error('Error:', error));
         }
 
-        // Fungsi untuk mengambil parameter form dan membuat URL
         function updateData() {
             let url = new URL(searchForm.action);
             let params = new URLSearchParams(new FormData(searchForm));
             url.search = params.toString();
-
             fetchTableData(url);
             window.history.pushState({}, '', url);
-
-            toggleResetButton(); // Panggil fungsi reset setiap kali data diupdate
+            toggleResetButton();
         }
 
-        // 1. FILTER DROPDOWN TETAP OTOMATIS 
-        kelasFilter.addEventListener('change', updateData);
         statusFilter.addEventListener('change', updateData);
-
-        // 2. SEARCH BAR MENJADI MANUAL
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             updateData();
         });
 
-        // 3. PAGINATION AJAX
         document.addEventListener('click', function(e) {
             if (e.target.closest('.pagination-container a')) {
                 e.preventDefault();

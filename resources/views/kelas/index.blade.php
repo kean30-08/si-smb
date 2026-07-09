@@ -58,7 +58,7 @@
                                                     Siswa</span>
                                                 <span
                                                     class="bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded border border-blue-400 text-sm">
-                                                    {{ $item->nilai_kehadirans_count }} Siswa
+                                                    {{ $item->jumlah_siswa ?? 0 }} Siswa
                                                 </span>
                                             </div>
                                         </td>

@@ -8,18 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('nilai_kehadirans', function (Blueprint $table) {
+        Schema::create('histori_siswas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('siswa_id')->constrained('siswas')->onDelete('cascade');
             $table->foreignId('kelas_id')->nullable()->constrained('kelas')->onDelete('set null');
             $table->foreignId('tahun_ajaran_id')->constrained('tahun_ajarans')->onDelete('cascade');
-            $table->integer('total_poin')->default(0);
             $table->timestamps();
+            
+            // Kita tidak perlu menyimpan "total_poin" di sini, 
+            // karena poin, H, I, S, A akan dihitung otomatis secara real-time!
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('nilai_kehadirans');
+        Schema::dropIfExists('histori_siswas');
     }
 };

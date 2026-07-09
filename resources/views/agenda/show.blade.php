@@ -149,11 +149,11 @@
     </div>
 
     {{-- SCRIPT JAVASCRIPT DINAMIS --}}
-    @if ($isAdmin)
-        <script>
-            function tambahPic() {
-                const container = document.getElementById('pic-container');
-                const html = `
+
+    <script>
+        function tambahPic() {
+            const container = document.getElementById('pic-container');
+            const html = `
                     <div class="pic-row flex items-center gap-2">
                         <select name="penanggung_jawab_id[]" class="flex-1 md:w-72 text-sm font-medium border-indigo-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-gray-700 py-2">
                             <option value="" disabled selected>-- Pilih Pengajar --</option>
@@ -166,17 +166,17 @@
                         </button>
                     </div>
                 `;
-                container.insertAdjacentHTML('beforeend', html);
-            }
+            container.insertAdjacentHTML('beforeend', html);
+        }
 
-            function hapusPic(btn) {
-                const rows = document.getElementsByClassName('pic-row');
-                if (rows.length > 1) {
-                    btn.closest('.pic-row').remove();
-                } else {
-                    btn.closest('.pic-row').querySelector('select').value = "";
-                }
+        function hapusPic(btn) {
+            const rows = document.getElementsByClassName('pic-row');
+            if (rows.length > 1) {
+                btn.closest('.pic-row').remove();
+            } else {
+                btn.closest('.pic-row').querySelector('select').value = "";
             }
-        </script>
-    @endif
+        }
+    </script>
+
 </x-app-layout>

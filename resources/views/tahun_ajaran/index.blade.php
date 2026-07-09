@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ showModal: false, activeFormId: '', confirmInput: '' }">
+    <div class="py-12" x-data="{ showModalAktif: false, activeFormId: '', confirmInput: '', showModalDelete: false, deleteFormId: '', deleteTaName: '', deleteAgendaCount: 0, confirmDeleteInput: '' }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
@@ -14,13 +14,10 @@
                     <div class="mb-6 flex justify-between items-center">
                         <h3 class="text-lg font-bold text-gray-800">Daftar Tahun Ajaran</h3>
 
-                        {{-- TOMBOL TAMBAH HANYA UNTUK ADMIN --}}
-                        @if (auth()->user()->isAdmin())
-                            <a href="{{ route('tahun_ajaran.create') }}"
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-sm transition shadow-sm">
-                                + Tambah Data
-                            </a>
-                        @endif
+                        <a href="{{ route('tahun_ajaran.create') }}"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-sm transition shadow-sm">
+                            + Tambah Data
+                        </a>
                     </div>
 
                     <div class="w-full">
@@ -31,11 +28,7 @@
                                     <th scope="col" class="py-3 px-6">No</th>
                                     <th scope="col" class="py-3 px-6">Tahun Ajaran / Semester</th>
                                     <th scope="col" class="py-3 px-6 text-center">Status</th>
-
-                                    {{-- HEADER AKSI HANYA UNTUK ADMIN --}}
-                                    @if (auth()->user()->isAdmin())
-                                        <th scope="col" class="py-3 px-6 text-center">Aksi</th>
-                                    @endif
+                                    <th scope="col" class="py-3 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
 
@@ -72,69 +65,66 @@
                                             </div>
                                         </td>
 
-                                        {{-- KOLOM AKSI HANYA UNTUK ADMIN --}}
-                                        @if (auth()->user()->isAdmin())
-                                            <td
-                                                class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4">
-                                                <div class="flex justify-end md:justify-center space-x-4 items-center">
-                                                    @if ($ta->status != 'aktif')
-                                                        <form id="form-aktif-{{ $ta->id }}"
-                                                            action="{{ route('tahun_ajaran.aktifkan', $ta->id) }}"
-                                                            method="POST" class="m-0">
-                                                            @csrf @method('PATCH')
-                                                            <button type="button"
-                                                                @click="showModal = true; activeFormId = 'form-aktif-{{ $ta->id }}'; confirmInput = '';"
-                                                                class="text-green-500 hover:text-green-700 transition font-bold text-xs md:text-sm mr-2 border border-green-500 hover:bg-green-50 px-2 py-1 rounded">
-                                                                Set Aktif
-                                                            </button>
-                                                        </form>
-                                                    @endif
+                                        <td
+                                            class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4">
+                                            <div class="flex justify-end md:justify-center space-x-4 items-center">
+                                                @if ($ta->status != 'aktif')
+                                                    <form id="form-aktif-{{ $ta->id }}"
+                                                        action="{{ route('tahun_ajaran.aktifkan', $ta->id) }}"
+                                                        method="POST" class="m-0">
+                                                        @csrf @method('PATCH')
+                                                        <button type="button"
+                                                            @click="showModalAktif = true; activeFormId = 'form-aktif-{{ $ta->id }}'; confirmInput = '';"
+                                                            class="text-green-500 hover:text-green-700 transition font-bold text-xs md:text-sm mr-2 border border-green-500 hover:bg-green-50 px-2 py-1 rounded">
+                                                            Set Aktif
+                                                        </button>
+                                                    </form>
+                                                @endif
 
-                                                    <a href="{{ route('tahun_ajaran.edit', $ta->id) }}"
-                                                        class="text-blue-500 hover:text-blue-700 transition p-1"
-                                                        title="Edit">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20"
-                                                            height="20" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round">
-                                                            <path
-                                                                d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                            <path
-                                                                d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
-                                                        </svg>
-                                                    </a>
+                                                <a href="{{ route('tahun_ajaran.edit', $ta->id) }}"
+                                                    class="text-blue-500 hover:text-blue-700 transition p-1"
+                                                    title="Edit">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <path
+                                                            d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                        <path
+                                                            d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+                                                    </svg>
+                                                </a>
 
-                                                    @if ($ta->status != 'aktif')
-                                                        <form action="{{ route('tahun_ajaran.destroy', $ta->id) }}"
-                                                            method="POST"
-                                                            onsubmit="return confirm('Yakin ingin menghapus Tahun Ajaran ini?');"
-                                                            class="m-0">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit"
-                                                                class="text-red-500 hover:text-red-700 transition p-1"
-                                                                title="Hapus">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="20"
-                                                                    height="20" viewBox="0 0 24 24" fill="none"
-                                                                    stroke="currentColor" stroke-width="2"
-                                                                    stroke-linecap="round" stroke-linejoin="round">
-                                                                    <path d="M3 6h18" />
-                                                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                                    <line x1="10" x2="10" y1="11"
-                                                                        y2="17" />
-                                                                    <line x1="14" x2="14" y1="11"
-                                                                        y2="17" />
-                                                                </svg>
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        @endif
+                                                @if ($ta->status != 'aktif')
+                                                    <form id="form-delete-{{ $ta->id }}"
+                                                        action="{{ route('tahun_ajaran.destroy', $ta->id) }}"
+                                                        method="POST" class="m-0">
+                                                        @csrf @method('DELETE')
+                                                        <button type="button"
+                                                            @click="showModalDelete = true; deleteFormId = 'form-delete-{{ $ta->id }}'; deleteTaName = '{{ $ta->tahun_ajaran }}'; deleteAgendaCount = {{ \App\Models\Agenda::where('tahun_ajaran_id', $ta->id)->count() }}; confirmDeleteInput = '';"
+                                                            class="text-red-500 hover:text-red-700 transition p-1"
+                                                            title="Hapus">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                                height="20" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M3 6h18" />
+                                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                <line x1="10" x2="10" y1="11"
+                                                                    y2="17" />
+                                                                <line x1="14" x2="14" y1="11"
+                                                                    y2="17" />
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr class="block md:table-row bg-white border border-gray-200 rounded-lg p-4">
-                                        <td colspan="{{ auth()->user()->isAdmin() ? '4' : '3' }}"
+                                        <td colspan="4"
                                             class="block md:table-cell py-4 px-6 text-center text-gray-500">
                                             Belum ada data.
                                         </td>
@@ -147,69 +137,153 @@
             </div>
         </div>
 
-        {{-- MODAL HANYA DIRENDER JIKA ADMIN --}}
-        @if (auth()->user()->isAdmin())
-            <div x-show="showModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto"
-                aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                    <div x-show="showModal" x-transition:enter="ease-out duration-300"
-                        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                        x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0" @click="showModal = false"
-                        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                    <div x-show="showModal" x-transition:enter="ease-out duration-300"
-                        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                        x-transition:leave="ease-in duration-200"
-                        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                            <div class="sm:flex sm:items-start">
-                                <div
-                                    class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                </div>
-                                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                        Konfirmasi Pengaktifan</h3>
-                                    <div class="mt-2">
-                                        <p class="text-sm text-gray-500 mb-4">
-                                            Peringatan: Tahun ajaran yang sedang berjalan saat ini akan otomatis
-                                            dimatikan.
-                                            Untuk melanjutkan, silakan ketik tulisan <span
-                                                class="font-bold text-red-600">Aktif</span> pada kotak di bawah ini.
-                                        </p>
-                                        <input type="text" x-model="confirmInput"
-                                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                            placeholder="Ketik 'Aktif' di sini...">
-                                    </div>
+        {{-- MODAL DI RENDER UNTUK SEMUA ROLE (KARENA SUDAH FULL AKSES) --}}
+
+        {{-- 1. MODAL AKTIFKAN TAHUN AJARAN --}}
+        <div x-show="showModalAktif" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto"
+            aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="showModalAktif" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                    x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0" @click="showModalAktif = false"
+                    class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div x-show="showModalAktif" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div
+                                class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Konfirmasi Pengaktifan</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 mb-4">
+                                        Peringatan: Tahun ajaran yang sedang berjalan saat ini akan otomatis
+                                        dimatikan.
+                                        Untuk melanjutkan, silakan ketik tulisan <span
+                                            class="font-bold text-indigo-600">Aktif</span> pada kotak di bawah ini.
+                                    </p>
+                                    <input type="text" x-model="confirmInput"
+                                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                        placeholder="Ketik 'Aktif' di sini...">
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                            <button type="button"
-                                @click="if(confirmInput === 'Aktif') { document.getElementById(activeFormId).submit(); }"
-                                :disabled="confirmInput !== 'Aktif'"
-                                :class="confirmInput === 'Aktif' ? 'bg-green-600 hover:bg-green-700 cursor-pointer' :
-                                    'bg-gray-300 text-gray-500 cursor-not-allowed'"
-                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                                Aktifkan Sekarang
-                            </button>
-                            <button type="button" @click="showModal = false"
-                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                                Batal
-                            </button>
-                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button"
+                            @click="if(confirmInput === 'Aktif') { document.getElementById(activeFormId).submit(); }"
+                            :disabled="confirmInput !== 'Aktif'"
+                            :class="confirmInput === 'Aktif' ? 'bg-green-600 hover:bg-green-700 cursor-pointer' :
+                                'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                            Aktifkan Sekarang
+                        </button>
+                        <button type="button" @click="showModalAktif = false"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
                     </div>
                 </div>
             </div>
-        @endif
+        </div>
+
+        {{-- 2. MODAL HAPUS TAHUN AJARAN --}}
+        <div x-show="showModalDelete" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto"
+            aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="showModalDelete" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                    x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0" @click="showModalDelete = false"
+                    class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div x-show="showModalDelete" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div
+                                class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Hapus <span x-text="deleteTaName"></span>?</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 mb-2">
+                                        Apakah Anda yakin ingin menghapus Tahun Ajaran ini secara permanen?
+                                    </p>
+                                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-3">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-yellow-400"
+                                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd"
+                                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm text-yellow-700">
+                                                    Terdapat <strong x-text="deleteAgendaCount"></strong> jadwal
+                                                    agenda/kegiatan yang terkait dengan tahun ajaran ini.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p class="text-sm text-gray-500 mb-2 mt-4">
+                                        Untuk melanjutkan penghapusan, silakan ketik <span
+                                            class="font-bold text-red-600">Hapus</span> di kotak berikut:
+                                    </p>
+                                    <input type="text" x-model="confirmDeleteInput"
+                                        class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                        placeholder="Ketik 'Hapus' di sini...">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button"
+                            @click="if(confirmDeleteInput === 'Hapus') { document.getElementById(deleteFormId).submit(); }"
+                            :disabled="confirmDeleteInput !== 'Hapus'"
+                            :class="confirmDeleteInput === 'Hapus' ? 'bg-red-600 hover:bg-red-700 cursor-pointer' :
+                                'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                            Ya, Hapus Permanen
+                        </button>
+                        <button type="button" @click="showModalDelete = false"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 </x-app-layout>

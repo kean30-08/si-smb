@@ -216,7 +216,7 @@
                                         <div>
                                             <p class="font-bold text-sm text-gray-800">{{ $siswa->nama_lengkap }}</p>
                                             <p class="text-xs text-gray-500">
-                                                {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}
+                                                {{ $siswa->historiAktif->kelas->nama_kelas ?? '-' }}
                                             </p>
                                         </div>
                                     </div>

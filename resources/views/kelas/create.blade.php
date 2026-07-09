@@ -42,8 +42,9 @@
                                         class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-bold text-indigo-700 bg-indigo-50 cursor-pointer"
                                         required>
                                         <option value="" disabled selected>-- Pilih Jenjang --</option>
-                                        <option value="TK">TK</option>
-                                        <option value="PAUD">PAUD</option>
+                                        <option value="PG">PG</option>
+                                        <option value="TK A">TK A</option>
+                                        <option value="TK B">TK B</option>
                                         <option value="SD">SD</option>
                                         <option value="SMP">SMP</option>
                                         <option value="SMA">SMA</option>
@@ -53,7 +54,7 @@
 
                             {{-- Petunjuk Dinamis --}}
                             <div class="mt-2 text-xs font-bold text-gray-500" x-show="jenjang !== ''">
-                                <p x-show="jenjang === 'TK' || jenjang === 'PAUD'" class="text-blue-600">Info: Jenjang
+                                <p x-show="['TK A', 'TK B', 'PG'].includes(jenjang)" class="text-blue-600">Info: Jenjang
                                     ini tidak memerlukan nomor kelas.</p>
                                 <p x-show="jenjang === 'SD'" class="text-amber-600">Info: Limit nomor kelas untuk SD
                                     adalah 1 sampai 6.</p>

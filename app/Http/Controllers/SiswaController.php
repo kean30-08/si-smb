@@ -9,17 +9,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Siswa;
 use App\Models\Kelas;
 use App\Models\TahunAjaran;
-use App\Models\NilaiKehadiran;
+use App\Models\HistoriSiswa; // Ganti NilaiKehadiran dengan HistoriSiswa
 
 class SiswaController extends Controller
 {
-    /**
-     * Menampilkan daftar siswa dengan fitur pencarian, filter status, dan filter kelas.
-     * Mendukung pemuatan data secara asinkron (AJAX).
-     * 
-     * @param Request $request
-     * @return \Illuminate\View\View
-     */
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -29,8 +22,8 @@ class SiswaController extends Controller
         $kelas = Kelas::all();
         $isAdmin = auth()->user()->isAdmin();
 
-        // Ambil data siswa beserta relasi nilai aktif (untuk ditarik nama kelasnya di view)
-        $siswas = Siswa::with('nilaiKehadiranAktif.kelas')
+        
+        $siswas = Siswa::with('historiAktif.kelas')
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
                     $q->where('nama_lengkap', 'like', "%{$search}%")
@@ -40,9 +33,8 @@ class SiswaController extends Controller
             ->when($status, function ($query, $status) {
                 return $query->where('status', $status);
             })
-            // PERUBAHAN: Filter kelas sekarang harus mengecek ke tabel nilai_kehadirans yang aktif
             ->when($kelas_id, function ($query, $kelas_id) {
-                return $query->whereHas('nilaiKehadiranAktif', function($q) use ($kelas_id) {
+                return $query->whereHas('historiAktif', function($q) use ($kelas_id) {
                     $q->where('kelas_id', $kelas_id);
                 });
             })
@@ -61,58 +53,38 @@ class SiswaController extends Controller
         return view('siswa.index', compact('siswas', 'kelas', 'isAdmin'));
     }
 
-    /**
-     * Menampilkan detail profil individu siswa.
-     * 
-     * @param Siswa $siswa
-     * @return \Illuminate\View\View
-     */
     public function show(Siswa $siswa)
-{
-    // 1. Load relasi tahun ajaran agar bisa menampilkan nama semester
-    $siswa->load('nilaiKehadiranAktif.kelas', 'nilaiKehadiranAktif.tahunAjaran');
+    {
+        // Ganti relasi historiAktif menjadi historiAktif
+        $siswa->load('historiAktif.kelas', 'historiAktif.tahunAjaran');
 
-    // 2. Hitung poin secara dinamis menggunakan rumus yang sama dengan Dashboard
-    $poin = 0;
-    $nilaiAktif = $siswa->nilaiKehadiranAktif;
+        $poin = 0;
+        $historiAktif = $siswa->historiAktif;
 
-    if ($nilaiAktif) {
-        $absensi = \App\Models\Absensi::where('siswa_id', $siswa->id)
-            ->whereHas('agenda', function($q) use ($nilaiAktif) {
-                $q->where('tahun_ajaran_id', $nilaiAktif->tahun_ajaran_id);
-            })->get();
+        if ($historiAktif) {
+            $absensi = \App\Models\Absensi::where('siswa_id', $siswa->id)
+                ->whereHas('agenda', function($q) use ($historiAktif) {
+                    $q->where('tahun_ajaran_id', $historiAktif->tahun_ajaran_id);
+                })->get();
 
-        $hadir = $absensi->where('status_kehadiran', 'hadir')->count();
-        $izin = $absensi->where('status_kehadiran', 'izin')->count();
-        $sakit = $absensi->where('status_kehadiran', 'sakit')->count();
+            $hadir = $absensi->where('status_kehadiran', 'hadir')->count();
+            $izin = $absensi->where('status_kehadiran', 'izin')->count();
+            $sakit = $absensi->where('status_kehadiran', 'sakit')->count();
 
-        // RUMUS YANG SAMA DENGAN DASHBOARD
-        $poin = ($hadir * 5) + ($izin * 1) + ($sakit * 1);
+            $poin = ($hadir * 5) + ($izin * 1) + ($sakit * 1);
+        }
+
+        return view('siswa.show', compact('siswa', 'poin'));
     }
 
-    return view('siswa.show', compact('siswa', 'poin'));
-}
-
-    /**
-     * Menampilkan formulir pendaftaran siswa baru.
-     * 
-     * @return \Illuminate\View\View
-     */
     public function create()
     {
         $kelas = Kelas::all();
         return view('siswa.create', compact('kelas'));
     }
 
-    /**
-     * Menyimpan data siswa baru ke dalam database.
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function store(Request $request)
     {
-        // Validasi data input dengan pesan error kustom
         $request->validate([
             'nama_lengkap' => 'required|unique:siswas,nama_lengkap|regex:/^[a-zA-Z\s]+$/',
             'nis' => 'required|unique:siswas,nis|regex:/^[0-9]+$/',
@@ -121,9 +93,11 @@ class SiswaController extends Controller
             'tanggal_lahir' => 'required|date',
             'tempat_lahir' => 'required|string',
             'nama_orang_tua' => 'required|string',
-            'nomor_hp_orang_tua' => 'required|regex:/^[0-9]+$/',
-            'email_orang_tua' => 'required|email',
+            'nomor_hp_orang_tua' => 'nullable|regex:/^[0-9]+$/',
+            'email_orang_tua' => 'nullable|email',
             'alamat' => 'required|string',
+            'asal_sekolah' => 'nullable|string|max:255',
+            'nomor_hp_siswa' => 'nullable|regex:/^[0-9]+$/',
         ], [
             'kelas_id.required' => 'Tidak ada kelas yang dibuat.',
             'nis.unique' => 'Nomor Induk Siswa (NIS) sudah terdaftar dalam sistem.',
@@ -132,22 +106,19 @@ class SiswaController extends Controller
             'nama_lengkap.unique' => 'Nama yang dimasukkan sudah terdaftar.',
             'email_orang_tua.email' => 'Format alamat email tidak valid.',
             'nomor_hp_orang_tua.regex' => 'Nomor HP orang tua hanya boleh berisi angka.',
+            'nomor_hp_siswa.regex' => 'Nomor HP Siswa hanya boleh berisi angka.',
         ]);
 
         DB::transaction(function () use ($request) {
-            // 1. Simpan Data Diri Siswa (Kecuali kelas_id)
             $siswa = Siswa::create($request->except(['kelas_id']));
-
-            // 2. Ambil Tahun Ajaran Aktif
             $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
 
-            // 3. Daftarkan siswa ke kelas tersebut di Tahun Ajaran Aktif
             if ($tahunAktif) {
-                NilaiKehadiran::create([
+                // Gunakan HistoriSiswa, tidak ada lagi total_poin
+                HistoriSiswa::create([
                     'siswa_id' => $siswa->id,
                     'kelas_id' => $request->kelas_id,
                     'tahun_ajaran_id' => $tahunAktif->id,
-                    'total_poin' => 0
                 ]);
             }
         });
@@ -155,28 +126,15 @@ class SiswaController extends Controller
         return redirect()->route('siswa.index')->with('success', 'Data entitas siswa berhasil ditambahkan.');
     }
 
-    /**
-     * Menampilkan formulir untuk memperbarui data siswa.
-     * 
-     * @param Siswa $siswa
-     * @return \Illuminate\View\View
-     */
     public function edit(Siswa $siswa)
     {
         $kelas = Kelas::all();
-        // Ambil kelas aktif saat ini untuk ditampilkan di form edit
-        $kelasSekarang = $siswa->nilaiKehadiranAktif->kelas_id ?? null;
+        // Ganti relasi historiAktif menjadi historiAktif
+        $kelasSekarang = $siswa->historiAktif->kelas_id ?? null;
         
         return view('siswa.edit', compact('siswa', 'kelas', 'kelasSekarang'));
     }
 
-    /**
-     * Memperbarui informasi profil siswa di database.
-     * 
-     * @param Request $request
-     * @param Siswa $siswa
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function update(Request $request, Siswa $siswa)
     {
         $request->validate([
@@ -187,21 +145,20 @@ class SiswaController extends Controller
             'tanggal_lahir' => 'required|date',
             'tempat_lahir' => 'required|string',
             'nama_orang_tua' => 'required|string',
-            'nomor_hp_orang_tua' => 'required|regex:/^[0-9]+$/',
-            'email_orang_tua' => 'required|email',
+            'nomor_hp_orang_tua' => 'nullable|regex:/^[0-9]+$/',
+            'email_orang_tua' => 'nullable|email',
             'alamat' => 'required|string',
             'status' => 'required|in:aktif,tidak aktif,lulus',
+            'asal_sekolah' => 'nullable|string|max:255',
+            'nomor_hp_siswa' => 'nullable|regex:/^[0-9]+$/',
         ]);
 
         DB::transaction(function () use ($request, $siswa) {
-            // 1. Update Profil Siswa
             $siswa->update($request->except(['kelas_id']));
-
-            // 2. Update atau Buat data pendaftaran kelas di Tahun Ajaran Aktif
             $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
             
             if ($tahunAktif) {
-                NilaiKehadiran::updateOrCreate(
+                HistoriSiswa::updateOrCreate(
                     [
                         'siswa_id' => $siswa->id,
                         'tahun_ajaran_id' => $tahunAktif->id
@@ -216,37 +173,65 @@ class SiswaController extends Controller
         return redirect()->route('siswa.index')->with('success', 'Informasi profil siswa berhasil diperbarui.');
     }
 
-    /**
-     * Menghapus entitas data siswa dari sistem.
-     * 
-     * @param Siswa $siswa
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function destroy(Siswa $siswa)
     {
         $siswa->delete();
         return redirect()->route('siswa.index')->with('success', 'Entitas data siswa telah dihapus.');
     }
 
-    /**
-     * Menghasilkan tampilan Kartu Identitas Siswa (ID Card).
-     * 
-     * @param Siswa $siswa
-     * @return \Illuminate\View\View
-     */
     public function cetakKartu(Siswa $siswa)
     {
-        // Eager load relasi terbaru
-        $siswa->load('nilaiKehadiranAktif.kelas'); 
+        $siswa->load('historiAktif.kelas'); 
         return view('siswa.partials.cetak_kartu', compact('siswa'));
     }
 
-   public function cetakMassal()
-{
-    // Mengambil semua siswa beserta relasi kelasnya
-    $siswa = \App\Models\Siswa::with('nilaiKehadiranAktif.kelas')->get();
+    public function cetakMassal()
+    {
+        $siswa = \App\Models\Siswa::with('historiAktif.kelas')->get();
+        return view('siswa.partials.cetak_massal', compact('siswa'));
+    }
 
-    // Mengarahkan ke file view untuk cetak massal
-    return view('siswa.partials.cetak_massal', compact('siswa'));
-}
+    public function histori(Siswa $siswa)
+    {
+        $historiMentah = \App\Models\HistoriSiswa::with(['kelas', 'tahunAjaran'])
+                            ->where('siswa_id', $siswa->id)
+                            ->get();
+
+        $historiMentah->each(function ($histori) use ($siswa) {
+            $absensis = \App\Models\Absensi::where('siswa_id', $siswa->id)
+                ->whereHas('agenda', function($q) use ($histori) {
+                    $q->where('tahun_ajaran_id', $histori->tahun_ajaran_id);
+                })->get();
+
+            $histori->hadir = $absensis->where('status_kehadiran', 'hadir')->count();
+            $histori->izin = $absensis->where('status_kehadiran', 'izin')->count();
+            $histori->sakit = $absensis->where('status_kehadiran', 'sakit')->count();
+            $histori->alpa = $absensis->where('status_kehadiran', 'alpa')->count();
+            
+            $histori->poin = ($histori->hadir * 5) + ($histori->izin * 1) + ($histori->sakit * 1);
+        });
+
+        // PEMBOBOTAN URUTAN KELAS AGAR ACCORDION RAPI (PG -> TK -> SD -> SMP -> SMA)
+        $urutanKelas = [
+            'Kelas PG' => 1, 'Kelas TK A' => 2, 'Kelas TK B' => 3,
+            'Kelas 1 SD' => 4, 'Kelas 2 SD' => 5, 'Kelas 3 SD' => 6, 'Kelas 4 SD' => 7, 'Kelas 5 SD' => 8, 'Kelas 6 SD' => 9,
+            'Kelas 1 SMP' => 10, 'Kelas 2 SMP' => 11, 'Kelas 3 SMP' => 12,
+            'Kelas 1 SMA' => 13, 'Kelas 2 SMA' => 14, 'Kelas 3 SMA' => 15,
+        ];
+
+        $historisGrouped = $historiMentah
+            ->sortByDesc(function($item) {
+                // 1. Urutkan isi di dalam tabel dari TA paling baru ke paling lama
+                return $item->tahunAjaran->tahun_ajaran ?? ''; 
+            })
+            ->groupBy(function($item) {
+                return $item->kelas ? $item->kelas->nama_kelas : 'Tanpa Kelas';
+            })
+            ->sortBy(function($items, $key) use ($urutanKelas) {
+                // 2. Urutkan Accordion dari atas ke bawah sesuai hierarki kelas
+                return $urutanKelas[$key] ?? 99; 
+            });
+
+        return view('siswa.histori', compact('siswa', 'historisGrouped'));
+    }
 }

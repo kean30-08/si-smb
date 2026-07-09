@@ -144,7 +144,7 @@
                         <div class="details-row">
                             {{-- Menggunakan ?? '-' untuk menghindari error jika kelas null --}}
                             <div class="details-label">Kelas</div>
-                            <div class="details-value">: {{ $s->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</div>
+                            <div class="details-value">: {{ $s->historiAktif->kelas->nama_kelas ?? '-' }}</div>
                         </div>
                         <div class="details-row">
                             <div class="details-label">L/P</div>

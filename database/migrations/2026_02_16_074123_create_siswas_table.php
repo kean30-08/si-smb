@@ -20,6 +20,10 @@ return new class extends Migration
             $table->string('tempat_lahir')->nullable();
             $table->date('tanggal_lahir')->nullable();
             
+            // DATA BARU: Pendidikan & Kontak Pribadi
+            $table->string('asal_sekolah')->nullable();
+            $table->string('nomor_hp_siswa')->nullable();
+            
             // Data Orang Tua
             $table->string('nama_orang_tua')->nullable();
             $table->string('email_orang_tua')->nullable();

@@ -48,6 +48,48 @@
                 </div>
 
                 <div class="p-4 sm:p-6 text-gray-900">
+                    {{-- INFORMASI TAHUN AJARAN & PERINGATAN BEDA TAHUN --}}
+                    @php
+                        $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+                        $agendaTa = $selectedAgenda ? $selectedAgenda->tahunAjaran : null;
+
+                        // Cek apakah agenda ini berada di tahun ajaran yang berbeda dengan tahun ajaran aktif saat ini
+                        $isBedaTahun = $tahunAktif && $agendaTa && $tahunAktif->id !== $agendaTa->id;
+                    @endphp
+
+                    @if ($agendaTa)
+                        <div class="mb-4">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Tahun Ajaran: {{ $agendaTa->tahun_ajaran }}
+                            </span>
+                        </div>
+
+                        {{-- Peringatan Beda Tahun Ajaran --}}
+                        @if ($isBedaTahun)
+                            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+                                <div class="flex items-center font-bold mb-1">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    Peringatan Keamanan Data!
+                                </div>
+                                <p class="text-sm">
+                                    Tanggal ini berada pada <strong>Tahun Ajaran {{ $agendaTa->tahun_ajaran }}</strong>.
+                                    Anda <strong>tidak dapat</strong> mengubah data absensi ini karena sistem saat ini
+                                    berada pada Tahun Ajaran {{ $tahunAktif->tahun_ajaran }}.
+                                </p>
+                            </div>
+                        @endif
+                    @endif
+
                     {{-- PERINGATAN JADWAL LAMPAU --}}
                     @php
                         $isLewat = false;
@@ -119,8 +161,8 @@
                         {{-- TAMPILAN NAMA PIC ABSENSI --}}
                         @if ($selectedAgenda && $penanggungJawab->isNotEmpty())
                             <div class="w-full lg:w-auto hidden md:block">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab Hari
-                                    Ini</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab
+                                    Absensi</label>
                                 <div
                                     class="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-md text-indigo-800 font-semibold text-sm flex items-center min-h-[42px]">
                                     <i data-lucide="users" class="w-4 h-4 mr-2 shrink-0"></i>
@@ -226,13 +268,13 @@
 
                                                                 {{-- KUNCI PERBAIKAN DROPDOWN: Hapus 'disabled' hardcoded, gunakan kondisi $isLewat --}}
                                                                 <select name="status" onchange="this.form.submit()"
-                                                                    {{ $isLewat ? 'disabled' : '' }}
+                                                                    {{ $isLewat || $isBedaTahun ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
                                                                     @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
                                                                     @elseif($statusSaatIni == 'hadir') bg-green-100 text-green-800 border-green-200
                                                                     @elseif($statusSaatIni == 'izin') bg-blue-100 text-blue-800 border-blue-200
                                                                     @elseif($statusSaatIni == 'sakit') bg-yellow-100 text-yellow-800 border-yellow-200 @endif"
-                                                                    style="opacity: {{ $isLewat ? '0.5' : '1' }};">
+                                                                    style="opacity: {{ $isLewat || $isBedaTahun ? '0.5' : '1' }};">
                                                                     <option value="alpa" class="bg-white text-black"
                                                                         {{ $statusSaatIni == 'alpa' ? 'selected' : '' }}>
                                                                         Alpa</option>

@@ -10,49 +10,34 @@ class TahunAjaranController extends Controller
 {
     public function index()
     {
-        $tahun_ajarans = TahunAjaran::orderBy('created_at', 'desc')->get();
+        // Akan otomatis mengurutkan: 2026/2027 Ganjil -> 2025/2026 Genap -> 2025/2026 Ganjil
+        $tahun_ajarans = TahunAjaran::orderBy('tahun_ajaran', 'desc')->get();
         return view('tahun_ajaran.index', compact('tahun_ajarans'));
     }
 
-    public function create()
-    {
-        return view('tahun_ajaran.create');
-    }
+    public function create() { return view('tahun_ajaran.create'); }
 
     public function store(Request $request)
     {
-        // 1. Validasi input mentah
         $request->validate([
             'tahun_awal' => 'required|numeric|min:2000|max:2099',
             'semester' => 'required|in:Ganjil,Genap'
         ]);
 
-        // 2. Gabungkan format: "2026/2027 Ganjil"
         $tahun_akhir = $request->tahun_awal + 1;
         $format_tahun_ajaran = $request->tahun_awal . '/' . $tahun_akhir . ' ' . $request->semester;
-
-        // 3. Masukkan kembali ke request untuk dicek duplikasinya
         $request->merge(['tahun_ajaran' => $format_tahun_ajaran]);
+        $request->validate(['tahun_ajaran' => 'unique:tahun_ajarans,tahun_ajaran']);
 
-        $request->validate([
-            'tahun_ajaran' => 'unique:tahun_ajarans,tahun_ajaran'
-        ], [
-            'tahun_ajaran.unique' => 'Tahun Ajaran sudah ada di dalam sistem. Tidak boleh duplikat!'
-        ]);
-
-        // 4. Simpan ke database
         TahunAjaran::create([
             'tahun_ajaran' => $format_tahun_ajaran,
-            'status' => 'tidak aktif' // Default saat dibuat selalu tidak aktif
+            'status' => 'tidak aktif'
         ]);
 
         return redirect()->route('tahun_ajaran.index')->with('success', 'Tahun Ajaran baru berhasil ditambahkan.');
     }
 
-    public function edit(TahunAjaran $tahun_ajaran)
-    {
-        return view('tahun_ajaran.edit', compact('tahun_ajaran'));
-    }
+    public function edit(TahunAjaran $tahun_ajaran) { return view('tahun_ajaran.edit', compact('tahun_ajaran')); }
 
     public function update(Request $request, TahunAjaran $tahun_ajaran)
     {
@@ -63,19 +48,10 @@ class TahunAjaranController extends Controller
 
         $tahun_akhir = $request->tahun_awal + 1;
         $format_tahun_ajaran = $request->tahun_awal . '/' . $tahun_akhir . ' ' . $request->semester;
-
         $request->merge(['tahun_ajaran' => $format_tahun_ajaran]);
+        $request->validate(['tahun_ajaran' => 'unique:tahun_ajarans,tahun_ajaran,' . $tahun_ajaran->id]);
 
-        $request->validate([
-            'tahun_ajaran' => 'unique:tahun_ajarans,tahun_ajaran,' . $tahun_ajaran->id
-        ], [
-            'tahun_ajaran.unique' => 'Tahun Ajaran "' . $format_tahun_ajaran . '" sudah ada di dalam sistem. Tidak boleh duplikat!'
-        ]);
-
-        $tahun_ajaran->update([
-            'tahun_ajaran' => $format_tahun_ajaran
-        ]);
-
+        $tahun_ajaran->update(['tahun_ajaran' => $format_tahun_ajaran]);
         return redirect()->route('tahun_ajaran.index')->with('success', 'Tahun Ajaran berhasil diperbarui.');
     }
 
@@ -84,7 +60,6 @@ class TahunAjaranController extends Controller
         if ($tahun_ajaran->status == 'aktif') {
             return back()->with('error', 'Tidak dapat menghapus Tahun Ajaran yang sedang Aktif!');
         }
-        
         $tahun_ajaran->delete();
         return redirect()->route('tahun_ajaran.index')->with('success', 'Tahun Ajaran berhasil dihapus.');
     }
@@ -92,42 +67,80 @@ class TahunAjaranController extends Controller
     public function aktifkan(TahunAjaran $tahun_ajaran)
     {
         DB::transaction(function () use ($tahun_ajaran) {
-            // 1. Matikan semua tahun ajaran terlebih dahulu
             TahunAjaran::query()->update(['status' => 'tidak aktif']);
-            
-            // 2. Aktifkan tahun ajaran yang dipilih
             $tahun_ajaran->update(['status' => 'aktif']);
 
-            // 3. AUTO-MIGRASI SISWA (MURNI COPY, TANPA NAIK KELAS)
             $siswas = \App\Models\Siswa::where('status', 'aktif')->get();
+            $namaTaBaru = $tahun_ajaran->tahun_ajaran; 
+            $tahunAwalBaru = (int) substr($namaTaBaru, 0, 4); 
             
+            // Peta Naik Kelas Lanjutan (Menambahkan TK A dan TK B)
+            $urutanKelas = [
+                'Kelas PG' => 'Kelas TK A',
+                'Kelas TK A' => 'Kelas TK B',
+                'Kelas TK B' => 'Kelas 1 SD',
+                'Kelas 1 SD' => 'Kelas 2 SD',
+                'Kelas 2 SD' => 'Kelas 3 SD',
+                'Kelas 3 SD' => 'Kelas 4 SD',
+                'Kelas 4 SD' => 'Kelas 5 SD',
+                'Kelas 5 SD' => 'Kelas 6 SD',
+                'Kelas 6 SD' => 'Kelas 1 SMP',
+                'Kelas 1 SMP' => 'Kelas 2 SMP',
+                'Kelas 2 SMP' => 'Kelas 3 SMP',
+                'Kelas 3 SMP' => 'Kelas 1 SMA',
+                'Kelas 1 SMA' => 'Kelas 2 SMA',
+                'Kelas 2 SMA' => 'Kelas 3 SMA'
+            ];
+
             foreach ($siswas as $siswa) {
-                // Cari riwayat pendaftaran terakhir siswa ini di semester/tahun SEBELUMNYA
-                $lastNilai = \App\Models\NilaiKehadiran::where('siswa_id', $siswa->id)
-                                ->where('tahun_ajaran_id', '!=', $tahun_ajaran->id) 
-                                ->orderBy('id', 'desc')
+                // Cari histori MASA LALU terdekat berdasarkan urutan nama TA
+                $pastHistori = \App\Models\HistoriSiswa::with(['tahunAjaran', 'kelas'])
+                                ->where('siswa_id', $siswa->id)
+                                ->whereHas('tahunAjaran', function($q) use ($namaTaBaru) {
+                                    $q->where('tahun_ajaran', '<', $namaTaBaru);
+                                })
+                                ->get()
+                                ->sortByDesc(function($h) { return $h->tahunAjaran->tahun_ajaran; })
                                 ->first();
                 
-                // Ambil kelas terakhirnya (Jika tidak ada, set null)
-                $kelasIdLama = $lastNilai ? $lastNilai->kelas_id : null;
+                $kelasIdBaru = null; 
 
-                // Cek agar tidak mendaftar ganda jika tombol diklik berkali-kali
-                $sudahDaftar = \App\Models\NilaiKehadiran::where('siswa_id', $siswa->id)
+                if ($pastHistori) {
+                    $kelasIdLama = $pastHistori->kelas_id;
+                    $namaTaLama = $pastHistori->tahunAjaran->tahun_ajaran;
+                    $tahunAwalLama = (int) substr($namaTaLama, 0, 4);
+                    
+                    $kelasIdBaru = $kelasIdLama; // Default: Kelas Tetap (jika hanya beda semester)
+                    
+                    // Logika Eksekusi Naik Kelas jika Beda Tahun Awal
+                    if ($tahunAwalBaru > $tahunAwalLama) {
+                        $namaKelasLama = $pastHistori->kelas->nama_kelas ?? '';
+                        if (array_key_exists($namaKelasLama, $urutanKelas)) {
+                            $namaKelasBaru = $urutanKelas[$namaKelasLama];
+                            $kelasBaruObj = \App\Models\Kelas::where('nama_kelas', $namaKelasBaru)->first();
+                            if ($kelasBaruObj) {
+                                $kelasIdBaru = $kelasBaruObj->id;
+                            }
+                        }
+                    }
+                } else {
+                    continue; 
+                }
+
+                $sudahDaftar = \App\Models\HistoriSiswa::where('siswa_id', $siswa->id)
                                     ->where('tahun_ajaran_id', $tahun_ajaran->id)
                                     ->exists();
 
-                if (!$sudahDaftar) {
-                    // Daftarkan ke Tahun Ajaran yang diaktifkan dengan KELAS YANG SAMA
-                    \App\Models\NilaiKehadiran::create([
+                if (!$sudahDaftar && $kelasIdBaru) {
+                    \App\Models\HistoriSiswa::create([
                         'siswa_id' => $siswa->id,
                         'tahun_ajaran_id' => $tahun_ajaran->id,
-                        'kelas_id' => $kelasIdLama, // TETAP DI KELAS YANG SAMA
-                        'total_poin' => 0 // Lembaran baru, poin kembali 0
+                        'kelas_id' => $kelasIdBaru,
                     ]);
                 }
             }
         });
 
-        return back()->with('success', 'Tahun Ajaran ' . $tahun_ajaran->tahun_ajaran . ' diaktifkan! Siswa berhasil dimigrasikan ke semester ini dengan kelas tetap.');
+        return back()->with('success', 'Tahun Ajaran ' . $tahun_ajaran->tahun_ajaran . ' diaktifkan! Siswa berhasil dimigrasikan.');
     }
 }

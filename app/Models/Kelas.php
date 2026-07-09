@@ -11,11 +11,8 @@ class Kelas extends Model
 
     protected $guarded = [];
     
-    /**
-     * Relasi ke tabel pendaftaran/buku induk tahunan
-     */
-    public function nilaiKehadirans()
+    public function historiSiswas()
     {
-        return $this->hasMany(NilaiKehadiran::class);
+        return $this->hasMany(HistoriSiswa::class);
     }
 }

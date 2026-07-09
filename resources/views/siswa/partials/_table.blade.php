@@ -5,12 +5,11 @@
             <tr>
                 <th scope="col" class="py-3 px-6">No</th>
                 <th scope="col" class="py-3 px-6">Nama Lengkap</th>
-                <th scope="col" class="py-3 px-6">NIS</th>
-                <th scope="col" class="py-3 px-6">Kelas</th>
+                <th scope="col" class="py-3 px-6">NIK</th>
                 <th scope="col" class="py-3 px-6 text-center">Status</th>
-                @if ($isAdmin)
-                    <th scope="col" class="py-3 px-6 text-center">Aksi</th>
-                @endif
+
+                <th scope="col" class="py-3 px-6 text-center">Aksi</th>
+
             </tr>
         </thead>
 
@@ -31,15 +30,7 @@
 
                     <td class="hidden md:table-cell py-4 px-6">{{ $siswa->nis }}</td>
 
-                    <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6 mb-2 md:mb-0">
-                        <div class="flex items-center justify-between md:justify-start">
-                            <span
-                                class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Kelas</span>
-                            <span class="text-sm text-gray-800">
-                                {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? 'Belum Masuk Kelas' }}
-                            </span>
-                        </div>
-                    </td>
+
 
                     <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6 md:text-center mb-2 md:mb-0">
                         <div class="flex items-center justify-between md:justify-center">
@@ -61,40 +52,40 @@
                         </div>
                     </td>
 
-                    @if ($isAdmin)
-                        <td class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4"
-                            onclick="event.stopPropagation();">
-                            <div class="flex justify-end md:justify-center space-x-5">
-                                <a href="{{ route('siswa.edit', $siswa->id) }}"
-                                    class="text-blue-500 hover:text-blue-700 transition p-1" title="Edit">
+
+                    <td class="block md:table-cell py-3 md:py-4 px-2 md:px-6 text-right md:text-center mt-2 md:mt-0 border-t md:border-none border-gray-50 pt-3 md:pt-4"
+                        onclick="event.stopPropagation();">
+                        <div class="flex justify-end md:justify-center space-x-5">
+                            <a href="{{ route('siswa.edit', $siswa->id) }}"
+                                class="text-blue-500 hover:text-blue-700 transition p-1" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path
+                                        d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+                                </svg>
+                            </a>
+                            <form action="{{ route('siswa.destroy', $siswa->id) }}" method="POST"
+                                onsubmit="return confirm('Yakin ingin menghapus?');" class="m-0">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-500 hover:text-red-700 transition p-1"
+                                    title="Hapus">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                         stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                        <path
-                                            d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+                                        <path d="M3 6h18" />
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                        <line x1="10" x2="10" y1="11" y2="17" />
+                                        <line x1="14" x2="14" y1="11" y2="17" />
                                     </svg>
-                                </a>
-                                <form action="{{ route('siswa.destroy', $siswa->id) }}" method="POST"
-                                    onsubmit="return confirm('Yakin ingin menghapus?');" class="m-0">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700 transition p-1"
-                                        title="Hapus">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M3 6h18" />
-                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                            <line x1="10" x2="10" y1="11" y2="17" />
-                                            <line x1="14" x2="14" y1="11" y2="17" />
-                                        </svg>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    @endif
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+
                 </tr>
             @empty
                 <tr class="block md:table-row bg-white border border-gray-200 rounded-lg p-4">

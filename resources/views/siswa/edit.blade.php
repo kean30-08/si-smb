@@ -30,7 +30,7 @@
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">NIS / ID Vihara *</label>
+                                <label class="block font-medium text-sm text-gray-700">NIK *</label>
                                 <input type="text" name="nis" value="{{ old('nis', $siswa->nis) }}"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm class:@error('nis') border-red-500 @enderror
 "
@@ -63,8 +63,9 @@
                                         <option value="">Tidak Ada Kelas Tersedia</option>
                                     @else
                                         @foreach ($kelas as $k)
+                                            {{-- PERBAIKAN: Gunakan old('kelas_id', $kelasSekarang) --}}
                                             <option value="{{ $k->id }}"
-                                                {{ old('kelas_id') == $k->id ? 'selected' : '' }}>
+                                                {{ old('kelas_id', $kelasSekarang) == $k->id ? 'selected' : '' }}>
                                                 {{ $k->nama_kelas }}
                                             </option>
                                         @endforeach
@@ -89,9 +90,29 @@
                                     required>
                             </div>
 
+                            {{-- PENDIDIKAN & KONTAK PRIBADI --}}
+                            <div>
+                                <label class="block font-medium text-sm text-gray-700">Asal Sekolah</label>
+                                <input type="text" name="asal_sekolah"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    value="{{ old('asal_sekolah', $siswa->asal_sekolah) }}">
+                            </div>
+
+                            <div>
+                                <label class="block font-medium text-sm text-gray-700">Nomor HP / WA Pribadi
+                                    (Siswa)</label>
+                                <input type="text" name="nomor_hp_siswa"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    value="{{ old('nomor_hp_siswa', $siswa->nomor_hp_siswa) }}"
+                                    placeholder="Opsional (Kosongkan Bila Tidak Ada)...">
+                                @error('nomor_hp_siswa')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             {{-- KONTAK & ORANG TUA --}}
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">Nama Orang Tua</label>
+                                <label class="block font-medium text-sm text-gray-700">Nama Orang Tua/Wali</label>
                                 <input type="text" name="nama_orang_tua"
                                     value="{{ old('nama_orang_tua', $siswa->nama_orang_tua) }}"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
@@ -99,15 +120,15 @@
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">Email Orang Tua</label>
+                                <label class="block font-medium text-sm text-gray-700">Email Orang Tua/Wali</label>
                                 <input type="email" name="email_orang_tua"
                                     value="{{ old('email_orang_tua', $siswa->email_orang_tua) }}"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                    required>
+                                    placeholder="(Opsional) Masukkan Email Orang Tua/Wali ...">
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">No HP / WA Orang Tua</label>
+                                <label class="block font-medium text-sm text-gray-700">No HP / WA Orang Tua/Wali</label>
                                 <input type="text" name="nomor_hp_orang_tua"
                                     value="{{ old('nomor_hp_orang_tua', $siswa->nomor_hp_orang_tua) }}"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm class:@error('nomor_hp_orang_tua') border-red-500 @enderror"

@@ -51,8 +51,9 @@ class DatabaseSeeder extends Seeder
 
         // 4. SEEDER DAFTAR KELAS RESMI
         $daftarKelas = [
-            'Kelas PAUD',
-            'Kelas TK',
+            'Kelas PG',
+            'Kelas TK A',
+            'Kelas TK B',
             'Kelas 1 SD',
             'Kelas 2 SD',
             'Kelas 3 SD',
