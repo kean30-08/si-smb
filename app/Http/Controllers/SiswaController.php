@@ -22,8 +22,7 @@ class SiswaController extends Controller
         $kelas = Kelas::all();
         $isAdmin = auth()->user()->isAdmin();
 
-        
-        $siswas = Siswa::with('historiAktif.kelas')
+        $siswas = Siswa::with('historiAktif.kelas', 'historiAktif.tahunAjaran')
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
                     $q->where('nama_lengkap', 'like', "%{$search}%")
@@ -50,7 +49,7 @@ class SiswaController extends Controller
             return view('siswa.partials._table', compact('siswas', 'isAdmin'))->render();
         }
 
-        return view('siswa.index', compact('siswas', 'kelas', 'isAdmin'));
+        return view('siswa.index', compact('siswas', 'kelas', 'isAdmin', 'kelas_id'));
     }
 
     public function show(Siswa $siswa)

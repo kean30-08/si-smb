@@ -113,4 +113,130 @@ class KelasController extends Controller
         $kelas->delete();
         return redirect()->route('kelas.index')->with('success', 'Entitas kelas berhasil dihapus dari sistem!');
     }
+
+    public function histori(Request $request)
+    {
+        $tahunAjarans = \App\Models\TahunAjaran::orderBy('tahun_ajaran', 'desc')->get();
+        $taAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+        
+        // Menentukan TA yang dipilih
+        $selectedTaId = $request->input('tahun_ajaran_id', $taAktif ? $taAktif->id : ($tahunAjarans->first()->id ?? null));
+        $selectedTa = $tahunAjarans->where('id', $selectedTaId)->first();
+
+        // Mengambil seluruh data kelas beserta statistiknya
+        $kelasList = \App\Models\Kelas::all()->map(function ($kelas) use ($selectedTaId, $selectedTa) {
+            
+            $historis = \App\Models\HistoriSiswa::with('siswa')
+                ->where('kelas_id', $kelas->id)
+                ->where('tahun_ajaran_id', $selectedTaId)
+                ->get();
+            
+            $kelas->jumlah_murid = $historis->count();
+            
+            // Siapkan penampung untuk dihitung
+            $muridAktif = 0;
+            $muridTidakAktif = 0;
+            $muridTambahan = 0;
+
+            if ($selectedTa) {
+                foreach ($historis as $h) {
+                    $siswa = $h->siswa;
+
+                    // 1. HITUNG MURID TAMBAHAN (Siswa Baru)
+                    // Cek apakah dia punya histori di TA yang lebih LAMA (<) dari TA terpilih
+                    $punyaHistoriLama = \App\Models\HistoriSiswa::where('siswa_id', $siswa->id)
+                        ->whereHas('tahunAjaran', function($q) use ($selectedTa) {
+                            $q->where('tahun_ajaran', '<', $selectedTa->tahun_ajaran);
+                        })->exists();
+                    
+                    if (!$punyaHistoriLama) {
+                        $muridTambahan++; // Tidak punya masa lalu = Murid Baru di TA ini
+                    }
+
+                    // 2. HITUNG STATUS HISTORIS
+                    if ($siswa->status == 'aktif') {
+                        // Jika saat ini aktif, sudah pasti di masa lalu juga aktif
+                        $muridAktif++;
+                    } else {
+                        // Jika saat ini statusnya 'TIDAK AKTIF' atau 'LULUS'
+                        // Kita cek, apakah dia punya histori di TA yang lebih BARU (>) dari TA terpilih?
+                        $punyaHistoriBaru = \App\Models\HistoriSiswa::where('siswa_id', $siswa->id)
+                            ->whereHas('tahunAjaran', function($q) use ($selectedTa) {
+                                $q->where('tahun_ajaran', '>', $selectedTa->tahun_ajaran);
+                            })->exists();
+
+                        if ($punyaHistoriBaru) {
+                            // Punya histori di TA masa depan = Berarti di TA ini dia MASIH AKTIF
+                            $muridAktif++;
+                        } else {
+                            // Tidak punya histori masa depan = TA ini adalah tempat terakhirnya (keluar/lulus)
+                            $muridTidakAktif++;
+                        }
+                    }
+                }
+            }
+
+            // Masukkan hasil perhitungan ke dalam property objek kelas
+            $kelas->murid_aktif = $muridAktif;
+            $kelas->murid_tidak_aktif = $muridTidakAktif;
+            $kelas->murid_tambahan = $muridTambahan;
+
+            return $kelas;
+        });
+
+        // Urutkan kelas sesuai hierarki (PG -> TK -> SD)
+        $urutanKelas = [
+            'Kelas PG' => 1, 'Kelas TK A' => 2, 'Kelas TK B' => 3,
+            'Kelas 1 SD' => 4, 'Kelas 2 SD' => 5, 'Kelas 3 SD' => 6, 'Kelas 4 SD' => 7, 'Kelas 5 SD' => 8, 'Kelas 6 SD' => 9,
+        ];
+        
+        $kelasList = $kelasList->sortBy(function($kelas) use ($urutanKelas) {
+            return $urutanKelas[$kelas->nama_kelas] ?? 99;
+        });
+
+        return view('kelas.histori', compact('tahunAjarans', 'selectedTaId', 'selectedTa', 'kelasList'));
+    }
+
+    public function rincianHistori(Request $request)
+    {
+        $kelas_id = $request->input('kelas_id');
+        $tahun_ajaran_id = $request->input('tahun_ajaran_id');
+
+        abort_if(!$kelas_id || !$tahun_ajaran_id, 404);
+
+        $kelas = \App\Models\Kelas::findOrFail($kelas_id);
+        $selectedTa = \App\Models\TahunAjaran::findOrFail($tahun_ajaran_id);
+
+        // Ambil histori siswa di kelas & TA tersebut
+        $historis = \App\Models\HistoriSiswa::with('siswa')
+            ->where('kelas_id', $kelas_id)
+            ->where('tahun_ajaran_id', $tahun_ajaran_id)
+            ->get()
+            ->map(function ($h) use ($selectedTa) {
+                $siswa = $h->siswa;
+                
+                // LOGIKA MESIN WAKTU UNTUK STATUS DINAMIS
+                if ($siswa->status == 'aktif') {
+                    $h->dynamic_status = 'Aktif';
+                    $h->status_class = 'bg-green-100 text-green-700';
+                } else {
+                    $punyaHistoriBaru = \App\Models\HistoriSiswa::where('siswa_id', $siswa->id)
+                        ->whereHas('tahunAjaran', function($q) use ($selectedTa) {
+                            $q->where('tahun_ajaran', '>', $selectedTa->tahun_ajaran);
+                        })->exists();
+
+                    if ($punyaHistoriBaru) {
+                        $h->dynamic_status = 'Aktif'; // Masa lalu masih aktif
+                        $h->status_class = 'bg-green-100 text-green-700';
+                    } else {
+                        $h->dynamic_status = ucwords($siswa->status); // Masa lalu sudah berhenti/lulus
+                        $h->status_class = 'bg-red-100 text-red-700';
+                    }
+                }
+
+                return $h;
+            });
+
+        return view('kelas.rincian_histori', compact('kelas', 'selectedTa', 'historis'));
+    }
 }

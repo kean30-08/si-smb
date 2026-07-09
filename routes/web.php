@@ -66,6 +66,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
     Route::get('/kelas/create', [KelasController::class, 'create'])->name('kelas.create');
     Route::post('/kelas', [KelasController::class, 'store'])->name('kelas.store');
+    // RUTE BARU DITAMBAHKAN DI SINI (Di atas rute {kelas}/edit)
+    Route::get('/kelas-histori', [KelasController::class, 'histori'])->name('kelas.histori'); 
+    Route::get('/kelas-histori/rincian', [KelasController::class, 'rincianHistori'])->name('kelas.histori.rincian');
     Route::get('/kelas/{kelas}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
     Route::put('/kelas/{kelas}', [KelasController::class, 'update'])->name('kelas.update');
     Route::delete('/kelas/{kelas}', [KelasController::class, 'destroy'])->name('kelas.destroy');

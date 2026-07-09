@@ -38,7 +38,8 @@
                         <p class="text-sm text-gray-500 mt-2">
                             Berikut adalah rekam jejak kehadiran siswa yang diurutkan berdasarkan tingkat
                             <strong>Kelas</strong> yang pernah diduduki. Klik pada masing-masing baris kelas untuk
-                            melihat rincian Tahun Ajaran dan Poin Kehadiran.
+                            melihat rincian Tahun Ajaran dan Poin Kehadiran. Untuk 1x Kehadiran <b>5 Poin</b>, 1x Sakit
+                            atau Izin <b>1 Poin</b></b>, dan 1x Alpa <b>0 Poin</b>.
                         </p>
                     </div>
 

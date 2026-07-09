@@ -81,8 +81,10 @@
                             <p class="text-lg font-medium uppercase text-blue-600">{{ $siswa->status }}</p>
                         </div>
 
-                        {{-- TAHUN AJARAN PERTAMA KALI DIBUAT (ANGKATAN) --}}
-                        <div class="col-span-1 md:col-span-2 mt-2">
+                        {{-- INFORMASI ANGKATAN & KELUAR --}}
+                        <div class="col-span-1 md:col-span-2 mt-2 flex flex-col sm:flex-row gap-4">
+
+                            {{-- TAHUN AJARAN PERTAMA KALI DIBUAT (ANGKATAN) --}}
                             <div
                                 class="inline-flex items-center px-3 py-1.5 rounded-md bg-green-50 border border-green-200">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -102,6 +104,50 @@
                                     {{ $historiAwal && $historiAwal->tahunAjaran ? $historiAwal->tahunAjaran->tahun_ajaran : \Carbon\Carbon::parse($siswa->created_at)->format('Y') }}
                                 </span>
                             </div>
+
+                            {{-- INFO KAPAN TIDAK AKTIF / LULUS --}}
+                            @if ($siswa->status != 'aktif')
+                                <div
+                                    class="inline-flex items-center px-3 py-1.5 rounded-md bg-red-50 border border-red-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="text-red-600 mr-2">
+                                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                                        <line x1="12" y1="2" x2="12" y2="12" />
+                                    </svg>
+                                    <span class="text-sm font-semibold text-red-800">
+                                        Berhenti/Lulus Sejak Tahun Ajaran:
+                                        @php
+                                            // Mencari histori terakhir siswa tersebut
+                                            $historiTerakhir = $siswa
+                                                ->riwayatHistori()
+                                                ->with('tahunAjaran')
+                                                ->orderBy('id', 'desc')
+                                                ->first();
+
+                                            if ($historiTerakhir && $historiTerakhir->tahunAjaran) {
+                                                // Siswa berhenti DI TAHUN AJARAN SETELAH histori terakhirnya
+                                                // Jadi kita cari TA yang ID-nya lebih besar dari ID TA terakhirnya
+                                                $taBerhenti = \App\Models\TahunAjaran::where(
+                                                    'id',
+                                                    '>',
+                                                    $historiTerakhir->tahun_ajaran_id,
+                                                )
+                                                    ->orderBy('id', 'asc')
+                                                    ->first();
+
+                                                // Jika tidak ada TA baru (berhenti di TA paling ujung saat ini)
+                                                echo $taBerhenti
+                                                    ? $taBerhenti->tahun_ajaran
+                                                    : $historiTerakhir->tahunAjaran->tahun_ajaran;
+                                            } else {
+                                                echo 'Tidak diketahui';
+                                            }
+                                        @endphp
+                                    </span>
+                                </div>
+                            @endif
+
                         </div>
 
                         <div class="col-span-1 md:col-span-2 border-t pt-4 mt-2">

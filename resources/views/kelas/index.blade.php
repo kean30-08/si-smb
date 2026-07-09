@@ -1,11 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        {{-- PERBAIKAN HEADER: Flex-col untuk HP, tombol memanjang --}}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Daftar Kelas') }}
             </h2>
-            <div class="w-full sm:w-auto flex">
+            <div class="w-full sm:w-auto flex gap-2">
+                {{-- TOMBOL HISTORI KELAS BARU --}}
+                <a href="{{ route('kelas.histori') }}"
+                    class="w-full sm:w-auto text-center bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    Histori Kelas
+                </a>
                 <a href="{{ route('kelas.create') }}"
                     class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
                     + Tambah Kelas

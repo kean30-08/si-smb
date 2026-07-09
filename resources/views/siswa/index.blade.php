@@ -25,7 +25,6 @@
                     Cetak Semua Kartu
                 </a>
 
-
                 <a href="{{ route('siswa.create') }}"
                     class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
                     + Tambah Siswa
@@ -42,10 +41,10 @@
 
                     {{-- Form Search & Filter --}}
                     <form id="searchForm" action="{{ route('siswa.index') }}" method="GET"
-                        class="mb-6 flex flex-col md:flex-row gap-4 w-full">
+                        class="mb-6 flex flex-col md:flex-row gap-4 w-full flex-wrap">
 
                         {{-- Input Search --}}
-                        <div class="flex-1 flex w-full">
+                        <div class="flex-1 flex w-full md:w-auto min-w-[200px]">
                             <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
                                 placeholder="Cari nama atau NIK siswa..."
                                 class="w-full border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -61,19 +60,24 @@
                             </button>
                         </div>
 
-                        {{-- Tombol Reset --}}
-                        <div id="resetButtonContainer"
-                            class="w-full sm:w-auto {{ request('search') || request('kelas_id') || request('status') ? '' : 'hidden' }}">
-                            <a href="{{ route('siswa.index') }}"
-                                class="block text-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-sm font-bold py-2 px-4 rounded-md transition shadow-sm h-full flex items-center justify-center">
-                                Reset
-                            </a>
+                        {{-- Dropdown Filter Kelas --}}
+                        <div class="w-full md:w-auto">
+                            <select id="kelasFilter" name="kelas_id"
+                                class="w-full md:w-40 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">-- Semua Kelas --</option>
+                                @foreach ($kelas as $k)
+                                    <option value="{{ $k->id }}"
+                                        {{ request('kelas_id') == $k->id ? 'selected' : '' }}>
+                                        {{ $k->nama_kelas }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         {{-- Dropdown Filter Status --}}
-                        <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                        <div class="w-full md:w-auto">
                             <select id="statusFilter" name="status"
-                                class="w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="w-full md:w-40 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">Semua Status</option>
                                 <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif
                                 </option>
@@ -82,6 +86,15 @@
                                 <option value="lulus" {{ request('status') == 'lulus' ? 'selected' : '' }}>Lulus
                                 </option>
                             </select>
+                        </div>
+
+                        {{-- Tombol Reset --}}
+                        <div id="resetButtonContainer"
+                            class="w-full sm:w-auto {{ request('search') || request('kelas_id') || request('status') ? '' : 'hidden' }}">
+                            <a href="{{ route('siswa.index') }}"
+                                class="block text-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 text-sm font-bold py-2 px-4 rounded-md transition shadow-sm h-full flex items-center justify-center">
+                                Reset
+                            </a>
                         </div>
                     </form>
 
@@ -98,11 +111,12 @@
         let searchInput = document.getElementById('searchInput');
         let searchForm = document.getElementById('searchForm');
         let statusFilter = document.getElementById('statusFilter');
+        let kelasFilter = document.getElementById('kelasFilter');
         let tableContainer = document.getElementById('table-container');
         let resetButtonContainer = document.getElementById('resetButtonContainer');
 
         function toggleResetButton() {
-            if (searchInput.value.trim() !== '' || statusFilter.value !== '') {
+            if (searchInput.value.trim() !== '' || statusFilter.value !== '' || kelasFilter.value !== '') {
                 resetButtonContainer.classList.remove('hidden');
             } else {
                 resetButtonContainer.classList.add('hidden');
@@ -133,7 +147,10 @@
             toggleResetButton();
         }
 
+        // Tambahkan event listener untuk semua dropdown filter yang tersisa
         statusFilter.addEventListener('change', updateData);
+        kelasFilter.addEventListener('change', updateData);
+
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             updateData();
