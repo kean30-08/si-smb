@@ -1,9 +1,23 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Jadwal Kegiatan') }}
-            </h2>
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Jadwal Kegiatan') }}
+                </h2>
+                {{-- INFO TAHUN AJARAN AKTIF --}}
+                @php
+                    $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+                @endphp
+                <p class="text-sm text-indigo-600 font-bold mt-1 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
+                </p>
+            </div>
 
             @auth
                 <div class="w-full sm:w-auto flex">
@@ -31,7 +45,7 @@
                             <label class="block text-sm font-bold text-gray-700 mb-1">Filter Tahun Ajaran:</label>
                             <select id="tahunSelect" name="tahun_ajaran_id"
                                 class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-indigo-700">
-                                <option value="">-- Semua Tahun Ajaran --</option>
+                                <option value="">Semua Tahun Ajaran</option>
                                 @foreach ($tahunAjarans as $ta)
                                     <option value="{{ $ta->id }}" {{ $filterTahun == $ta->id ? 'selected' : '' }}>
                                         {{ $ta->tahun_ajaran }} {{ $ta->status == 'aktif' ? '(Sedang Aktif)' : '' }}

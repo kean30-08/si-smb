@@ -39,8 +39,41 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-4 sm:p-6 text-gray-900 bg-gray-50 md:bg-white">
 
+                    {{-- CATATAN INFORMASI TAHUN AJARAN --}}
+                    <div class="mb-5 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg shadow-sm">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-600 mt-0.5" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-bold text-blue-800">Informasi Penting</h3>
+                                <p class="text-sm text-blue-700 mt-1">
+                                    @php
+                                        // Mengambil 1 data Tahun Ajaran dengan nama/angka paling besar (terbaru)
+                                        $taTerbaru = \App\Models\TahunAjaran::orderBy('tahun_ajaran', 'desc')->first();
+                                    @endphp
+                                    Data siswa yang ditampilkan pada halaman ini selalu merepresentasikan data
+                                    <strong>Tahun
+                                        Ajaran Baru</strong>,
+                                    yaitu
+                                    <strong>{{ $taTerbaru ? $taTerbaru->tahun_ajaran : 'Belum ada data' }}</strong>.
+                                    <br class="hidden sm:block">Untuk melihat riwayat daftar siswa di Tahun Ajaran
+                                    lampau,
+                                    silakan
+                                    kunjungi menu <strong>Kelas &rarr; Histori Kelas</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Form Search & Filter --}}
-                    <form id="searchForm" action="{{ route('siswa.index') }}" method="GET"
+                    <form id="searchForm" action="{{ route('siswa.index') }}" method="GET" ... {{-- Form Search & Filter --}}
+                        <form id="searchForm" action="{{ route('siswa.index') }}" method="GET"
                         class="mb-6 flex flex-col md:flex-row gap-4 w-full flex-wrap">
 
                         {{-- Input Search --}}
@@ -64,7 +97,7 @@
                         <div class="w-full md:w-auto">
                             <select id="kelasFilter" name="kelas_id"
                                 class="w-full md:w-40 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="">-- Semua Kelas --</option>
+                                <option value="">Semua Kelas</option>
                                 @foreach ($kelas as $k)
                                     <option value="{{ $k->id }}"
                                         {{ request('kelas_id') == $k->id ? 'selected' : '' }}>

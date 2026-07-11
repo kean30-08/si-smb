@@ -110,7 +110,9 @@ class AgendaController extends Controller
         
         $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
         $filterTahun = $request->input('tahun_ajaran_id', $tahunAktif ? $tahunAktif->id : null);
-        $tahunAjarans = TahunAjaran::orderBy('created_at', 'desc')->get();
+        
+        // PERBAIKAN DI SINI: Gunakan 'tahun_ajaran' bukan 'created_at'
+        $tahunAjarans = TahunAjaran::orderBy('tahun_ajaran', 'desc')->get();
 
         $agendasGrouped = Agenda::selectRaw('tanggal, tahun_ajaran_id, count(id) as total_kegiatan, MIN(id) as first_agenda_id')
             ->when($filterTahun, function ($q, $filterTahun) {

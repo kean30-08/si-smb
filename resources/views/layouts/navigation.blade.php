@@ -31,9 +31,9 @@
                         {{ __('Jadwal') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
+                    {{-- <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
                         {{ __('Materi') }}
-                    </x-nav-link>
+                    </x-nav-link> --}}
 
                     {{-- ================================================== --}}
                     {{-- MENU LAINNYA HANYA UNTUK YANG LOGIN --}}
@@ -147,9 +147,9 @@
                 {{ __('Jadwal') }}
             </x-responsive-nav-link>
 
-            <x-responsive-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
+            {{-- <x-responsive-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
                 {{ __('Materi') }}
-            </x-responsive-nav-link>
+            </x-responsive-nav-link> --}}
 
             @auth
                 <x-responsive-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">

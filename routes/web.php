@@ -27,8 +27,10 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::get('/pemberitahuan', [PemberitahuanController::class, 'index'])->name('pemberitahuan.index');
 Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
 Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
-Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
-Route::get('/materi/show/{materi}', [MateriController::class, 'show'])->name('materi.show');
+
+//Materi Public
+// Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
+// Route::get('/materi/show/{materi}', [MateriController::class, 'show'])->name('materi.show');
 
 // =======================================================
 // RUTE UMUM UNTUK SEMUA ROLE (ADMIN & PENGAJAR BEBAS AKSES)
@@ -103,11 +105,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/agenda/detail/{tanggal}/update-pic', [AgendaController::class, 'updatePic'])->name('agenda.updatePic');
 
     // === MATERI ===
-    Route::get('/materi/create', [MateriController::class, 'create'])->name('materi.create');
-    Route::post('/materi/store', [MateriController::class, 'store'])->name('materi.store');
-    Route::get('/materi/{materi}/edit', [MateriController::class, 'edit'])->name('materi.edit');
-    Route::put('/materi/{materi}', [MateriController::class, 'update'])->name('materi.update');
-    Route::delete('/materi/{materi}', [MateriController::class, 'destroy'])->name('materi.destroy');
+    // Route::get('/materi/create', [MateriController::class, 'create'])->name('materi.create');
+    // Route::post('/materi/store', [MateriController::class, 'store'])->name('materi.store');
+    // Route::get('/materi/{materi}/edit', [MateriController::class, 'edit'])->name('materi.edit');
+    // Route::put('/materi/{materi}', [MateriController::class, 'update'])->name('materi.update');
+    // Route::delete('/materi/{materi}', [MateriController::class, 'destroy'])->name('materi.destroy');
 
     // === SISWA ===
     Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');

@@ -1,16 +1,30 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Kelola Kehadiran Harian') }}
-            </h2>
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Kelola Kehadiran Harian') }}
+                </h2>
+                {{-- INFO TAHUN AJARAN AKTIF --}}
+                @php
+                    $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+                @endphp
+                <p class="text-sm text-indigo-600 font-bold mt-1 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
+                </p>
+            </div>
             {{-- TOMBOL SCANNER HANYA MUNCUL JIKA USER ADALAH PIC / ADMIN --}}
             @if ($type == 'siswa' && $selectedAgenda && $isPic)
                 <a href="{{ route('absensi.scanner', ['agenda_id' => $agenda_id]) }}" id="btnScanner"
                     class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="mr-2">
                         <rect width="18" height="18" x="3" y="3" rx="2" />
                         <path d="M7 7h.01" />
                         <path d="M17 7h.01" />

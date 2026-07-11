@@ -41,6 +41,8 @@ class ProfileController extends Controller
         
         if ($pengajar) {
             $pengajar->update([
+                // TAMBAHKAN SINKRONISASI NAMA LENGKAP
+                'nama_lengkap' => $request->input('name'), 
                 'nomor_hp' => $request->input('nomor_hp'),
                 'jenis_kelamin' => $request->input('jenis_kelamin'),
                 'alamat' => $request->input('alamat'),

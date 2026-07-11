@@ -125,7 +125,7 @@
                                         <div class="block md:hidden mt-2 border-t border-gray-100 pt-2">
                                             <span
                                                 class="px-2 mb-2 inline-block text-[10px] leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
-                                                {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}
+                                                {{ $siswa->historiAktif->kelas->nama_kelas ?? 'Tanpa Kelas' }}
                                             </span>
                                             <div class="flex flex-wrap gap-1 text-[10px] font-bold">
                                                 <span class="text-green-600 bg-green-50 px-1.5 py-1 rounded"
@@ -146,7 +146,7 @@
                                     <td class="hidden md:table-cell px-6 py-4 whitespace-nowrap">
                                         <span
                                             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
-                                            {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}
+                                            {{ $siswa->historiAktif->kelas->nama_kelas ?? 'Tanpa Kelas' }}
                                         </span>
                                     </td>
 

@@ -6,6 +6,7 @@
                 <th scope="col" class="py-3 px-6">No</th>
                 <th scope="col" class="py-3 px-6">Nama Lengkap</th>
                 <th scope="col" class="py-3 px-6">NIK</th>
+                <th scope="col" class="py-3 px-6">Kelas</th>
                 <th scope="col" class="py-3 px-6 text-center">Status</th>
 
                 <th scope="col" class="py-3 px-6 text-center">Aksi</th>
@@ -26,10 +27,18 @@
                         <div class="font-bold text-gray-900 text-base md:text-sm whitespace-nowrap">
                             {{ $siswa->nama_lengkap }}</div>
                         <div class="text-xs text-gray-500 md:hidden mt-1 font-medium">NIS: {{ $siswa->nis }}</div>
+                        {{-- Tambahan Tampilan Kelas untuk Mobile (HP) --}}
+                        <div class="text-xs text-indigo-500 md:hidden mt-1 font-bold">
+                            {{ $siswa->historiAktif && $siswa->historiAktif->kelas ? $siswa->historiAktif->kelas->nama_kelas : 'Tanpa Kelas' }}
+                        </div>
                     </td>
 
                     <td class="hidden md:table-cell py-4 px-6">{{ $siswa->nis }}</td>
 
+                    {{-- KOLOM KELAS (Desktop) --}}
+                    <td class="hidden md:table-cell py-4 px-6 font-semibold text-gray-700">
+                        {{ $siswa->historiAktif && $siswa->historiAktif->kelas ? $siswa->historiAktif->kelas->nama_kelas : 'Tanpa Kelas' }}
+                    </td>
 
 
                     <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6 md:text-center mb-2 md:mb-0">

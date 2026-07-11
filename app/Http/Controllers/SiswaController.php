@@ -152,9 +152,73 @@ class SiswaController extends Controller
             'nomor_hp_siswa' => 'nullable|regex:/^[0-9]+$/',
         ]);
 
-        DB::transaction(function () use ($request, $siswa) {
+        $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
+
+        // ==========================================
+        // VALIDASI MENCEGAH LOMPAT KELAS / > 2 SEMESTER
+        // ==========================================
+        if ($tahunAktif) {
+            
+            // 1. VALIDASI: Maksimal 2 Semester di Kelas yang Sama
+            $jumlahSemesterDiKelasIni = HistoriSiswa::where('siswa_id', $siswa->id)
+                ->where('kelas_id', $request->kelas_id)
+                ->where('tahun_ajaran_id', '!=', $tahunAktif->id)
+                ->count();
+
+            if ($jumlahSemesterDiKelasIni >= 2) {
+                return back()->withInput()->withErrors([
+                    'kelas_id' => 'Validasi Gagal! Siswa ini sudah pernah menduduki kelas tersebut selama 2 semester penuh. Anda tidak dapat menurunkannya atau menahannya di kelas yang sama untuk ke-3 kalinya.'
+                ]);
+            }
+
+            // 2. VALIDASI: Mencegah Loncat Kelas (Naik/Turun Terlalu Jauh)
+            $urutanKelas = [
+                'Kelas PG' => 1, 'Kelas TK A' => 2, 'Kelas TK B' => 3,
+                'Kelas 1 SD' => 4, 'Kelas 2 SD' => 5, 'Kelas 3 SD' => 6, 'Kelas 4 SD' => 7, 'Kelas 5 SD' => 8, 'Kelas 6 SD' => 9,
+                'Kelas 1 SMP' => 10, 'Kelas 2 SMP' => 11, 'Kelas 3 SMP' => 12,
+                'Kelas 1 SMA' => 13, 'Kelas 2 SMA' => 14, 'Kelas 3 SMA' => 15,
+            ];
+
+            // Cek urutan kelas tujuan
+            $kelasTujuan = Kelas::find($request->kelas_id);
+            $urutanTujuan = $urutanKelas[$kelasTujuan->nama_kelas] ?? 0;
+
+            // Cari histori TERAKHIR siswa (secara kronologis sebelum TA Aktif saat ini)
+            $historiTerakhirMasaLalu = HistoriSiswa::with(['kelas', 'tahunAjaran'])
+                ->where('siswa_id', $siswa->id)
+                ->where('tahun_ajaran_id', '!=', $tahunAktif->id)
+                ->get()
+                ->sortByDesc(function($h) {
+                    return $h->tahunAjaran->tahun_ajaran ?? ''; // Diurutkan dari Tahun Ajaran Z-A
+                })->first();
+
+            if ($historiTerakhirMasaLalu && $historiTerakhirMasaLalu->kelas) {
+                $urutanTerakhir = $urutanKelas[$historiTerakhirMasaLalu->kelas->nama_kelas] ?? 0;
+                $namaKelasTerakhir = $historiTerakhirMasaLalu->kelas->nama_kelas;
+                $namaKelasTujuan = $kelasTujuan->nama_kelas;
+
+                // Hitung selisih jarak kelas
+                $selisih = $urutanTujuan - $urutanTerakhir;
+
+                // Jika naik > 1 tingkat (Loncat Kelas ke Atas)
+                if ($selisih > 1) {
+                    return back()->withInput()->withErrors([
+                        'kelas_id' => "Validasi Gagal! Kelas terakhir siswa ini adalah {$namaKelasTerakhir}. Anda tidak bisa melompatkannya langsung ke {$namaKelasTujuan}."
+                    ]);
+                }
+
+                // Jika turun < -1 tingkat (Loncat Kelas ke Bawah terlalu jauh)
+                if ($selisih < -1) {
+                    return back()->withInput()->withErrors([
+                        'kelas_id' => "Validasi Gagal! Kelas terakhir siswa ini adalah {$namaKelasTerakhir}. Penurunan ke {$namaKelasTujuan} terlalu jauh dan merusak urutan histori."
+                    ]);
+                }
+            }
+        }
+        // ==========================================
+
+        DB::transaction(function () use ($request, $siswa, $tahunAktif) {
             $siswa->update($request->except(['kelas_id']));
-            $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
             
             if ($tahunAktif) {
                 HistoriSiswa::updateOrCreate(
