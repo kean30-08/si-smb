@@ -45,7 +45,7 @@ class PengajarController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_lengkap' => 'required|regex:/^[a-zA-Z\s]+$/',
+            'nama_lengkap' => 'required',
             'nomor_hp' => 'required|regex:/^[0-9]+$/',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
@@ -90,7 +90,7 @@ class PengajarController extends Controller
     public function update(Request $request, Pengajar $pengajar)
     {
         $rules = [
-            'nama_lengkap' => 'required|regex:/^[a-zA-Z\s]+$/',
+            'nama_lengkap' => 'required',
             'jenis_kelamin' => 'required',
             'jabatan_id' => 'required|exists:jabatans,id',
             'alamat' => 'required',

@@ -282,19 +282,57 @@ class SiswaController extends Controller
             'Kelas 1 SMA' => 13, 'Kelas 2 SMA' => 14, 'Kelas 3 SMA' => 15,
         ];
 
-        $historisGrouped = $historiMentah
+       $historisGrouped = $historiMentah
             ->sortByDesc(function($item) {
-                // 1. Urutkan isi di dalam tabel dari TA paling baru ke paling lama
                 return $item->tahunAjaran->tahun_ajaran ?? ''; 
             })
             ->groupBy(function($item) {
                 return $item->kelas ? $item->kelas->nama_kelas : 'Tanpa Kelas';
             })
             ->sortBy(function($items, $key) use ($urutanKelas) {
-                // 2. Urutkan Accordion dari atas ke bawah sesuai hierarki kelas
                 return $urutanKelas[$key] ?? 99; 
             });
 
-        return view('siswa.histori', compact('siswa', 'historisGrouped'));
+        // TAMBAHAN: Ambil semua data Tahun Ajaran untuk dropdown edit
+        $semuaTahunAjaran = \App\Models\TahunAjaran::orderBy('tahun_ajaran', 'desc')->get();
+
+        // Jangan lupa tambahkan $semuaTahunAjaran ke dalam compact
+        return view('siswa.histori', compact('siswa', 'historisGrouped', 'semuaTahunAjaran'));
+    }
+
+    // FUNGSI BARU: Update Tahun Ajaran di Histori
+    public function updateHistori(Request $request, $id)
+    {
+        $request->validate([
+            'tahun_ajaran_id' => 'required|exists:tahun_ajarans,id'
+        ]);
+
+        $histori = \App\Models\HistoriSiswa::findOrFail($id);
+
+        // Cek agar tidak ada duplikasi data (Siswa A di Kelas 1 pada TA Ganjil sebanyak 2 kali)
+        $exists = \App\Models\HistoriSiswa::where('siswa_id', $histori->siswa_id)
+            ->where('kelas_id', $histori->kelas_id)
+            ->where('tahun_ajaran_id', $request->tahun_ajaran_id)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Gagal! Histori untuk Tahun Ajaran tersebut sudah ada di kelas ini.');
+        }
+
+        $histori->update([
+            'tahun_ajaran_id' => $request->tahun_ajaran_id
+        ]);
+
+        return back()->with('success', 'Tahun Ajaran pada histori berhasil dikoreksi.');
+    }
+
+    // FUNGSI BARU: Hapus Histori
+    public function destroyHistori($id)
+    {
+        $histori = \App\Models\HistoriSiswa::findOrFail($id);
+        $histori->delete();
+
+        return back()->with('success', 'Data histori salah berhasil dihapus.');
     }
 }

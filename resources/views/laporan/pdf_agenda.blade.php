@@ -261,8 +261,7 @@
             <div class="summary-box" style="page-break-inside: avoid;">
                 <div class="summary-title">Ringkasan & Analisis Statistik</div>
                 <ul class="summary-list">
-                    <li><strong>Total Jumlah Kegiatan:</strong> {{ $total_kegiatan }} Kegiatan</li>
-                    <li><strong>Total Kehadiran Siswa:</strong> {{ $total_kehadiran }} Kehadiran</li>
+
                     <li><strong>Rata-rata Kehadiran:</strong> ~{{ $rata_rata }} Siswa per kegiatan</li>
                     <li>
                         <strong>Kehadiran Tertinggi:</strong>
@@ -278,14 +277,7 @@
                     </li>
                 </ul>
 
-                <p class="summary-paragraph">
-                    <strong>Kesimpulan:</strong> Berdasarkan data kegiatan pada periode
-                    {{ \Carbon\Carbon::parse($mulai)->translatedFormat('d F Y') }} sampai
-                    {{ \Carbon\Carbon::parse($selesai)->translatedFormat('d F Y') }}, tercatat sebanyak
-                    <strong>{{ $total_kegiatan }} kegiatan</strong> yang telah dilaksanakan. Total akumulasi kehadiran
-                    siswa pada seluruh kegiatan mencapai <strong>{{ $total_kehadiran }} kehadiran</strong>, dengan
-                    rata-rata <strong>{{ $rata_rata }} siswa hadir per kegiatan</strong>.
-                </p>
+
             </div>
         @endif
 

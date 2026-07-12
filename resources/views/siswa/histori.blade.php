@@ -80,14 +80,60 @@
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Izin</th>
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Alpa</th>
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Total Poin</th>
+                                                    {{-- TAMBAHAN KOLOM AKSI --}}
+                                                    <th class="py-3 px-4 text-center whitespace-nowrap">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-100">
                                                 @foreach ($items as $histori)
-                                                    <tr class="hover:bg-gray-50 transition">
+                                                    {{-- ALPINE JS STATE UNTUK INLINE EDIT --}}
+                                                    <tr class="hover:bg-gray-50 transition" x-data="{ editing: false }">
                                                         <td
                                                             class="py-3 px-4 font-bold text-indigo-700 whitespace-nowrap">
-                                                            {{ $histori->tahunAjaran->tahun_ajaran }}
+
+                                                            {{-- TAMPILAN NORMAL (Teks Biasa) --}}
+                                                            <span
+                                                                x-show="!editing">{{ $histori->tahunAjaran->tahun_ajaran ?? '-' }}</span>
+
+                                                            {{-- TAMPILAN EDIT (Dropdown Form) --}}
+                                                            <form x-show="editing"
+                                                                action="{{ route('histori_siswa.update', $histori->id) }}"
+                                                                method="POST" class="flex items-center gap-2" x-cloak>
+                                                                @csrf
+                                                                @method('PUT')
+                                                                <select name="tahun_ajaran_id"
+                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-700">
+                                                                    @foreach ($semuaTahunAjaran as $ta)
+                                                                        <option value="{{ $ta->id }}"
+                                                                            {{ $histori->tahun_ajaran_id == $ta->id ? 'selected' : '' }}>
+                                                                            {{ $ta->tahun_ajaran }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                                <button type="submit"
+                                                                    class="p-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                                                                    title="Simpan Perubahan">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        class="h-4 w-4" viewBox="0 0 20 20"
+                                                                        fill="currentColor">
+                                                                        <path fill-rule="evenodd"
+                                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                                            clip-rule="evenodd" />
+                                                                    </svg>
+                                                                </button>
+                                                                <button type="button" @click="editing = false"
+                                                                    class="p-1 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
+                                                                    title="Batal">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        class="h-4 w-4" viewBox="0 0 20 20"
+                                                                        fill="currentColor">
+                                                                        <path fill-rule="evenodd"
+                                                                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                                            clip-rule="evenodd" />
+                                                                    </svg>
+                                                                </button>
+                                                            </form>
+
                                                         </td>
                                                         <td class="py-3 px-4 text-center font-medium">
                                                             {{ $histori->hadir }}</td>
@@ -101,6 +147,57 @@
                                                             class="py-3 px-4 text-center font-black text-indigo-600 text-base">
                                                             {{ $histori->poin }} <span
                                                                 class="text-xs font-normal text-gray-400">Pts</span>
+                                                        </td>
+
+                                                        {{-- TOMBOL AKSI --}}
+                                                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                                                            <div class="flex justify-center items-center gap-3"
+                                                                x-show="!editing">
+                                                                {{-- Tombol Edit Tampil Inline --}}
+                                                                <button type="button" @click="editing = true"
+                                                                    class="text-blue-500 hover:text-blue-700 transition"
+                                                                    title="Koreksi Tahun Ajaran">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        width="16" height="16"
+                                                                        viewBox="0 0 24 24" fill="none"
+                                                                        stroke="currentColor" stroke-width="2"
+                                                                        stroke-linecap="round" stroke-linejoin="round">
+                                                                        <path d="M12 20h9" />
+                                                                        <path
+                                                                            d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                                                    </svg>
+                                                                </button>
+
+                                                                {{-- Tombol Hapus Histori --}}
+                                                                <form
+                                                                    action="{{ route('histori_siswa.destroy', $histori->id) }}"
+                                                                    method="POST"
+                                                                    onsubmit="return confirm('Hapus histori ini? Jika ini dihapus, riwayat kelas dan poin kehadiran siswa di tahun ajaran ini akan ikut lenyap.');"
+                                                                    class="m-0 p-0 inline-block">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit"
+                                                                        class="text-red-500 hover:text-red-700 transition mt-1.5"
+                                                                        title="Hapus Histori Kelas Ini">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                            width="16" height="16"
+                                                                            viewBox="0 0 24 24" fill="none"
+                                                                            stroke="currentColor" stroke-width="2"
+                                                                            stroke-linecap="round"
+                                                                            stroke-linejoin="round">
+                                                                            <path d="M3 6h18" />
+                                                                            <path
+                                                                                d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                            <path
+                                                                                d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                            <line x1="10" y1="11"
+                                                                                x2="10" y2="17" />
+                                                                            <line x1="14" y1="11"
+                                                                                x2="14" y2="17" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 @endforeach

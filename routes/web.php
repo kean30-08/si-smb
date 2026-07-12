@@ -76,13 +76,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/kelas/{kelas}', [KelasController::class, 'destroy'])->name('kelas.destroy');
 
     // === TAHUN AJARAN ===
+    // Index dibiarkan terbuka agar pengajar tetap bisa melihat daftar tahun ajaran (opsional)
     Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun_ajaran.index');
-    Route::get('/tahun-ajaran/create', [TahunAjaranController::class, 'create'])->name('tahun_ajaran.create');
-    Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun_ajaran.store');
-    Route::get('/tahun-ajaran/{tahun_ajaran}/edit', [TahunAjaranController::class, 'edit'])->name('tahun_ajaran.edit');
-    Route::put('/tahun-ajaran/{tahun_ajaran}', [TahunAjaranController::class, 'update'])->name('tahun_ajaran.update');
-    Route::delete('/tahun-ajaran/{tahun_ajaran}', [TahunAjaranController::class, 'destroy'])->name('tahun_ajaran.destroy');
-    Route::patch('/tahun-ajaran/{tahun_ajaran}/aktifkan', [TahunAjaranController::class, 'aktifkan'])->name('tahun_ajaran.aktifkan');
+    
+    // Proteksi Rute CRUD khusus untuk Admin menggunakan Middleware AdminOnly milik Anda
+    Route::middleware([\App\Http\Middleware\AdminOnly::class])->group(function () {
+        Route::get('/tahun-ajaran/create', [TahunAjaranController::class, 'create'])->name('tahun_ajaran.create');
+        Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun_ajaran.store');
+        Route::get('/tahun-ajaran/{tahun_ajaran}/edit', [TahunAjaranController::class, 'edit'])->name('tahun_ajaran.edit');
+        Route::put('/tahun-ajaran/{tahun_ajaran}', [TahunAjaranController::class, 'update'])->name('tahun_ajaran.update');
+        Route::delete('/tahun-ajaran/{tahun_ajaran}', [TahunAjaranController::class, 'destroy'])->name('tahun_ajaran.destroy');
+        Route::patch('/tahun-ajaran/{tahun_ajaran}/aktifkan', [TahunAjaranController::class, 'aktifkan'])->name('tahun_ajaran.aktifkan');
+    });
 
     // === LAPORAN ===
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
@@ -121,6 +126,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/siswa/{siswa}', [SiswaController::class, 'destroy'])->name('siswa.destroy');
     Route::get('/siswa/{siswa}/cetak-kartu', [SiswaController::class, 'cetakKartu'])->name('siswa.cetakKartu');
     Route::get('/siswa/{siswa}/histori', [SiswaController::class, 'histori'])->name('siswa.histori');
+    // TAMBAHKAN DUA RUTE INI
+    Route::put('/histori-siswa/{id}', [SiswaController::class, 'updateHistori'])->name('histori_siswa.update');
+    Route::delete('/histori-siswa/{id}', [SiswaController::class, 'destroyHistori'])->name('histori_siswa.destroy');
 });
 
 // PERBAIKAN: Rute PUBLIK `show` diletakkan paling bawah di luar middleware Auth
