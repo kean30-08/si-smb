@@ -121,6 +121,10 @@ class AgendaController extends Controller
             ->when($search, function ($query, $search) {
                 return $query->where('tanggal', 'like', "%{$search}%");
             })
+            // TAMBAHAN: Sembunyikan agenda internal dari tamu (Guest) yang belum login
+            ->when(!auth()->check(), function ($query) { 
+                return $query->where('is_public', 1);
+                })
             ->with('tahunAjaran') 
             ->groupBy('tanggal', 'tahun_ajaran_id') 
             ->orderBy('tanggal', 'desc')
@@ -158,6 +162,9 @@ class AgendaController extends Controller
     public function updatePic(Request $request, $tanggal)
     {
         $request->validate([
+            'nama_kegiatan' => 'required|string|max:100',
+            'is_public' => 'required|boolean',
+            'is_libur' => 'required|boolean', // TAMBAHAN
             'penanggung_jawab_id' => 'nullable|array',
             'penanggung_jawab_id.*' => 'exists:pengajars,id'
         ]);
@@ -166,10 +173,15 @@ class AgendaController extends Controller
         $picIds = $request->penanggung_jawab_id ?? [];
         
         foreach ($agendas as $agenda) {
+            $agenda->update([
+                'nama_kegiatan' => $request->nama_kegiatan,
+                'is_public' => $request->is_public,
+                'is_libur' => $request->is_libur // TAMBAHAN
+            ]);
             $agenda->penanggungJawab()->sync($picIds);
         }
         
-        return back()->with('success', 'Daftar Penanggung Jawab Absensi hari tersebut berhasil diperbarui!');
+        return back()->with('success', 'Detail agenda dan Penanggung Jawab berhasil diperbarui!');
     }
 
     public function create()
@@ -180,9 +192,12 @@ class AgendaController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validasi hanya butuh Tanggal dan PIC
+        // 1. Validasi Tanggal, Nama Kegiatan, dan PIC
         $request->validate([
             'tanggal' => 'required|date',
+            'nama_kegiatan' => 'required|string|max:100',
+            'is_public' => 'required|boolean', // Validasi Maksimal 100 huruf
+            'is_libur' => 'required|boolean',
             'penanggung_jawab_id' => 'nullable|array', 
             'penanggung_jawab_id.*' => 'exists:pengajars,id',
         ]);
@@ -199,28 +214,29 @@ class AgendaController extends Controller
             }
         }
 
-        // 3. Mencegah duplikasi (1 Tanggal hanya boleh ada 1 Jadwal Harian)
+        // 3. Mencegah duplikasi
         $exists = Agenda::where('tanggal', $tanggal)->exists();
         if ($exists) {
             return back()->withInput()->withErrors(['tanggal' => 'Jadwal absensi untuk tanggal tersebut sudah dibuat!']);
         }
 
-        // 4. Simpan ke Database dengan nilai default
+        // 4. Simpan ke Database
         DB::transaction(function () use ($request, $tanggal, $taId) {
             $picIds = $request->penanggung_jawab_id ?? [];
             
             $agenda = Agenda::create([
                 'tahun_ajaran_id' => $taId,
                 'tanggal' => $tanggal,
-                // Berikan nilai default agar database tidak error
-                'nama_kegiatan' => 'Absensi Harian', 
+                // Menggunakan inputan user alih-alih tulisan statis 'Absensi Harian'
+                'nama_kegiatan' => $request->nama_kegiatan, 
+                'is_public' => $request->is_public,
+                'is_libur' => $request->is_libur,
                 'waktu_mulai' => '08:00:00',
                 'waktu_selesai' => '12:00:00',
                 'deskripsi_rundown' => null,
                 'status' => 'akan datang',
             ]);
 
-            // Masukkan PIC
             if (!empty($picIds)) {
                 $agenda->penanggungJawab()->sync($picIds);
             }

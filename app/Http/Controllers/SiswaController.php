@@ -86,6 +86,7 @@ class SiswaController extends Controller
     {
         $request->validate([
             'nama_lengkap' => 'required|unique:siswas,nama_lengkap|regex:/^[a-zA-Z\s]+$/',
+            'nama_panggilan' => 'required|string|max:255',
             'nis' => 'required|unique:siswas,nis|regex:/^[0-9]+$/',
             'jenis_kelamin' => 'required',
             'kelas_id' => 'required|exists:kelas,id',
@@ -138,6 +139,7 @@ class SiswaController extends Controller
     {
         $request->validate([
             'nama_lengkap' => 'required|regex:/^[a-zA-Z\s]+$/|unique:siswas,nama_lengkap,' . $siswa->id,
+            'nama_panggilan' => 'required|string|max:255',
             'nis' => 'required|regex:/^[0-9]+$/|unique:siswas,nis,' . $siswa->id,
             'jenis_kelamin' => 'required',
             'kelas_id' => 'required|exists:kelas,id',
@@ -150,6 +152,10 @@ class SiswaController extends Controller
             'status' => 'required|in:aktif,tidak aktif,lulus',
             'asal_sekolah' => 'nullable|string|max:255',
             'nomor_hp_siswa' => 'nullable|regex:/^[0-9]+$/',
+            // VALIDASI BARU UNTUK ALASAN
+            'alasan_tidak_aktif' => 'nullable|required_if:status,tidak aktif|string',
+        ], [
+            'alasan_tidak_aktif.required_if' => 'Alasan wajib diisi karena Anda mengubah status siswa menjadi Tidak Aktif.',
         ]);
 
         $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
@@ -158,7 +164,6 @@ class SiswaController extends Controller
         // VALIDASI MENCEGAH LOMPAT KELAS / > 2 SEMESTER
         // ==========================================
         if ($tahunAktif) {
-            
             // 1. VALIDASI: Maksimal 2 Semester di Kelas yang Sama
             $jumlahSemesterDiKelasIni = HistoriSiswa::where('siswa_id', $siswa->id)
                 ->where('kelas_id', $request->kelas_id)
@@ -171,7 +176,7 @@ class SiswaController extends Controller
                 ]);
             }
 
-            // 2. VALIDASI: Mencegah Loncat Kelas (Naik/Turun Terlalu Jauh)
+            // 2. VALIDASI: Mencegah Loncat Kelas
             $urutanKelas = [
                 'Kelas PG' => 1, 'Kelas TK A' => 2, 'Kelas TK B' => 3,
                 'Kelas 1 SD' => 4, 'Kelas 2 SD' => 5, 'Kelas 3 SD' => 6, 'Kelas 4 SD' => 7, 'Kelas 5 SD' => 8, 'Kelas 6 SD' => 9,
@@ -179,17 +184,15 @@ class SiswaController extends Controller
                 'Kelas 1 SMA' => 13, 'Kelas 2 SMA' => 14, 'Kelas 3 SMA' => 15,
             ];
 
-            // Cek urutan kelas tujuan
             $kelasTujuan = Kelas::find($request->kelas_id);
             $urutanTujuan = $urutanKelas[$kelasTujuan->nama_kelas] ?? 0;
 
-            // Cari histori TERAKHIR siswa (secara kronologis sebelum TA Aktif saat ini)
             $historiTerakhirMasaLalu = HistoriSiswa::with(['kelas', 'tahunAjaran'])
                 ->where('siswa_id', $siswa->id)
                 ->where('tahun_ajaran_id', '!=', $tahunAktif->id)
                 ->get()
                 ->sortByDesc(function($h) {
-                    return $h->tahunAjaran->tahun_ajaran ?? ''; // Diurutkan dari Tahun Ajaran Z-A
+                    return $h->tahunAjaran->tahun_ajaran ?? ''; 
                 })->first();
 
             if ($historiTerakhirMasaLalu && $historiTerakhirMasaLalu->kelas) {
@@ -197,17 +200,14 @@ class SiswaController extends Controller
                 $namaKelasTerakhir = $historiTerakhirMasaLalu->kelas->nama_kelas;
                 $namaKelasTujuan = $kelasTujuan->nama_kelas;
 
-                // Hitung selisih jarak kelas
                 $selisih = $urutanTujuan - $urutanTerakhir;
 
-                // Jika naik > 1 tingkat (Loncat Kelas ke Atas)
                 if ($selisih > 1) {
                     return back()->withInput()->withErrors([
                         'kelas_id' => "Validasi Gagal! Kelas terakhir siswa ini adalah {$namaKelasTerakhir}. Anda tidak bisa melompatkannya langsung ke {$namaKelasTujuan}."
                     ]);
                 }
 
-                // Jika turun < -1 tingkat (Loncat Kelas ke Bawah terlalu jauh)
                 if ($selisih < -1) {
                     return back()->withInput()->withErrors([
                         'kelas_id' => "Validasi Gagal! Kelas terakhir siswa ini adalah {$namaKelasTerakhir}. Penurunan ke {$namaKelasTujuan} terlalu jauh dan merusak urutan histori."
@@ -218,7 +218,15 @@ class SiswaController extends Controller
         // ==========================================
 
         DB::transaction(function () use ($request, $siswa, $tahunAktif) {
-            $siswa->update($request->except(['kelas_id']));
+            // Ambil semua data request kecuali kelas_id
+            $dataSiswa = $request->except(['kelas_id']);
+            
+            // JIKA STATUS BUKAN "TIDAK AKTIF", BERSIHKAN ALASANNYA
+            if ($dataSiswa['status'] !== 'tidak aktif') {
+                $dataSiswa['alasan_tidak_aktif'] = null;
+            }
+
+            $siswa->update($dataSiswa);
             
             if ($tahunAktif) {
                 HistoriSiswa::updateOrCreate(
@@ -301,30 +309,34 @@ class SiswaController extends Controller
     }
 
     // FUNGSI BARU: Update Tahun Ajaran di Histori
+    // FUNGSI BARU: Update Tahun Ajaran & Kelas di Histori
     public function updateHistori(Request $request, $id)
     {
         $request->validate([
-            'tahun_ajaran_id' => 'required|exists:tahun_ajarans,id'
+            'tahun_ajaran_id' => 'required|exists:tahun_ajarans,id',
+            'kelas_id' => 'required|exists:kelas,id' // TAMBAHAN: Menerima input kelas_id
         ]);
 
         $histori = \App\Models\HistoriSiswa::findOrFail($id);
 
-        // Cek agar tidak ada duplikasi data (Siswa A di Kelas 1 pada TA Ganjil sebanyak 2 kali)
+        // Cek agar tidak ada duplikasi data di kelas dan TA yang BERSAMAAN
         $exists = \App\Models\HistoriSiswa::where('siswa_id', $histori->siswa_id)
-            ->where('kelas_id', $histori->kelas_id)
+            ->where('kelas_id', $request->kelas_id)
             ->where('tahun_ajaran_id', $request->tahun_ajaran_id)
             ->where('id', '!=', $id)
             ->exists();
 
         if ($exists) {
-            return back()->with('error', 'Gagal! Histori untuk Tahun Ajaran tersebut sudah ada di kelas ini.');
+            return back()->with('error', 'Gagal! Histori untuk Kelas dan Tahun Ajaran tersebut sudah ada.');
         }
 
+        // Simpan pembaruan kelas dan TA
         $histori->update([
-            'tahun_ajaran_id' => $request->tahun_ajaran_id
+            'tahun_ajaran_id' => $request->tahun_ajaran_id,
+            'kelas_id' => $request->kelas_id // TAMBAHAN: Simpan perubahan kelas
         ]);
 
-        return back()->with('success', 'Tahun Ajaran pada histori berhasil dikoreksi.');
+        return back()->with('success', 'Histori Kelas dan Tahun Ajaran berhasil dikoreksi.');
     }
 
     // FUNGSI BARU: Hapus Histori
@@ -334,5 +346,51 @@ class SiswaController extends Controller
         $histori->delete();
 
         return back()->with('success', 'Data histori salah berhasil dihapus.');
+    }
+
+    public function cetakBarcodeMassal()
+    {
+        // Hanya mengambil siswa yang berstatus 'aktif' dan urut berdasarkan nama
+        $siswas = \App\Models\Siswa::where('status', 'aktif')->orderBy('nama_lengkap', 'asc')->get();
+        
+        return view('siswa.partials.cetak_barcode_massal', compact('siswas'));
+    }
+
+    public function cetakBarcode(Siswa $siswa)
+    {
+        return view('siswa.partials.cetak_barcode', compact('siswa'));
+    }
+
+    public function cetakKartuBaru()
+    {
+        $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
+
+        if (!$tahunAktif) {
+            return back()->with('error', 'Cetak gagal: Tidak ada Tahun Ajaran yang sedang aktif saat ini.');
+        }
+
+        // 1. Kumpulkan ID murid yang punya riwayat di Tahun Ajaran LAIN (Berarti mereka Murid Lama)
+        $idMuridLama = HistoriSiswa::where('tahun_ajaran_id', '!=', $tahunAktif->id)
+            ->pluck('siswa_id')
+            ->toArray();
+
+        // 2. Kumpulkan ID murid yang punya riwayat di Tahun Ajaran AKTIF
+        $idMuridDiTaAktif = HistoriSiswa::where('tahun_ajaran_id', $tahunAktif->id)
+            ->pluck('siswa_id')
+            ->toArray();
+
+        // 3. FILTER FINAL: Ambil siswa yang ADA di TA Aktif, tapi BUKAN Murid Lama
+        $siswa = \App\Models\Siswa::with('historiAktif.kelas')
+            ->where('status', 'aktif')
+            ->whereIn('id', $idMuridDiTaAktif)
+            ->whereNotIn('id', $idMuridLama) // Coret semua murid lama dari daftar
+            ->orderBy('nama_lengkap', 'asc')
+            ->get();
+
+        if ($siswa->isEmpty()) {
+            return back()->with('error', "Tidak ada murid baru (pendaftar murni) pada Tahun Ajaran {$tahunAktif->tahun_ajaran}.");
+        }
+
+        return view('siswa.partials.cetak_massal', compact('siswa'));
     }
 }

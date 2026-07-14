@@ -2,19 +2,20 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <title>Laporan Absensi Siswa</title>
     <style>
-        /* Mengatur batas margin kertas PDF (Atas Kanan Bawah Kiri) */
         @page {
-            margin: 140px 40px 40px 40px;
+            margin: 140px 30px 40px 30px;
         }
 
         body {
             font-family: Arial, sans-serif;
             font-size: 11px;
             margin: 0;
+            color: #000;
         }
 
-        /* HEADER & KOP SURAT (Fixed Position agar berulang) */
         header {
             position: fixed;
             top: -120px;
@@ -26,7 +27,6 @@
         table.kop-surat {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 0;
             border: none;
         }
 
@@ -63,19 +63,29 @@
             margin-top: 10px;
         }
 
-        /* TABEL UTAMA */
+        .title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .legend-box {
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+
         table.main-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            margin-bottom: 30px;
         }
 
         table.main-table th,
         table.main-table td {
             border: 1px solid #000;
-            padding: 6px;
+            padding: 5px;
             text-align: center;
+            vertical-align: middle;
         }
 
         table.main-table th {
@@ -84,65 +94,60 @@
 
         .left {
             text-align: left;
+            padding-left: 6px !important;
         }
 
-        .row-total {
+        .sub-header {
             background-color: #e6e6e6;
             font-weight: bold;
+            text-align: left;
+            padding-left: 6px !important;
         }
 
-        .text-right {
-            text-align: right;
-            padding-right: 10px;
+        .tgl-kecil {
+            font-size: 8px;
+            font-weight: normal;
+            display: block;
+            margin-top: 2px;
         }
 
-        /* TANDA TANGAN */
-        table.signature-table {
-            width: 100%;
-            margin-top: 10px;
-            border: none !important;
-            page-break-inside: avoid;
+        .page-break {
+            page-break-after: always;
         }
 
-        table.signature-table td {
-            border: none !important;
-            padding: 0;
-            vertical-align: bottom;
-        }
-
-        .print-info {
-            font-size: 10px;
+        /* PERBAIKAN: CSS Khusus untuk sel Libur tanpa Rowspan */
+        .cell-libur {
+            font-weight: bold;
             font-style: italic;
-            color: #555;
-        }
-
-        .signature-wrapper {
-            display: inline-block;
-            width: 250px;
+            vertical-align: middle;
             text-align: center;
         }
 
-        .signature-date {
-            margin-bottom: 5px;
-            font-size: 11px;
+        /* Modifikasi Border untuk Libur agar terkesan menyatu */
+        .libur-top {
+            border-bottom: none !important;
         }
 
-        .signature-title {
-            margin-bottom: 60px;
-            font-weight: bold;
-            font-size: 11px;
+        .libur-middle {
+            border-top: none !important;
+            border-bottom: none !important;
+            color: transparent !important;
         }
 
-        .signature-name {
-            font-weight: bold;
-            text-decoration: underline;
-            font-size: 12px;
+        /* Teks disembunyikan agar bersih */
+        .libur-bottom {
+            border-top: none !important;
+            color: transparent !important;
+        }
+
+        /* Class khusus jika di kelas itu cuma ada 1 murid */
+        .libur-single {
+            border: 1px solid #000 !important;
         }
     </style>
 </head>
 
 <body>
-    {{-- HEADER KOP SURAT (Otomatis Berulang) --}}
     <header>
         <table class="kop-surat">
             <tr>
@@ -150,11 +155,16 @@
                     @php
                         $path = public_path('img/logo2_smb.jpg');
                         $type = pathinfo($path, PATHINFO_EXTENSION);
-                        $data = file_get_contents($path);
-                        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                        if (file_exists($path)) {
+                            $data = file_get_contents($path);
+                            $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                        } else {
+                            $base64 = '';
+                        }
                     @endphp
-
-                    <img src="{{ $base64 }}" width="80" alt="Logo SMB">
+                    @if ($base64)
+                        <img src="{{ $base64 }}" width="80" alt="Logo SMB">
+                    @endif
                 </td>
                 <td class="kop-text">
                     <div class="kop-title-1">SEKOLAH MINGGU BUDDHA (SMB)</div>
@@ -168,110 +178,150 @@
         <div class="garis-kop"></div>
     </header>
 
-    {{-- KONTEN UTAMA --}}
     <main>
-        <h2 style="text-align: center; margin-top: 0; margin-bottom: 0;">Laporan Tingkat Keaktifan Siswa</h2>
-        <p style="text-align: center; margin-top: 5px;">Periode: {{ \Carbon\Carbon::parse($mulai)->format('d/m/Y') }} -
-            {{ \Carbon\Carbon::parse($selesai)->format('d/m/Y') }} | Kelas: {{ $nama_kelas }}</p>
+        @php $isFirstPage = true; @endphp
 
-        <table class="main-table">
-            <thead>
-                <tr>
-                    <th>Peringkat</th>
-                    <th class="left">Nama Siswa</th>
-                    <th>Kls</th>
-                    <th>Hadir</th>
-                    <th>Izin</th>
-                    <th>Sakit</th>
-                    <th>Alpa</th>
-                    <th>Persentase Keaktifan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($siswas as $index => $siswa)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td class="left">{{ $siswa->nama_lengkap }}</td>
-                        <td>{{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</td>
-                        <td>{{ $siswa->total_hadir }}</td>
-                        <td>{{ $siswa->total_izin }}</td>
-                        <td>{{ $siswa->total_sakit }}</td>
-                        <td>{{ $siswa->total_alpa }}</td>
-                        <td><strong>{{ $siswa->persentase }}%</strong></td>
-                    </tr>
+        @foreach ($agendasPerBulan as $bulanKey => $tanggalArray)
+            @php
+                $namaBulan = \Carbon\Carbon::createFromFormat('Y-m', $bulanKey)->translatedFormat('F Y');
+                $tanggals = $tanggalArray->values()->all();
+                $jumlahKolom = count($tanggals);
+                if ($jumlahKolom == 0) {
+                    $jumlahKolom = 1;
+                }
+                $romawiMinggu = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+            @endphp
 
-                    {{-- TRIK JITU: Paksa potong tabel dan pindah halaman setiap 20 baris --}}
-                    @if (($index + 1) % 20 == 0 && !$loop->last)
-            </tbody>
-        </table>
-        <div style="page-break-before: always;"></div>
-        <table class="main-table">
-            <thead>
-                <tr>
-                    <th>Peringkat</th>
-                    <th class="left">Nama Siswa</th>
-                    <th>Kls</th>
-                    <th>Hadir</th>
-                    <th>Izin</th>
-                    <th>Sakit</th>
-                    <th>Alpa</th>
-                    <th>Persentase Keaktifan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @endif
-            @empty
-                <tr>
-                    <td colspan="8">Tidak ada data siswa pada kelas/periode ini.</td>
-                </tr>
-                @endforelse
-            </tbody>
-
-            @if ($siswas->count() > 0)
-                <tfoot>
-                    <tr class="row-total">
-                        <td colspan="3" class="text-right">TOTAL KESELURUHAN</td>
-                        <td>{{ $siswas->sum('total_hadir') }}</td>
-                        <td>{{ $siswas->sum('total_izin') }}</td>
-                        <td>{{ $siswas->sum('total_sakit') }}</td>
-                        <td>{{ $siswas->sum('total_alpa') }}</td>
-                        <td>-</td>
-                    </tr>
-                    <tr class="row-total">
-                        <td colspan="3" class="text-right">RATA-RATA</td>
-                        <td>{{ round((float) $siswas->avg('total_hadir'), 1) }}</td>
-                        <td>{{ round((float) $siswas->avg('total_izin'), 1) }}</td>
-                        <td>{{ round((float) $siswas->avg('total_sakit'), 1) }}</td>
-                        <td>{{ round((float) $siswas->avg('total_alpa'), 1) }}</td>
-                        <td>{{ round((float) $siswas->avg('persentase')) }}%</td>
-                    </tr>
-                </tfoot>
+            @if (!$isFirstPage)
+                <div class="page-break"></div>
             @endif
-        </table>
+            @php $isFirstPage = false; @endphp
 
-        <table class="signature-table">
-            <tr>
-                <td style="width: 50%; text-align: left;">
-                    <div class="print-info">
-                        Dicetak pada: {{ \Carbon\Carbon::now('Asia/Makassar')->translatedFormat('d F Y, H:i') }} WITA
-                    </div>
-                </td>
-                <td style="width: 50%; text-align: right;">
-                    <div class="signature-wrapper">
-                        <div class="signature-date">
-                            {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}<br>
-                            Mengetahui,
-                        </div>
-                        <div class="signature-title">
-                            Kepala Sekolah Minggu Buddha
-                        </div>
-                        <div class="signature-name">
-                            {{ $admin->name ?? 'Admin Sekolah Minggu' }}
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
+            <h2 style="text-align: center; margin-top: 0; margin-bottom: 5px;">LAPORAN ABSENSI SISWA SMB VDC</h2>
+            <p style="text-align: center; margin-top: 0; margin-bottom: 10px; font-weight: bold; font-size: 12px;">TAHUN
+                AJARAN: {{ strtoupper($nama_ta) }}</p>
+
+            <div class="legend-box">
+                <strong>Keterangan:</strong> H = Hadir &nbsp;|&nbsp; I = Izin &nbsp;|&nbsp; S = Sakit &nbsp;|&nbsp; L =
+                Libur &nbsp;|&nbsp; A = Alpa
+            </div>
+
+            <table class="main-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" width="4%">NO</th>
+                        <th rowspan="2" width="28%">NAMA</th>
+                        <th rowspan="2" width="8%">KELAS</th>
+                        <th rowspan="2" width="25%">ASAL SEKOLAH</th>
+                        <th colspan="{{ $jumlahKolom }}">{{ strtoupper($namaBulan) }}</th>
+                    </tr>
+                    <tr>
+                        @for ($i = 0; $i < $jumlahKolom; $i++)
+                            <th>
+                                M.{{ $romawiMinggu[$i] ?? $i + 1 }}
+                                <span class="tgl-kecil">
+                                    {{ isset($tanggals[$i]) ? \Carbon\Carbon::parse($tanggals[$i])->format('d M') : '-' }}
+                                </span>
+                            </th>
+                        @endfor
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $siswaPerKelas = $siswas->groupBy('kelas_laporan');
+                        $totalHadirPerMinggu = array_fill(0, $jumlahKolom, 0);
+                    @endphp
+
+                    @foreach ($siswaPerKelas as $namaKelas => $siswasKelas)
+                        @php
+                            $jumlahSiswaDiKelas = count($siswasKelas);
+                        @endphp
+
+                        <tr>
+                            <td colspan="{{ 4 + $jumlahKolom }}" class="sub-header">{{ strtoupper($namaKelas) }}</td>
+                        </tr>
+
+                        @foreach ($siswasKelas as $index => $siswa)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td class="left">{{ $siswa->nama_lengkap }}</td>
+                                <td>{{ preg_replace('/Kelas /i', '', $namaKelas) }}</td>
+                                <td class="left" style="font-size: 9px;">{{ $siswa->asal_sekolah ?? '-' }}</td>
+
+                                @for ($i = 0; $i < $jumlahKolom; $i++)
+                                    @if (isset($tanggals[$i]))
+                                        @php
+                                            $tgl = $tanggals[$i];
+                                            $isLibur = $agendaStatusMap[$tgl] ?? false;
+
+                                            // Logika Pendaftaran Siswa
+                                            $tglDaftar = \Carbon\Carbon::parse($siswa->created_at)->format('Y-m-d');
+                                            $isBelumDaftar = $tgl < $tglDaftar;
+                                        @endphp
+
+                                        @if ($isLibur)
+                                            @php
+                                                // Logika CSS Border untuk menciptakan ilusi sel gabungan
+                                                $cssClass = 'cell-libur ';
+                                                if ($jumlahSiswaDiKelas == 1) {
+                                                    $cssClass .= 'libur-single';
+                                                } elseif ($index == 0) {
+                                                    $cssClass .= 'libur-top';
+                                                } elseif ($index == $jumlahSiswaDiKelas - 1) {
+                                                    $cssClass .= 'libur-bottom';
+                                                } else {
+                                                    $cssClass .= 'libur-middle';
+                                                }
+                                            @endphp
+
+                                            <td class="{{ $cssClass }}">LIBUR</td>
+                                        @elseif ($isBelumDaftar)
+                                            <td>-</td>
+                                        @else
+                                            @php
+                                                $status = $siswa->absen_map[$tgl] ?? null;
+                                                $simbol = 'A';
+
+                                                if ($status == 'hadir') {
+                                                    $simbol = 'H';
+                                                    $totalHadirPerMinggu[$i]++;
+                                                } elseif ($status == 'sakit') {
+                                                    $simbol = 'S';
+                                                } elseif ($status == 'izin') {
+                                                    $simbol = 'I';
+                                                }
+                                            @endphp
+                                            <td><strong>{{ $simbol }}</strong></td>
+                                        @endif
+                                    @else
+                                        <td>-</td>
+                                    @endif
+                                @endfor
+                            </tr>
+                        @endforeach
+                    @endforeach
+
+                    <tr>
+                        <td colspan="4" class="left" style="font-weight:bold;">JUMLAH KEHADIRAN (H)</td>
+                        @for ($i = 0; $i < $jumlahKolom; $i++)
+                            <td style="font-weight:bold;">
+                                @php
+                                    $isLiburCol = isset($tanggals[$i])
+                                        ? $agendaStatusMap[$tanggals[$i]] ?? false
+                                        : false;
+                                @endphp
+
+                                @if ($isLiburCol)
+                                    -
+                                @else
+                                    {{ isset($tanggals[$i]) ? $totalHadirPerMinggu[$i] : '-' }}
+                                @endif
+                            </td>
+                        @endfor
+                    </tr>
+                </tbody>
+            </table>
+        @endforeach
     </main>
 </body>
 

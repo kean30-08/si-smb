@@ -30,7 +30,7 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-data="{ statusPilihan: '{{ old('status', $siswa->status) }}' }">
 
                             {{-- IDENTITAS UTAMA --}}
                             <div>
@@ -41,6 +41,17 @@
 "
                                     required>
                                 @error('nama_lengkap')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block font-medium text-sm text-gray-700">Nama Panggilan *</label>
+                                <input type="text" name="nama_panggilan"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm @error('nama_panggilan') border-red-500 @enderror"
+                                    value="{{ old('nama_panggilan', $siswa->nama_panggilan ?? '') }}"
+                                    placeholder="Contoh: Ryan, Jessica..." required>
+                                @error('nama_panggilan')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -136,11 +147,11 @@
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">Email Orang Tua/Wali</label>
+                                <label class="block font-medium text-sm text-gray-700">Email</label>
                                 <input type="email" name="email_orang_tua"
                                     value="{{ old('email_orang_tua', $siswa->email_orang_tua) }}"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                    placeholder="(Opsional) Masukkan Email Orang Tua/Wali ...">
+                                    placeholder="(Opsional) Masukkan Email Orang Tua/Wali/Pribadi ...">
                             </div>
 
                             <div>
@@ -157,27 +168,25 @@
                             {{-- STATUS & GAMIFIKASI --}}
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Status Siswa</label>
-                                <select name="status"
+                                {{-- TAMBAHKAN x-model="statusPilihan" DI SELECT INI --}}
+                                <select name="status" x-model="statusPilihan"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                    <option value="aktif"
-                                        {{ old('status', $siswa->status) == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                    <option value="tidak aktif"
-                                        {{ old('status', $siswa->status) == 'tidak aktif' ? 'selected' : '' }}>Tidak
-                                        Aktif</option>
-                                    <option value="lulus"
-                                        {{ old('status', $siswa->status) == 'lulus' ? 'selected' : '' }}>Lulus</option>
+                                    <option value="aktif">Aktif</option>
+                                    <option value="tidak aktif">Tidak Aktif</option>
+                                    <option value="lulus">Lulus</option>
                                 </select>
                             </div>
 
-                            {{-- <div>
-                                <label class="block font-medium text-sm text-gray-700">Total Poin/Nilai</label>
-                                <input type="number" name="total_poin"
-                                    value="{{ old('total_poin', $siswa->total_poin) }}"
-                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm class:@error('total_poin') border-red-500 @enderror">
-                                @error('total_poin')
-                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                            {{-- KOLOM BARU: ALASAN TIDAK AKTIF (Hanya muncul jika status "Tidak Aktif") --}}
+                            <div x-show="statusPilihan === 'tidak aktif'" x-cloak class="md:col-span-1">
+                                <label class="block font-medium text-sm text-red-700">Alasan Tidak Aktif *</label>
+                                <textarea name="alasan_tidak_aktif" rows="1"
+                                    class="mt-1 block w-full border-red-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm @error('alasan_tidak_aktif') border-red-500 @enderror"
+                                    placeholder="Contoh: Pindah sekolah, berhenti, dsb.">{{ old('alasan_tidak_aktif', $siswa->alasan_tidak_aktif) }}</textarea>
+                                @error('alasan_tidak_aktif')
+                                    <p class="text-xs text-red-500 mt-1 font-semibold">{{ $message }}</p>
                                 @enderror
-                            </div> --}}
+                            </div>
 
                             {{-- ALAMAT (Memakan 2 kolom supaya lebar) --}}
                             <div class="md:col-span-2">

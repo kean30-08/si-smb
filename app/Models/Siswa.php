@@ -24,4 +24,12 @@ class Siswa extends Model
     {
         return $this->hasOne(HistoriSiswa::class)->latestOfMany();
     }
+
+    /**
+     * TAMBAHAN BARU: Relasi untuk menarik semua data kehadiran siswa
+     */
+    public function absensi()
+    {
+        return $this->hasMany(Absensi::class);
+    }
 }

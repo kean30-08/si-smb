@@ -14,6 +14,18 @@
                         @csrf
 
                         <div class="space-y-6 mb-6">
+                            {{-- KOLOM NAMA KEGIATAN --}}
+                            <div>
+                                <label class="block font-bold text-lg text-gray-800 mb-2">Deskripsi Agenda Kegiatan
+                                    *</label>
+                                <input type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan') }}"
+                                    maxlength="100"
+                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="Contoh: Sekolah Minggu Pekan ke-1 (Maksimal 100 Huruf)" required>
+                                @error('nama_kegiatan')
+                                    <p class="text-red-500 text-xs mt-2 font-bold">{{ $message }}</p>
+                                @enderror
+                            </div>
                             {{-- KOLOM TANGGAL --}}
                             <div>
                                 <label class="block font-bold text-lg text-gray-800 mb-2">Tanggal Pelaksanaan *</label>
@@ -32,6 +44,36 @@
                                     required>
 
                                 @error('tanggal')
+                                    <p class="text-red-500 text-xs mt-2 font-bold">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- KOLOM PUBLIKASI --}}
+                            <div>
+                                <label class="block font-bold text-lg text-gray-800 mb-2">Status Publikasi *</label>
+                                <select name="is_public" required
+                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="1" {{ old('is_public') == '1' ? 'selected' : '' }}>Publik
+                                        (Ditampilkan untuk Umum)</option>
+                                    <option value="0" {{ old('is_public') == '0' ? 'selected' : '' }}>Internal
+                                        (Hanya Pengajar & Admin)</option>
+                                </select>
+                                @error('is_public')
+                                    <p class="text-red-500 text-xs mt-2 font-bold">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- KOLOM STATUS LIBUR --}}
+                            <div>
+                                <label class="block font-bold text-lg text-gray-800 mb-2">Status Kegiatan *</label>
+                                <select name="is_libur" required
+                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="0" {{ old('is_libur') == '0' ? 'selected' : '' }}>Kegiatan
+                                        Normal (Wajib Absen)</option>
+                                    <option value="1" {{ old('is_libur') == '1' ? 'selected' : '' }}>Hari Libur
+                                        (Tidak Ada Absensi)</option>
+                                </select>
+                                @error('is_libur')
                                     <p class="text-red-500 text-xs mt-2 font-bold">{{ $message }}</p>
                                 @enderror
                             </div>

@@ -10,54 +10,52 @@ class AgendaSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        // Berdasarkan ID Tahun Ajaran dari Database Anda
-        $tahunAjarans = [
-            1 => ['nama' => '2025/2026 Ganjil', 'start_date' => '2025-07-20'], // Dimulai pertengahan Juli 2025
-            4 => ['nama' => '2025/2026 Genap',  'start_date' => '2026-01-18'], // Dimulai pertengahan Januari 2026
-            5 => ['nama' => '2026/2027 Ganjil', 'start_date' => '2026-07-19'], // Dimulai pertengahan Juli 2026
-            6 => ['nama' => '2026/2027 Genap',  'start_date' => '2027-01-17'], // Dimulai pertengahan Januari 2027
-        ];
+        // Tetapkan tanggal mulai dan selesai
+        $startDate = Carbon::parse('2025-07-06');
+        $endDate = Carbon::parse('2026-07-12');
 
-        foreach ($tahunAjarans as $ta_id => $ta) {
-            // Gunakan Carbon untuk memanipulasi tanggal
-            $tanggal = Carbon::parse($ta['start_date']);
+        // Copy tanggal mulai untuk di-looping
+        $currentDate = $startDate->copy();
 
-            // Buat 16 kali pertemuan (16 Pekan/Minggu) untuk setiap Semester
-            for ($i = 1; $i <= 16; $i++) {
-                
-                // Logika Status: Menyesuaikan dengan waktu saat ini (Real-time)
-                if ($tanggal->isPast()) {
-                    $status = 'selesai';
-                } elseif ($tanggal->isToday()) {
-                    $status = 'sedang berlangsung';
-                } else {
-                    $status = 'akan datang';
-                }
+        while ($currentDate->lte($endDate)) {
+            $year = $currentDate->year;
+            $month = $currentDate->month;
 
-                // Gunakan updateOrCreate agar tidak terjadi duplikat jika seeder dijalankan berulang kali
-                Agenda::updateOrCreate(
-                    [
-                        'tahun_ajaran_id' => $ta_id,
-                        'nama_kegiatan' => "Sekolah Minggu Pekan ke-{$i} ({$ta['nama']})",
-                    ],
-                    [
-                        'tanggal' => $tanggal->format('Y-m-d'),
-                        'waktu_mulai' => '08:00:00',
-                        'waktu_selesai' => '11:00:00',
-                        'status' => $status,
-                    ]
-                );
-
-                // Tambahkan 7 hari untuk memajukan jadwal ke pekan berikutnya
-                $tanggal->addWeek();
+            // Logika Penentuan ID Tahun Ajaran otomatis berdasarkan bulan & tahun
+            $taId = 1; // Default
+            
+            if ($year == 2025) {
+                // Juli s/d Desember 2025 masuk ke 2025/2026 Ganjil (ID: 1)
+                $taId = 1;
+            } elseif ($year == 2026 && $month <= 6) {
+                // Januari s/d Juni 2026 masuk ke 2025/2026 Genap (ID: 4)
+                $taId = 4;
+            } elseif ($year == 2026 && $month >= 7) {
+                // Mulai Juli 2026 masuk ke 2026/2027 Ganjil (ID: 5)
+                $taId = 5;
             }
+
+            // Gunakan updateOrCreate agar tidak duplikat jika dijalankan berulang kali
+            Agenda::updateOrCreate(
+                ['tanggal' => $currentDate->format('Y-m-d')],
+                [
+                    'tahun_ajaran_id' => $taId,
+                    'nama_kegiatan' => 'Kegiatan Sekolah Minggu',
+                    'waktu_mulai' => '08:00:00',
+                    'waktu_selesai' => '12:00:00',
+                    'status' => 'selesai', // Diset selesai karena jadwalnya adalah masa lalu
+                    'is_public' => 1,
+                    // is_libur tidak kita set di sini, agar tidak menimpa status libur (seperti tgl 6 Juli) yang mungkin sudah ada di database Anda
+                ]
+            );
+
+            // Tambahkan 1 minggu (7 hari) untuk melompat ke hari Minggu berikutnya
+            $currentDate->addWeek();
         }
 
-        $this->command->info('Berhasil! Jadwal Sekolah Minggu dari 2025/2026 Ganjil hingga 2026/2027 Genap telah dibuat.');
+        $this->command->info('Jadwal Sekolah Minggu dari 6 Juli 2025 s/d 12 Juli 2026 berhasil di-generate!');
     }
 }

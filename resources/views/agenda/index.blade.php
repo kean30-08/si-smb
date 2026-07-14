@@ -3,7 +3,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ __('Jadwal Kegiatan') }}
+                    {{ __('Jadwal Dan Agenda Kegiatan') }}
                 </h2>
                 {{-- INFO TAHUN AJARAN AKTIF --}}
                 @php

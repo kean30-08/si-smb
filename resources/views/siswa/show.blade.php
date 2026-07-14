@@ -34,8 +34,9 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
 
-                    {{-- TOMBOL RIWAYAT --}}
-                    <div class="mb-6 flex justify-end">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-bold text-gray-700">Informasi Siswa</h2>
+
                         <a href="{{ route('siswa.histori', $siswa->id) }}"
                             class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-sm font-bold shadow-sm transition">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -48,10 +49,19 @@
                         </a>
                     </div>
 
+
+
+                    {{-- TOMBOL RIWAYAT --}}
+
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <p class="text-sm text-gray-500 font-semibold">Nama Lengkap</p>
                             <p class="text-lg font-medium">{{ $siswa->nama_lengkap }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 font-semibold">Nama Panggilan</p>
+                            <p class="text-lg font-medium">{{ $siswa->nama_panggilan ?? '-' }}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500 font-semibold">NIK</p>
@@ -76,10 +86,38 @@
                                 {{ $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('d F Y') : '-' }}
                             </p>
                         </div>
+
+                        {{-- STATUS SISWA (Warna disesuaikan otomatis) --}}
                         <div>
                             <p class="text-sm text-gray-500 font-semibold">Status</p>
-                            <p class="text-lg font-medium uppercase text-blue-600">{{ $siswa->status }}</p>
+                            <p
+                                class="text-lg font-bold uppercase 
+                                @if ($siswa->status == 'aktif') text-green-600 
+                                @elseif($siswa->status == 'tidak aktif') text-red-600 
+                                @else text-blue-600 @endif">
+                                {{ $siswa->status }}
+                            </p>
                         </div>
+
+                        {{-- TAMBAHAN: ALASAN TIDAK AKTIF (Hanya muncul jika status "tidak aktif") --}}
+                        @if ($siswa->status === 'tidak aktif')
+                            <div class="md:col-span-2 bg-red-50 p-4 rounded-lg border border-red-200 mt-2">
+                                <div class="flex items-start">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2 mt-0.5"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm text-red-700 font-bold uppercase tracking-wider mb-1">Alasan
+                                            Berhenti / Tidak Aktif</p>
+                                        <p class="text-base text-red-900 font-medium">
+                                            {{ $siswa->alasan_tidak_aktif ?? 'Tidak ada keterangan tambahan yang dicatat.' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
                         {{-- INFORMASI ANGKATAN & KELUAR --}}
                         <div class="col-span-1 md:col-span-2 mt-2 flex flex-col sm:flex-row gap-4">
@@ -175,7 +213,7 @@
                             <p class="text-lg font-medium">{{ $siswa->nama_orang_tua ?? '-' }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 font-semibold">Email Orang Tua/Wali</p>
+                            <p class="text-sm text-gray-500 font-semibold">Email</p>
                             <p class="text-lg font-medium">{{ $siswa->email_orang_tua ?? '-' }}</p>
                         </div>
                         <div>
@@ -191,15 +229,37 @@
 
                     <div class="mt-8 border-t pt-6">
                         <h4 class="text-sm font-bold text-gray-500 mb-3">QR Code Identitas Siswa</h4>
-                        <div class="flex items-center space-x-6">
-                            <div class="p-2 bg-white inline-block rounded border border-gray-300 shadow-sm text-center">
+                        <div class="flex items-start sm:items-center space-x-6">
+
+                            {{-- TAMPILAN GAMBAR QR --}}
+                            <div
+                                class="p-2 bg-white inline-block rounded border border-gray-300 shadow-sm text-center shrink-0">
                                 {!! QrCode::size(100)->generate('SMB-' . $siswa->id) !!}
                                 <p class="text-[10px] font-bold mt-1 text-gray-800 tracking-widest">
                                     SMB-{{ $siswa->id }}</p>
                             </div>
-                            <div>
+
+                            {{-- DERETAN TOMBOL CETAK --}}
+                            <div class="flex flex-col gap-3 w-full max-w-xs">
+
+                                {{-- TOMBOL BARU: CETAK BARCODE SAJA --}}
+                                <a href="{{ route('siswa.cetakBarcode', $siswa->id) }}" target="_blank"
+                                    class="inline-flex justify-center items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 transition shadow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2"
+                                            ry="2"></rect>
+                                        <line x1="8" y1="8" x2="8" y2="16"></line>
+                                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                                        <line x1="16" y1="8" x2="16" y2="16"></line>
+                                    </svg>
+                                    Cetak Barcode (Stiker)
+                                </a>
+
+                                {{-- TOMBOL LAMA: CETAK KARTU ID --}}
                                 <a href="{{ route('siswa.cetakKartu', $siswa->id) }}" target="_blank"
-                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ease-in-out duration-150 shadow">
+                                    class="inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 transition shadow">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                         fill="currentColor" class="mr-2" viewBox="0 0 16 16">
                                         <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z" />
@@ -208,9 +268,12 @@
                                     </svg>
                                     Cetak Kartu Pelajar (ID)
                                 </a>
-                                <p class="text-xs text-gray-500 mt-2 max-w-xs">Gunakan kartu ini untuk absensi
-                                    otomatis melalui kamera scanner Vihara.</p>
+
+                                <p class="text-xs text-gray-500 mt-1">Pilih <strong>Stiker Barcode</strong> untuk
+                                    ukuran kecil (di buku), atau <strong>Kartu ID</strong> untuk identitas lengkap
+                                    (dikalungkan).</p>
                             </div>
+
                         </div>
                     </div>
 

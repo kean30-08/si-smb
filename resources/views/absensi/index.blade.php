@@ -19,23 +19,41 @@
                 </p>
             </div>
             {{-- TOMBOL SCANNER HANYA MUNCUL JIKA USER ADALAH PIC / ADMIN --}}
-            @if ($type == 'siswa' && $selectedAgenda && $isPic)
-                <a href="{{ route('absensi.scanner', ['agenda_id' => $agenda_id]) }}" id="btnScanner"
-                    class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                {{-- TOMBOL INPUT GRID (BARU) --}}
+                <a href="{{ route('absensi.grid') }}"
+                    class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" class="mr-2">
-                        <rect width="18" height="18" x="3" y="3" rx="2" />
-                        <path d="M7 7h.01" />
-                        <path d="M17 7h.01" />
-                        <path d="M7 17h.01" />
-                        <path d="M17 17h.01" />
-                        <path d="M12 7v10" />
-                        <path d="M7 12h10" />
+                        <path d="M3 3h18v18H3z" />
+                        <path d="M3 9h18" />
+                        <path d="M3 15h18" />
+                        <path d="M9 3v18" />
+                        <path d="M15 3v18" />
                     </svg>
-                    Buka Kamera Scanner (Siswa)
+                    Input Cepat (Grid)
                 </a>
-            @endif
+
+                {{-- TOMBOL SCANNER --}}
+                @if ($type == 'siswa' && $selectedAgenda && $isPic && !$isLibur)
+                    <a href="{{ route('absensi.scanner', ['agenda_id' => $agenda_id]) }}" id="btnScanner"
+                        class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" class="mr-2">
+                            <rect width="18" height="18" x="3" y="3" rx="2" />
+                            <path d="M7 7h.01" />
+                            <path d="M17 7h.01" />
+                            <path d="M7 17h.01" />
+                            <path d="M17 17h.01" />
+                            <path d="M12 7v10" />
+                            <path d="M7 12h10" />
+                        </svg>
+                        Kamera Scanner
+                    </a>
+                @endif
+            </div>
         </div>
     </x-slot>
 
@@ -62,6 +80,23 @@
                 </div>
 
                 <div class="p-4 sm:p-6 text-gray-900">
+                    {{-- BANNER HARI LIBUR --}}
+                    @if ($isLibur)
+                        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+                            <div class="flex items-center font-bold mb-1">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Pemberitahuan Hari Libur
+                            </div>
+                            <p class="text-sm">
+                                Kegiatan pada tanggal ini ditetapkan sebagai Hari Libur. Sistem secara otomatis
+                                menonaktifkan fitur absensi.
+                            </p>
+                        </div>
+                    @endif
                     {{-- INFORMASI TAHUN AJARAN & PERINGATAN BEDA TAHUN --}}
                     @php
                         $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
@@ -107,6 +142,7 @@
                     {{-- PERINGATAN JADWAL LAMPAU --}}
                     @php
                         $isLewat = false;
+
                     @endphp
 
                     @if ($selectedAgenda)
@@ -245,7 +281,15 @@
                                             @php
                                                 $absenSiswa = $absensis->where('siswa_id', $siswa->id)->first();
                                                 $statusSaatIni = $absenSiswa ? $absenSiswa->status_kehadiran : 'alpa';
+
+                                                // Ambil nama kelas tepat di tahun ajaran agenda ini
+                                                $historiLaporan = $siswa->riwayatHistori->first();
+                                                $namaKelasLaporan =
+                                                    $historiLaporan && $historiLaporan->kelas
+                                                        ? $historiLaporan->kelas->nama_kelas
+                                                        : '-';
                                             @endphp
+
                                             <tr
                                                 class="block md:table-row bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-50 transition mb-4 md:mb-0 rounded-lg md:rounded-none p-4 md:p-0">
                                                 <td class="hidden md:table-cell py-4 px-4">
@@ -255,11 +299,12 @@
                                                     <div class="font-bold text-gray-900 text-base md:text-sm">
                                                         {{ $siswa->nama_lengkap }}</div>
                                                     <div class="text-xs text-indigo-600 md:hidden mt-1 font-semibold">
-                                                        {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}
+                                                        {{ $namaKelasLaporan }}
                                                     </div>
                                                 </td>
-                                                <td class="hidden md:table-cell py-4 px-4">
-                                                    {{ $siswa->nilaiKehadiranAktif->kelas->nama_kelas ?? '-' }}</td>
+                                                <td
+                                                    class="hidden md:table-cell py-4 px-4 font-semibold text-indigo-600">
+                                                    {{ $namaKelasLaporan }}</td>
 
                                                 {{-- STATUS KEHADIRAN (FORM PER BARIS) --}}
                                                 <td
@@ -269,7 +314,13 @@
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                             Absensi</span>
 
-                                                        @if ($isPic)
+                                                        @if ($isLibur)
+                                                            {{-- TAMPILAN JIKA HARI LIBUR --}}
+                                                            <div
+                                                                class="px-3 py-1 rounded-full text-xs font-bold shadow-sm text-center bg-red-100 text-red-800 border border-red-200">
+                                                                LIBUR
+                                                            </div>
+                                                        @elseif ($isPic)
                                                             <form action="{{ route('absensi.manual') }}"
                                                                 method="POST" class="m-0 w-full sm:w-auto">
                                                                 @csrf
@@ -280,7 +331,6 @@
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
 
-                                                                {{-- KUNCI PERBAIKAN DROPDOWN: Hapus 'disabled' hardcoded, gunakan kondisi $isLewat --}}
                                                                 <select name="status" onchange="this.form.submit()"
                                                                     {{ $isLewat || $isBedaTahun ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
@@ -333,7 +383,7 @@
                                                                     class="hidden md:inline mx-1 text-gray-400 font-light">|</span>
                                                                 <span
                                                                     class="block md:inline">{{ $dt->format('H:i:s') }}</span>
-                                                                <div class="text-[10px] text-gray-400">
+                                                                <div class="text-[10px] text-gray-400 mt-1">
                                                                     ({{ ucfirst($absenSiswa->metode_absen) }})
                                                                 </div>
                                                             @else
@@ -398,7 +448,13 @@
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Status
                                                             Absensi</span>
 
-                                                        @if ($isPic)
+                                                        @if ($isLibur)
+                                                            {{-- TAMPILAN JIKA HARI LIBUR --}}
+                                                            <div
+                                                                class="px-3 py-1 rounded-full text-xs font-bold shadow-sm text-center bg-red-100 text-red-800 border border-red-200">
+                                                                LIBUR
+                                                            </div>
+                                                        @elseif ($isPic)
                                                             <form action="{{ route('absensi.manualPengajar') }}"
                                                                 method="POST" class="m-0 w-full sm:w-auto">
                                                                 @csrf

@@ -33,10 +33,42 @@
                         </div>
                     </td>
 
-                    {{-- TANGGAL --}}
-                    <td
-                        class="block md:table-cell py-2 md:py-4 px-2 md:px-6 font-bold text-gray-900 text-base md:text-sm">
-                        {{ \Carbon\Carbon::parse($group->tanggal)->translatedFormat('l, d F Y') }}
+                    {{-- TANGGAL & DESKRIPSI --}}
+                    <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6">
+
+                        {{-- DEKLARASIKAN VARIABEL AGENDA DETAIL LEBIH AWAL --}}
+                        @php
+                            $key = $group->tanggal . '_' . $group->tahun_ajaran_id;
+                            $agendaDetail = $agendasWithPics[$key] ?? null;
+                        @endphp
+
+                        <div class="font-bold text-gray-900 text-base md:text-sm flex items-center flex-wrap gap-2">
+                            <span>{{ \Carbon\Carbon::parse($group->tanggal)->translatedFormat('l, d F Y') }}</span>
+
+                            @if ($agendaDetail && !$agendaDetail->is_public)
+                                @auth
+                                    <span
+                                        class="px-2 py-0.5 text-[10px] bg-orange-100 text-orange-700 border border-orange-300 rounded font-bold uppercase tracking-wider shadow-sm">
+                                        Tidak Dipublikasikan
+                                    </span>
+                                @endauth
+                            @endif
+
+                            {{-- PERBAIKAN: Gunakan $agendaDetail alih-alih $agenda --}}
+                            @if ($agendaDetail && $agendaDetail->is_libur)
+                                <span
+                                    class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded ml-2 border border-red-200">
+                                    LIBUR
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- NAMA KEGIATAN --}}
+                        @if ($agendaDetail && $agendaDetail->nama_kegiatan)
+                            <div class="text-xs text-gray-500 font-medium mt-1 italic line-clamp-2">
+                                "{{ $agendaDetail->nama_kegiatan }}"
+                            </div>
+                        @endif
                     </td>
 
                     {{-- TOTAL KEGIATAN --}}

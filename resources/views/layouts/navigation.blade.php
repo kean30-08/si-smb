@@ -17,6 +17,8 @@
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('Dashboard') }}
                         </x-nav-link>
+
+
                     @endauth
 
                     {{-- ================================================== --}}
@@ -27,8 +29,15 @@
                         {{ __('Pemberitahuan') }}
                     </x-nav-link>
 
+                    {{-- MENU PUBLIK (Ubah namanya jadi Daftar Baru) --}}
+                    @guest
+                        <x-nav-link :href="route('pendaftaran.create')" :active="request()->routeIs('pendaftaran.create')">
+                            {{ __('Daftar Baru') }}
+                        </x-nav-link>
+                    @endguest
+
                     <x-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
-                        {{ __('Jadwal') }}
+                        {{ __('Agenda') }}
                     </x-nav-link>
 
                     {{-- <x-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
@@ -39,6 +48,25 @@
                     {{-- MENU LAINNYA HANYA UNTUK YANG LOGIN --}}
                     {{-- ================================================== --}}
                     @auth
+                        {{-- CEK JUMLAH PENDAFTAR MENUNGGU --}}
+                        @php
+                            $pendingCount = \Illuminate\Support\Facades\Schema::hasTable('pendaftarans')
+                                ? \App\Models\Pendaftaran::where('status', 'menunggu')->count()
+                                : 0;
+                        @endphp
+
+                        {{-- MASUKKAN KE DALAM DAFTAR MENU AUTH ANDA --}}
+                        {{-- MENU ADMIN (Ubah namanya jadi Kelola Pendaftar) --}}
+                        <x-nav-link :href="route('kelola_pendaftaran.index')" :active="request()->routeIs('kelola_pendaftaran.*')">
+                            {{ __('Pendaftaran') }}
+                            @if ($pendingCount > 0)
+                                <span
+                                    class="ml-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-600 rounded-full animate-pulse">
+                                    {{ $pendingCount }}
+                                </span>
+                            @endif
+                        </x-nav-link>
+
                         <x-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
                             {{ __('Absensi') }}
                         </x-nav-link>
@@ -143,8 +171,16 @@
                 {{ __('Pemberitahuan') }}
             </x-responsive-nav-link>
 
+
+            @guest
+                {{-- MENU MOBILE PUBLIK --}}
+                <x-responsive-nav-link :href="route('pendaftaran.create')" :active="request()->routeIs('pendaftaran.create')">
+                    {{ __('Daftar Baru') }}
+                </x-responsive-nav-link>
+            @endguest
+
             <x-responsive-nav-link :href="route('agenda.index')" :active="request()->routeIs('agenda.*')">
-                {{ __('Jadwal') }}
+                {{ __('Agenda') }}
             </x-responsive-nav-link>
 
             {{-- <x-responsive-nav-link :href="route('materi.index')" :active="request()->routeIs('materi.*')">
@@ -152,6 +188,18 @@
             </x-responsive-nav-link> --}}
 
             @auth
+
+                {{-- MENU MOBILE ADMIN --}}
+                <x-responsive-nav-link :href="route('kelola_pendaftaran.index')" :active="request()->routeIs('kelola_pendaftaran.*')">
+                    {{ __('Pendaftaran') }}
+                    @if ($pendingCount > 0)
+                        <span
+                            class="ml-2 inline-block px-2 py-0.5 text-[10px] font-bold text-white bg-red-600 rounded-full animate-pulse">
+                            {{ $pendingCount }} Baru
+                        </span>
+                    @endif
+                </x-responsive-nav-link>
+
                 <x-responsive-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
                     {{ __('Absensi') }}
                 </x-responsive-nav-link>

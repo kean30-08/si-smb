@@ -27,7 +27,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::get('/pemberitahuan', [PemberitahuanController::class, 'index'])->name('pemberitahuan.index');
 Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
 Route::get('/agenda/download/{tanggal}', [AgendaController::class, 'downloadPdf'])->name('agenda.download');
-
+Route::get('/pendaftaran', [\App\Http\Controllers\PendaftaranController::class, 'create'])->name('pendaftaran.create');
+Route::post('/pendaftaran', [\App\Http\Controllers\PendaftaranController::class, 'store'])->name('pendaftaran.store');
 //Materi Public
 // Route::get('/materi', [MateriController::class, 'index'])->name('materi.index');
 // Route::get('/materi/show/{materi}', [MateriController::class, 'show'])->name('materi.show');
@@ -50,7 +51,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     Route::post('/absensi/manual', [AbsensiController::class, 'updateManual'])->name('absensi.manual');
     Route::post('/absensi/manual-pengajar', [AbsensiController::class, 'updateManualPengajar'])->name('absensi.manualPengajar');
-
+// Rute untuk fitur Input Grid Cepat
+Route::get('/grid', [App\Http\Controllers\AbsensiController::class, 'gridInput'])->name('absensi.grid');
+Route::post('/grid', [App\Http\Controllers\AbsensiController::class, 'storeGrid'])->name('absensi.storeGrid');
     // -------------------------------------------------------
     // SEMUA MODUL CRUD (FULL AKSES)
     // -------------------------------------------------------
@@ -129,6 +132,15 @@ Route::middleware('auth')->group(function () {
     // TAMBAHKAN DUA RUTE INI
     Route::put('/histori-siswa/{id}', [SiswaController::class, 'updateHistori'])->name('histori_siswa.update');
     Route::delete('/histori-siswa/{id}', [SiswaController::class, 'destroyHistori'])->name('histori_siswa.destroy');
+Route::get('/siswa/cetak-barcode-massal', [\App\Http\Controllers\SiswaController::class, 'cetakBarcodeMassal'])->name('siswa.cetakBarcodeMassal');
+Route::get('/siswa/{siswa}/cetak-barcode', [\App\Http\Controllers\SiswaController::class, 'cetakBarcode'])->name('siswa.cetakBarcode');
+Route::get('/siswa/cetak-kartu-baru', [\App\Http\Controllers\SiswaController::class, 'cetakKartuBaru'])->name('siswa.cetakKartuBaru');
+
+    // rute pendaftaran
+    Route::get('/kelola-pendaftaran', [\App\Http\Controllers\PendaftaranController::class, 'index'])->name('kelola_pendaftaran.index');
+Route::post('/kelola-pendaftaran/{id}/terima', [\App\Http\Controllers\PendaftaranController::class, 'terima'])->name('kelola_pendaftaran.terima');
+Route::post('/kelola-pendaftaran/{id}/tolak', [\App\Http\Controllers\PendaftaranController::class, 'tolak'])->name('kelola_pendaftaran.tolak');
+Route::get('/kelola-pendaftaran/{id}', [\App\Http\Controllers\PendaftaranController::class, 'show'])->name('kelola_pendaftaran.show');
 });
 
 // PERBAIKAN: Rute PUBLIK `show` diletakkan paling bawah di luar middleware Auth

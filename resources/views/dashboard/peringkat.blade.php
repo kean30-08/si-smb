@@ -71,7 +71,7 @@
                             <tr>
                                 <th scope="col"
                                     class="w-16 px-4 md:px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Peringkat</th>
+                                    No</th>
                                 <th scope="col"
                                     class="px-4 md:px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     Nama Siswa</th>

@@ -19,17 +19,29 @@
                 </p>
             </div>
 
-            <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
-                <a href="{{ route('siswa.cetakMassal') }}"
-                    class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition">
+            {{-- TAMBAHKAN flex-wrap AGAR RAPI DI LAYAR KECIL --}}
+            <div class="flex flex-wrap items-center gap-2">
+
+                {{-- TOMBOL BARU: CETAK KARTU (MURID BARU SAJA) --}}
+                <a href="{{ route('siswa.cetakKartuBaru') }}" target="_blank"
+                    class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                    Cetak Kartu (Murid Baru)
+                </a>
+
+                {{-- TOMBOL LAMA --}}
+                <a href="{{ route('siswa.cetakBarcodeMassal') }}" target="_blank"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                    Cetak Semua Barcode
+                </a>
+
+                <a href="{{ route('siswa.cetakMassal') }}" target="_blank"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
                     Cetak Semua Kartu
                 </a>
-
                 <a href="{{ route('siswa.create') }}"
-                    class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
                     + Tambah Siswa
                 </a>
-
             </div>
         </div>
     </x-slot>

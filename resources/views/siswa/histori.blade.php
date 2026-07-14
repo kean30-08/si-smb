@@ -101,6 +101,19 @@
                                                                 method="POST" class="flex items-center gap-2" x-cloak>
                                                                 @csrf
                                                                 @method('PUT')
+
+                                                                {{-- TAMBAHAN: DROPDOWN PILIH KELAS --}}
+                                                                <select name="kelas_id"
+                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-700">
+                                                                    @foreach (\App\Models\Kelas::all() as $k)
+                                                                        <option value="{{ $k->id }}"
+                                                                            {{ $histori->kelas_id == $k->id ? 'selected' : '' }}>
+                                                                            {{ $k->nama_kelas }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+
+                                                                {{-- DROPDOWN TAHUN AJARAN (YANG SUDAH ADA) --}}
                                                                 <select name="tahun_ajaran_id"
                                                                     class="text-xs border-gray-300 rounded shadow-sm py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-700">
                                                                     @foreach ($semuaTahunAjaran as $ta)
@@ -110,6 +123,7 @@
                                                                         </option>
                                                                     @endforeach
                                                                 </select>
+
                                                                 <button type="submit"
                                                                     class="p-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
                                                                     title="Simpan Perubahan">
@@ -161,7 +175,8 @@
                                                                         width="16" height="16"
                                                                         viewBox="0 0 24 24" fill="none"
                                                                         stroke="currentColor" stroke-width="2"
-                                                                        stroke-linecap="round" stroke-linejoin="round">
+                                                                        stroke-linecap="round"
+                                                                        stroke-linejoin="round">
                                                                         <path d="M12 20h9" />
                                                                         <path
                                                                             d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />

@@ -172,7 +172,7 @@
     <main>
         <h2 style="text-align: center; margin-top: 0; margin-bottom: 0;">Laporan Data & Kehadiran Pengurus Vihara</h2>
         <p style="text-align: center; margin-top: 5px;">Periode: {{ \Carbon\Carbon::parse($mulai)->format('d/m/Y') }} -
-            {{ \Carbon\Carbon::parse($selesai)->format('d/m/Y') }}</p>
+            {{ \Carbon\Carbon::parse($selesai)->format('d/m/Y') }} | Tahun Ajaran: {{ $nama_ta }}</p>
 
         <table class="main-table">
             <thead>
