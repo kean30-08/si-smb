@@ -98,6 +98,10 @@ Route::post('/grid', [App\Http\Controllers\AbsensiController::class, 'storeGrid'
     Route::post('/laporan/cetak-agenda', [LaporanController::class, 'cetakAgenda'])->name('laporan.cetakAgenda');
     Route::post('/laporan/cetak-pengajar', [LaporanController::class, 'cetakPengajar'])->name('laporan.cetakPengajar');
 
+    // === LAPORAN INSENTIF===
+    Route::resource('laporan_insentif', App\Http\Controllers\LaporanInsentifController::class);
+Route::get('/laporan_insentif/{id}/download', [App\Http\Controllers\LaporanInsentifController::class, 'download'])->name('laporan_insentif.download');
+
     // === PEMBERITAHUAN ===
     Route::get('/pemberitahuan/create', [PemberitahuanController::class, 'create'])->name('pemberitahuan.create');
     Route::post('/pemberitahuan/store', [PemberitahuanController::class, 'store'])->name('pemberitahuan.store');

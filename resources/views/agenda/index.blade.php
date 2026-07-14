@@ -59,7 +59,7 @@
                             <label class="block text-sm font-bold text-gray-700 mb-1">Cari Tanggal:</label>
                             <div class="flex">
                                 <input type="text" id="searchInput" name="search" value="{{ request('search') }}"
-                                    placeholder="Contoh: 2023-06-28"
+                                    placeholder="Contoh: 6 Juli 2026"
                                     class="w-full border-gray-300 rounded-l-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder:italic">
                                 <button type="submit"
                                     class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r-md flex items-center justify-center transition">

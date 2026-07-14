@@ -63,13 +63,6 @@
             margin-top: 10px;
         }
 
-        .title {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
         .legend-box {
             font-size: 10px;
             margin-bottom: 5px;
@@ -97,13 +90,6 @@
             padding-left: 6px !important;
         }
 
-        .sub-header {
-            background-color: #e6e6e6;
-            font-weight: bold;
-            text-align: left;
-            padding-left: 6px !important;
-        }
-
         .tgl-kecil {
             font-size: 8px;
             font-weight: normal;
@@ -115,34 +101,14 @@
             page-break-after: always;
         }
 
-        /* PERBAIKAN: CSS Khusus untuk sel Libur tanpa Rowspan */
+        /* Gaya baru untuk teks Libur per huruf (Tanpa ilusi rowspan) */
         .cell-libur {
             font-weight: bold;
-            font-style: italic;
-            vertical-align: middle;
             text-align: center;
-        }
-
-        /* Modifikasi Border untuk Libur agar terkesan menyatu */
-        .libur-top {
-            border-bottom: none !important;
-        }
-
-        .libur-middle {
-            border-top: none !important;
-            border-bottom: none !important;
-            color: transparent !important;
-        }
-
-        /* Teks disembunyikan agar bersih */
-        .libur-bottom {
-            border-top: none !important;
-            color: transparent !important;
-        }
-
-        /* Class khusus jika di kelas itu cuma ada 1 murid */
-        .libur-single {
-            border: 1px solid #000 !important;
+            vertical-align: middle;
+            font-size: 10px;
+            line-height: 1.5;
+            /* Tambahan agar jarak turunnya rapi */
         }
     </style>
 </head>
@@ -190,91 +156,97 @@
                     $jumlahKolom = 1;
                 }
                 $romawiMinggu = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
+                // Inisialisasi total kehadiran bulan ini
+                $totalHadirPerMinggu = array_fill(0, $jumlahKolom, 0);
+
+                // LOGIKA BARU: Persiapkan array huruf menurun dari atas ke bawah untuk Hari Libur
+                $liburChars = [];
+                for ($i = 0; $i < $jumlahKolom; $i++) {
+                    $tgl = $tanggals[$i] ?? null;
+                    $deskripsiLibur = $tgl ? $agendaStatusMap[$tgl] ?? false : false;
+
+                    if ($deskripsiLibur) {
+                        // Hapus spasi lalu jadikan array per huruf
+                        $descNoSpace = str_replace(' ', '', strtoupper($deskripsiLibur));
+                        $liburChars[$i] = preg_split('//u', $descNoSpace, -1, PREG_SPLIT_NO_EMPTY);
+                    }
+                }
+
+                // Chunk (Potong) tabel per 20 baris siswa agar tidak merusak halaman DOMPDF
+                $siswaChunks = $siswas->chunk(20);
             @endphp
 
-            @if (!$isFirstPage)
-                <div class="page-break"></div>
-            @endif
-            @php $isFirstPage = false; @endphp
+            @foreach ($siswaChunks as $chunkIndex => $chunk)
+                @if (!$isFirstPage)
+                    <div class="page-break"></div>
+                @endif
+                @php $isFirstPage = false; @endphp
 
-            <h2 style="text-align: center; margin-top: 0; margin-bottom: 5px;">LAPORAN ABSENSI SISWA SMB VDC</h2>
-            <p style="text-align: center; margin-top: 0; margin-bottom: 10px; font-weight: bold; font-size: 12px;">TAHUN
-                AJARAN: {{ strtoupper($nama_ta) }}</p>
+                <h2 style="text-align: center; margin-top: 0; margin-bottom: 5px;">LAPORAN ABSENSI SISWA SMB VDC
+                    {{ $chunkIndex > 0 ? '(Lanjutan)' : '' }}</h2>
+                <p style="text-align: center; margin-top: 0; margin-bottom: 10px; font-weight: bold; font-size: 12px;">
+                    TAHUN AJARAN: {{ strtoupper($nama_ta) }}</p>
 
-            <div class="legend-box">
-                <strong>Keterangan:</strong> H = Hadir &nbsp;|&nbsp; I = Izin &nbsp;|&nbsp; S = Sakit &nbsp;|&nbsp; L =
-                Libur &nbsp;|&nbsp; A = Alpa
-            </div>
+                <div class="legend-box">
+                    <strong>Keterangan:</strong> H = Hadir &nbsp;|&nbsp; I = Izin &nbsp;|&nbsp; S = Sakit &nbsp;|&nbsp;
+                    L = Libur &nbsp;|&nbsp; A = Alpa
+                </div>
 
-            <table class="main-table">
-                <thead>
-                    <tr>
-                        <th rowspan="2" width="4%">NO</th>
-                        <th rowspan="2" width="28%">NAMA</th>
-                        <th rowspan="2" width="8%">KELAS</th>
-                        <th rowspan="2" width="25%">ASAL SEKOLAH</th>
-                        <th colspan="{{ $jumlahKolom }}">{{ strtoupper($namaBulan) }}</th>
-                    </tr>
-                    <tr>
-                        @for ($i = 0; $i < $jumlahKolom; $i++)
-                            <th>
-                                M.{{ $romawiMinggu[$i] ?? $i + 1 }}
-                                <span class="tgl-kecil">
-                                    {{ isset($tanggals[$i]) ? \Carbon\Carbon::parse($tanggals[$i])->format('d M') : '-' }}
-                                </span>
-                            </th>
-                        @endfor
-                    </tr>
-                </thead>
-                <tbody>
-                    @php
-                        $siswaPerKelas = $siswas->groupBy('kelas_laporan');
-                        $totalHadirPerMinggu = array_fill(0, $jumlahKolom, 0);
-                    @endphp
-
-                    @foreach ($siswaPerKelas as $namaKelas => $siswasKelas)
+                <table class="main-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" width="4%">NO</th>
+                            <th rowspan="2" width="28%">NAMA</th>
+                            <th rowspan="2" width="8%">KELAS</th>
+                            <th rowspan="2" width="25%">ASAL SEKOLAH</th>
+                            <th colspan="{{ $jumlahKolom }}">{{ strtoupper($namaBulan) }}</th>
+                        </tr>
+                        <tr>
+                            @for ($i = 0; $i < $jumlahKolom; $i++)
+                                <th>
+                                    M.{{ $romawiMinggu[$i] ?? $i + 1 }}
+                                    <span class="tgl-kecil">
+                                        {{ isset($tanggals[$i]) ? \Carbon\Carbon::parse($tanggals[$i])->format('d M') : '-' }}
+                                    </span>
+                                </th>
+                            @endfor
+                        </tr>
+                    </thead>
+                    <tbody>
                         @php
-                            $jumlahSiswaDiKelas = count($siswasKelas);
+                            $globalNo = $chunkIndex * 20 + 1;
+                            $indexInChunk = 0;
                         @endphp
 
-                        <tr>
-                            <td colspan="{{ 4 + $jumlahKolom }}" class="sub-header">{{ strtoupper($namaKelas) }}</td>
-                        </tr>
-
-                        @foreach ($siswasKelas as $index => $siswa)
+                        @foreach ($chunk as $siswa)
                             <tr>
-                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $globalNo++ }}</td>
                                 <td class="left">{{ $siswa->nama_lengkap }}</td>
-                                <td>{{ preg_replace('/Kelas /i', '', $namaKelas) }}</td>
+                                <td>{{ preg_replace('/Kelas /i', '', $siswa->kelas_laporan) }}</td>
                                 <td class="left" style="font-size: 9px;">{{ $siswa->asal_sekolah ?? '-' }}</td>
 
                                 @for ($i = 0; $i < $jumlahKolom; $i++)
                                     @if (isset($tanggals[$i]))
                                         @php
                                             $tgl = $tanggals[$i];
-                                            $isLibur = $agendaStatusMap[$tgl] ?? false;
+                                            $deskripsiLibur = $agendaStatusMap[$tgl] ?? false;
 
-                                            // Logika Pendaftaran Siswa
                                             $tglDaftar = \Carbon\Carbon::parse($siswa->created_at)->format('Y-m-d');
                                             $isBelumDaftar = $tgl < $tglDaftar;
                                         @endphp
 
-                                        @if ($isLibur)
-                                            @php
-                                                // Logika CSS Border untuk menciptakan ilusi sel gabungan
-                                                $cssClass = 'cell-libur ';
-                                                if ($jumlahSiswaDiKelas == 1) {
-                                                    $cssClass .= 'libur-single';
-                                                } elseif ($index == 0) {
-                                                    $cssClass .= 'libur-top';
-                                                } elseif ($index == $jumlahSiswaDiKelas - 1) {
-                                                    $cssClass .= 'libur-bottom';
-                                                } else {
-                                                    $cssClass .= 'libur-middle';
-                                                }
-                                            @endphp
-
-                                            <td class="{{ $cssClass }}">LIBUR</td>
+                                        @if ($deskripsiLibur)
+                                            {{-- Hanya cetak 1 kali di awal halaman/chunk, sisanya di-merge --}}
+                                            @if ($indexInChunk == 0)
+                                                @php
+                                                    // Ubah spasi menjadi enter agar menurun
+                                                    $vertHTML = strtoupper(str_replace(' ', '<br>', $deskripsiLibur));
+                                                @endphp
+                                                <td rowspan="{{ count($chunk) }}" class="cell-libur">
+                                                    {!! $vertHTML !!}
+                                                </td>
+                                            @endif
                                         @elseif ($isBelumDaftar)
                                             <td>-</td>
                                         @else
@@ -298,29 +270,33 @@
                                     @endif
                                 @endfor
                             </tr>
+                            @php $indexInChunk++; @endphp
                         @endforeach
-                    @endforeach
 
-                    <tr>
-                        <td colspan="4" class="left" style="font-weight:bold;">JUMLAH KEHADIRAN (H)</td>
-                        @for ($i = 0; $i < $jumlahKolom; $i++)
-                            <td style="font-weight:bold;">
-                                @php
-                                    $isLiburCol = isset($tanggals[$i])
-                                        ? $agendaStatusMap[$tanggals[$i]] ?? false
-                                        : false;
-                                @endphp
+                        {{-- Total kehadiran hanya dicetak di halaman chunk terakhir untuk bulan ini --}}
+                        @if ($loop->last)
+                            <tr>
+                                <td colspan="4" class="left" style="font-weight:bold;">JUMLAH KEHADIRAN (H)</td>
+                                @for ($i = 0; $i < $jumlahKolom; $i++)
+                                    <td style="font-weight:bold;">
+                                        @php
+                                            $isLiburCol = isset($tanggals[$i])
+                                                ? $agendaStatusMap[$tanggals[$i]] ?? false
+                                                : false;
+                                        @endphp
 
-                                @if ($isLiburCol)
-                                    -
-                                @else
-                                    {{ isset($tanggals[$i]) ? $totalHadirPerMinggu[$i] : '-' }}
-                                @endif
-                            </td>
-                        @endfor
-                    </tr>
-                </tbody>
-            </table>
+                                        @if ($isLiburCol)
+                                            -
+                                        @else
+                                            {{ isset($tanggals[$i]) ? $totalHadirPerMinggu[$i] : '-' }}
+                                        @endif
+                                    </td>
+                                @endfor
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            @endforeach
         @endforeach
     </main>
 </body>

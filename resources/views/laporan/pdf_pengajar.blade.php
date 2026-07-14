@@ -2,19 +2,20 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <title>Laporan Absensi Pengajar</title>
     <style>
-        /* Mengatur batas margin kertas PDF (Atas Kanan Bawah Kiri) */
         @page {
-            margin: 140px 40px 40px 40px;
+            margin: 140px 30px 40px 30px;
         }
 
         body {
             font-family: Arial, sans-serif;
             font-size: 11px;
             margin: 0;
+            color: #000;
         }
 
-        /* HEADER & KOP SURAT (Fixed Position agar berulang) */
         header {
             position: fixed;
             top: -120px;
@@ -26,7 +27,6 @@
         table.kop-surat {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 0;
             border: none;
         }
 
@@ -63,11 +63,15 @@
             margin-top: 10px;
         }
 
-        /* TABEL UTAMA */
+        .legend-box {
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
         table.main-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            border: 1px solid #000;
             margin-bottom: 30px;
         }
 
@@ -76,14 +80,20 @@
             border: 1px solid #000;
             padding: 6px;
             text-align: center;
+            vertical-align: middle;
         }
 
         table.main-table th {
             background-color: #f2f2f2;
         }
 
+        table.main-table tr {
+            page-break-inside: auto;
+        }
+
         .left {
             text-align: left;
+            padding-left: 6px !important;
         }
 
         .row-total {
@@ -91,12 +101,29 @@
             font-weight: bold;
         }
 
-        .text-right {
-            text-align: right;
-            padding-right: 10px;
+        .tgl-kecil {
+            font-size: 8px;
+            font-weight: normal;
+            display: block;
+            margin-top: 2px;
         }
 
-        /* TANDA TANGAN */
+        .page-break {
+            page-break-after: always;
+        }
+
+        /* Teks Libur Vertikal Rapi */
+        .cell-libur {
+            font-weight: bold;
+            text-align: center;
+            vertical-align: top;
+            padding-top: 15px !important;
+            font-size: 9px;
+            line-height: 1.3;
+            border: 1px solid #000 !important;
+        }
+
+        /* Tanda Tangan */
         table.signature-table {
             width: 100%;
             margin-top: 10px;
@@ -142,7 +169,6 @@
 </head>
 
 <body>
-    {{-- HEADER KOP SURAT (Otomatis Berulang) --}}
     <header>
         <table class="kop-surat">
             <tr>
@@ -150,11 +176,16 @@
                     @php
                         $path = public_path('img/logo2_smb.jpg');
                         $type = pathinfo($path, PATHINFO_EXTENSION);
-                        $data = file_get_contents($path);
-                        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                        if (file_exists($path)) {
+                            $data = file_get_contents($path);
+                            $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                        } else {
+                            $base64 = '';
+                        }
                     @endphp
-
-                    <img src="{{ $base64 }}" width="80" alt="Logo SMB">
+                    @if ($base64)
+                        <img src="{{ $base64 }}" width="80" alt="Logo SMB">
+                    @endif
                 </td>
                 <td class="kop-text">
                     <div class="kop-title-1">SEKOLAH MINGGU BUDDHA (SMB)</div>
@@ -168,86 +199,131 @@
         <div class="garis-kop"></div>
     </header>
 
-    {{-- KONTEN UTAMA --}}
     <main>
-        <h2 style="text-align: center; margin-top: 0; margin-bottom: 0;">Laporan Data & Kehadiran Pengurus Vihara</h2>
-        <p style="text-align: center; margin-top: 5px;">Periode: {{ \Carbon\Carbon::parse($mulai)->format('d/m/Y') }} -
-            {{ \Carbon\Carbon::parse($selesai)->format('d/m/Y') }} | Tahun Ajaran: {{ $nama_ta }}</p>
+        @php $isFirstPage = true; @endphp
 
-        <table class="main-table">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th class="left">Nama Pengajar / Pengurus</th>
-                    <th>Jabatan</th>
-                    <th>Hadir</th>
-                    <th>Izin</th>
-                    <th>Sakit</th>
-                    <th>Alpa</th>
-                    <th>Persentase Keaktifan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($pengajars as $index => $p)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td class="left">{{ $p->nama_lengkap }}</td>
-                        <td>{{ $p->jabatan->nama_jabatan ?? '-' }}</td>
-                        <td>{{ $p->total_hadir }}</td>
-                        <td>{{ $p->total_izin }}</td>
-                        <td>{{ $p->total_sakit }}</td>
-                        <td>{{ $p->total_alpa }}</td>
-                        <td><strong>{{ $p->persentase }}%</strong></td>
-                    </tr>
+        @foreach ($agendasPerBulan as $bulanKey => $tanggalArray)
+            @php
+                $namaBulan = \Carbon\Carbon::createFromFormat('Y-m', $bulanKey)->translatedFormat('F Y');
+                $tanggals = $tanggalArray->values()->all();
+                $jumlahKolom = count($tanggals);
+                if ($jumlahKolom == 0) {
+                    $jumlahKolom = 1;
+                }
+                $romawiMinggu = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+                $totalHadirPerMinggu = array_fill(0, $jumlahKolom, 0);
 
-                    {{-- TRIK JITU: Paksa potong tabel dan pindah halaman setiap 20 baris --}}
-                    @if (($index + 1) % 20 == 0 && !$loop->last)
-            </tbody>
-        </table>
-        <div style="page-break-before: always;"></div>
-        <table class="main-table">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th class="left">Nama Pengajar / Pengurus</th>
-                    <th>Jabatan</th>
-                    <th>Hadir</th>
-                    <th>Izin</th>
-                    <th>Sakit</th>
-                    <th>Alpa</th>
-                    <th>Persentase Keaktifan</th>
-                </tr>
-            </thead>
-            <tbody>
+                // Chunk Pengajar per 20 orang untuk menghindari bug garis hilang
+                $pengajarChunks = $pengajars->chunk(20);
+            @endphp
+
+            @foreach ($pengajarChunks as $chunkIndex => $chunk)
+                @if (!$isFirstPage)
+                    <div class="page-break"></div>
                 @endif
-            @empty
-                <tr>
-                    <td colspan="8">Tidak ada data pengajar/pengurus pada periode ini.</td>
-                </tr>
-                @endforelse
-            </tbody>
+                @php $isFirstPage = false; @endphp
 
-            @if ($pengajars->count() > 0)
-                <tfoot>
-                    <tr class="row-total">
-                        <td colspan="3" class="text-right">TOTAL KESELURUHAN</td>
-                        <td>{{ $pengajars->sum('total_hadir') }}</td>
-                        <td>{{ $pengajars->sum('total_izin') }}</td>
-                        <td>{{ $pengajars->sum('total_sakit') }}</td>
-                        <td>{{ $pengajars->sum('total_alpa') }}</td>
-                        <td>-</td>
-                    </tr>
-                    <tr class="row-total">
-                        <td colspan="3" class="text-right">RATA-RATA</td>
-                        <td>{{ round((float) $pengajars->avg('total_hadir'), 1) }}</td>
-                        <td>{{ round((float) $pengajars->avg('total_izin'), 1) }}</td>
-                        <td>{{ round((float) $pengajars->avg('total_sakit'), 1) }}</td>
-                        <td>{{ round((float) $pengajars->avg('total_alpa'), 1) }}</td>
-                        <td>{{ round((float) $pengajars->avg('persentase')) }}%</td>
-                    </tr>
-                </tfoot>
-            @endif
-        </table>
+                <h2 style="text-align: center; margin-top: 0; margin-bottom: 5px;">LAPORAN ABSENSI PENGAJAR / PENGURUS
+                    SMB VDC {{ $chunkIndex > 0 ? '(Lanjutan)' : '' }}</h2>
+                <p style="text-align: center; margin-top: 0; margin-bottom: 10px; font-weight: bold; font-size: 12px;">
+                    TAHUN AJARAN: {{ strtoupper($nama_ta) }}</p>
+
+                <div class="legend-box">
+                    <strong>Keterangan:</strong> H = Hadir &nbsp;|&nbsp; I = Izin &nbsp;|&nbsp; S = Sakit &nbsp;|&nbsp;
+                    L = Libur &nbsp;|&nbsp; A = Alpa
+                </div>
+
+                <table class="main-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" width="5%">NO</th>
+                            <th rowspan="2" width="40%">NAMA PENGAJAR</th>
+                            <th rowspan="2" width="25%">JABATAN</th>
+                            <th colspan="{{ $jumlahKolom }}">{{ strtoupper($namaBulan) }}</th>
+                        </tr>
+                        <tr>
+                            @for ($i = 0; $i < $jumlahKolom; $i++)
+                                <th>
+                                    M.{{ $romawiMinggu[$i] ?? $i + 1 }}
+                                    <span class="tgl-kecil">
+                                        {{ isset($tanggals[$i]) ? \Carbon\Carbon::parse($tanggals[$i])->format('d M') : '-' }}
+                                    </span>
+                                </th>
+                            @endfor
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $globalNo = $chunkIndex * 20 + 1;
+                            $indexInChunk = 0;
+                        @endphp
+
+                        @foreach ($chunk as $p)
+                            <tr>
+                                <td>{{ $globalNo++ }}</td>
+                                <td class="left">{{ $p->nama_lengkap }}</td>
+                                <td>{{ $p->jabatan->nama_jabatan ?? '-' }}</td>
+
+                                @for ($i = 0; $i < $jumlahKolom; $i++)
+                                    @if (isset($tanggals[$i]))
+                                        @php
+                                            $tgl = $tanggals[$i];
+                                            $deskripsiLibur = $agendaStatusMap[$tgl] ?? false;
+                                        @endphp
+
+                                        @if ($deskripsiLibur)
+                                            @if ($indexInChunk == 0)
+                                                @php
+                                                    $vertHTML = strtoupper(str_replace(' ', '<br>', $deskripsiLibur));
+                                                @endphp
+                                                <td rowspan="{{ count($chunk) }}" class="cell-libur">
+                                                    {!! $vertHTML !!}
+                                                </td>
+                                            @endif
+                                        @else
+                                            @php
+                                                $status = $p->absen_map[$tgl] ?? null;
+                                                $simbol = 'A'; // Default Alpa
+
+                                                if ($status == 'hadir') {
+                                                    $simbol = 'H';
+                                                    $totalHadirPerMinggu[$i]++;
+                                                } elseif ($status == 'sakit') {
+                                                    $simbol = 'S';
+                                                } elseif ($status == 'izin') {
+                                                    $simbol = 'I';
+                                                }
+                                            @endphp
+                                            <td><strong>{{ $simbol }}</strong></td>
+                                        @endif
+                                    @else
+                                        <td>-</td>
+                                    @endif
+                                @endfor
+                            </tr>
+                            @php $indexInChunk++; @endphp
+                        @endforeach
+
+                        @if ($loop->last)
+                            <tr class="row-total">
+                                <td colspan="3" class="text-right" style="padding-right: 10px;">JUMLAH KEHADIRAN (H)
+                                </td>
+                                @for ($i = 0; $i < $jumlahKolom; $i++)
+                                    <td>
+                                        @php
+                                            $isLiburCol = isset($tanggals[$i])
+                                                ? $agendaStatusMap[$tanggals[$i]] ?? false
+                                                : false;
+                                        @endphp
+                                        {{ $isLiburCol ? '-' : (isset($tanggals[$i]) ? $totalHadirPerMinggu[$i] : '-') }}
+                                    </td>
+                                @endfor
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            @endforeach
+        @endforeach
 
         <table class="signature-table">
             <tr>
@@ -259,14 +335,14 @@
                 <td style="width: 50%; text-align: right;">
                     <div class="signature-wrapper">
                         <div class="signature-date">
-                            {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}<br>
+                            Tabanan, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
                             Mengetahui,
                         </div>
                         <div class="signature-title">
                             Kepala Sekolah Minggu Buddha
                         </div>
                         <div class="signature-name">
-                            {{ $admin->name ?? 'Admin Sekolah Minggu' }}
+                            {{ $namaKepalaSekolah }}
                         </div>
                     </div>
                 </td>

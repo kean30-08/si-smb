@@ -55,7 +55,8 @@ class LaporanController extends Controller
         });
 
         // TAMBAHAN: Buat Peta Status Libur berdasarkan tanggal
-        $agendaStatusMap = $agendas->pluck('is_libur', 'tanggal')->toArray();
+       // TAMBAHAN: Buat Peta Status Libur & Ambil Nama Kegiatannya
+        $agendaStatusMap = $agendas->where('is_libur', true)->pluck('nama_kegiatan', 'tanggal')->toArray();
 
         // 2. Filter Siswa yang BENAR-BENAR TERDAFTAR pada Tahun Ajaran tersebut (Mencegah data masa depan bocor)
         $historiQuery = HistoriSiswa::whereIn('tahun_ajaran_id', $ta_ids);
@@ -144,18 +145,26 @@ class LaporanController extends Controller
         return $pdf->stream('Laporan_Statistik_Agenda.pdf');
     }
 
-    public function cetakPengajar(Request $request)
+   public function cetakPengajar(Request $request)
     {
         $mulai = $request->tanggal_mulai;
         $selesai = $request->tanggal_selesai;
 
-        $agendas = Agenda::whereBetween('tanggal', [$mulai, $selesai])->get();
+        $agendas = Agenda::whereBetween('tanggal', [$mulai, $selesai])->orderBy('tanggal', 'asc')->get();
 
         if ($agendas->isEmpty()) {
             return back()->with('error', 'Tidak ada data jadwal kegiatan pada rentang tanggal tersebut.');
         }
 
-        $total_jadwal = $agendas->pluck('tanggal')->unique()->count();
+        // 1. Buat Peta Status Libur & Ambil Nama Kegiatannya
+        $agendaStatusMap = $agendas->where('is_libur', true)->pluck('nama_kegiatan', 'tanggal')->toArray();
+
+        // 2. Kelompokkan Agenda Per Bulan (Untuk Kolom Grid PDF)
+        $agendasPerBulan = $agendas->pluck('tanggal')->unique()->values()->groupBy(function($date) {
+            return Carbon::parse($date)->format('Y-m'); 
+        });
+
+        // 3. Tarik semua pengajar dan mapping absensinya berdasarkan tanggal
         $pengajars = Pengajar::orderBy('nama_lengkap', 'asc')->get();
 
         foreach ($pengajars as $pengajar) {
@@ -166,37 +175,29 @@ class LaporanController extends Controller
                 ->with('agenda')
                 ->get();
 
-            $absensi_per_hari = $absensi_pengajar->groupBy(function($item) {
-                return $item->agenda->tanggal;
-            });
-
-            $hadir = 0; $izin = 0; $sakit = 0;
-            
-            foreach ($absensi_per_hari as $tanggal => $records) {
-                $status_hari_ini = $records->first()->status_kehadiran;
-                if ($status_hari_ini == 'hadir') $hadir++;
-                elseif ($status_hari_ini == 'izin') $izin++;
-                elseif ($status_hari_ini == 'sakit') $sakit++;
+            $absenMap = [];
+            foreach ($absensi_pengajar as $absen) {
+                if ($absen->agenda) {
+                    $absenMap[$absen->agenda->tanggal] = $absen->status_kehadiran;
+                }
             }
-
-            $pengajar->total_hadir = $hadir;
-            $pengajar->total_izin = $izin;
-            $pengajar->total_sakit = $sakit;
-            
-            $pengajar->total_alpa = max(0, $total_jadwal - ($hadir + $izin + $sakit));
-            $pengajar->persentase = $total_jadwal > 0 ? round(($hadir / $total_jadwal) * 100) : 0;
+            $pengajar->absen_map = $absenMap;
         }
 
-        $pengajars = $pengajars->sortByDesc('persentase')->values();
+        // 4. Cari Kepala Sekolah yang Aktif untuk Tanda Tangan
+        $kepalaSekolah = Pengajar::whereHas('jabatan', function($q) {
+            $q->where('nama_jabatan', 'like', '%Kepala Sekolah%');
+        })->where('status', 'aktif')->first();
         
-        // Teks Tahun Ajaran Dinamis
+        $namaKepalaSekolah = $kepalaSekolah ? $kepalaSekolah->nama_lengkap : '...............................';
+
+        // 5. Teks Tahun Ajaran Dinamis
         $ta_ids = $agendas->pluck('tahun_ajaran_id')->unique()->toArray();
         $namaTAs = TahunAjaran::whereIn('id', $ta_ids)->pluck('tahun_ajaran')->toArray();
         $nama_ta = empty($namaTAs) ? '-' : implode(' & ', $namaTAs);
         
-        $admin = auth()->user();
-
-        $pdf = Pdf::loadView('laporan.pdf_pengajar', compact('pengajars', 'mulai', 'selesai', 'admin', 'nama_ta'));
+        $pdf = Pdf::loadView('laporan.pdf_pengajar', compact('pengajars', 'agendasPerBulan', 'agendaStatusMap', 'namaKepalaSekolah', 'nama_ta', 'mulai', 'selesai'));
+        $pdf->setPaper('A4', 'portrait');
         return $pdf->stream('Laporan_Data_Kehadiran_Pengurus.pdf');
     }
 }

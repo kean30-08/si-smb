@@ -106,7 +106,57 @@ class AgendaController extends Controller
                     });
             })->update(['status' => 'selesai']);
 
-        $search = $request->input('search');
+       $search = $request->input('search');
+        $querySearch = $search; // Variabel khusus untuk disuntikkan ke database
+
+        if ($search) {
+            $searchClean = strtolower(trim($search));
+            
+            // Peta nama bulan Indonesia ke format angka (dengan pengapit strip)
+            $bulanIndo = [
+                'januari' => '01', 'februari' => '02', 'maret' => '03',
+                'april' => '04', 'mei' => '05', 'juni' => '06',
+                'juli' => '07', 'agustus' => '08', 'september' => '09',
+                'oktober' => '10', 'november' => '11', 'desember' => '12'
+            ];
+
+            $isMonthTranslated = false;
+            foreach ($bulanIndo as $indo => $angka) {
+                if (str_contains($searchClean, $indo)) {
+                    $searchClean = str_replace($indo, "-$angka-", $searchClean);
+                    $isMonthTranslated = true;
+                    break;
+                }
+            }
+
+            if ($isMonthTranslated) {
+                // Pecah teks pencarian berdasarkan spasi untuk menyusun YYYY-MM-DD parsial
+                $parts = array_values(array_filter(explode(' ', $searchClean)));
+                
+                if (count($parts) === 3) {
+                    // Kasus "6 juli 2026" -> mencari "2026-07-06"
+                    $tgl = str_pad($parts[0], 2, '0', STR_PAD_LEFT);
+                    $bln = str_replace('-', '', $parts[1]);
+                    $thn = $parts[2];
+                    $querySearch = "$thn-$bln-$tgl";
+                } elseif (count($parts) === 2) {
+                    if (str_contains($parts[0], '-')) {
+                        // Kasus "juli 2026" -> mencari "%2026-07-%"
+                        $bln = str_replace('-', '', $parts[0]);
+                        $thn = $parts[1];
+                        $querySearch = "$thn-$bln-";
+                    } else {
+                        // Kasus "6 juli" -> mencari "%-07-06"
+                        $tgl = str_pad($parts[0], 2, '0', STR_PAD_LEFT);
+                        $bln = str_replace('-', '', $parts[1]);
+                        $querySearch = "-$bln-$tgl";
+                    }
+                } elseif (count($parts) === 1) {
+                    // Kasus "juli" -> mencari "%-07-%"
+                    $querySearch = $parts[0];
+                }
+            }
+        }
         
         $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
         $filterTahun = $request->input('tahun_ajaran_id', $tahunAktif ? $tahunAktif->id : null);
@@ -118,8 +168,8 @@ class AgendaController extends Controller
             ->when($filterTahun, function ($q, $filterTahun) {
                 return $q->where('tahun_ajaran_id', $filterTahun);
             })
-            ->when($search, function ($query, $search) {
-                return $query->where('tanggal', 'like', "%{$search}%");
+            ->when($querySearch, function ($query, $querySearch) {
+                return $query->where('tanggal', 'like', "%{$querySearch}%");
             })
             // TAMBAHAN: Sembunyikan agenda internal dari tamu (Guest) yang belum login
             ->when(!auth()->check(), function ($query) { 

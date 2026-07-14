@@ -89,9 +89,33 @@
                             {{ __('Kelas') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                            {{ __('Laporan') }}
-                        </x-nav-link>
+                        {{-- MENU DROPDOWN LAPORAN (DESKTOP) --}}
+                        <div class="hidden sm:flex sm:items-center">
+                            <x-dropdown align="left" width="48">
+                                <x-slot name="trigger">
+                                    <button
+                                        class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out h-16 {{ request()->routeIs('laporan.*') || request()->routeIs('laporan_insentif.*') ? 'border-indigo-400 text-gray-900' : '' }}">
+                                        <div>{{ __('Laporan') }}</div>
+                                        <div class="ml-1">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </button>
+                                </x-slot>
+                                <x-slot name="content">
+                                    <x-dropdown-link :href="route('laporan.index')">
+                                        {{ __('Rekap Absensi') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('laporan_insentif.index')">
+                                        {{ __('Insentif Pengajar') }}
+                                    </x-dropdown-link>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
 
                     @endauth
                 </div>
@@ -104,7 +128,7 @@
                         <x-slot name="trigger">
                             <button
                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                                <div>{{ Auth::user()->name }}</div>
+                                <div>{{ strtoupper(\Illuminate\Support\Str::limit(Auth::user()->name, 12, '...')) }}</div>
 
                                 <div class="ms-1">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
@@ -221,8 +245,14 @@
                 </x-responsive-nav-link>
 
 
+                {{-- MENU LAPORAN MOBILE --}}
+                <div class="block px-4 py-2 mt-2 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50">Menu
+                    Laporan</div>
                 <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                    {{ __('Laporan') }}
+                    {{ __('Rekap Absensi') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laporan_insentif.index')" :active="request()->routeIs('laporan_insentif.*')">
+                    {{ __('Insentif Pengajar') }}
                 </x-responsive-nav-link>
 
             @endauth
@@ -232,7 +262,8 @@
             @auth
                 {{-- Data User Mobile jika Login --}}
                 <div class="px-4">
-                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-base text-gray-800">
+                        {{ strtoupper(\Illuminate\Support\Str::limit(Auth::user()->name, 15, '...')) }}</div>
                     <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
                 </div>
 
