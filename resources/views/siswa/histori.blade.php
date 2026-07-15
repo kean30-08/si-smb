@@ -84,10 +84,11 @@
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Aksi</th>
                                                 </tr>
                                             </thead>
-                                            <tbody class="divide-y divide-gray-100">
-                                                @foreach ($items as $histori)
+                                            @foreach ($items as $histori)
+                                                <tbody class="divide-y divide-gray-100" x-data="{ editing: false, detailBuka: false }">
+
                                                     {{-- ALPINE JS STATE UNTUK INLINE EDIT --}}
-                                                    <tr class="hover:bg-gray-50 transition" x-data="{ editing: false }">
+                                                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
                                                         <td
                                                             class="py-3 px-4 font-bold text-indigo-700 whitespace-nowrap">
 
@@ -167,6 +168,21 @@
                                                         <td class="py-3 px-4 text-center whitespace-nowrap">
                                                             <div class="flex justify-center items-center gap-3"
                                                                 x-show="!editing">
+                                                                {{-- Tombol Lihat Rincian Bulanan --}}
+                                                                <button type="button" @click="detailBuka = !detailBuka"
+                                                                    class="text-indigo-500 hover:text-indigo-800 transition"
+                                                                    title="Lihat Rincian Kehadiran Per Bulan">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        width="18" height="18"
+                                                                        viewBox="0 0 24 24" fill="none"
+                                                                        stroke="currentColor" stroke-width="2"
+                                                                        stroke-linecap="round"
+                                                                        stroke-linejoin="round">
+                                                                        <path
+                                                                            d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                                                        <circle cx="12" cy="12" r="3" />
+                                                                    </svg>
+                                                                </button>
                                                                 {{-- Tombol Edit Tampil Inline --}}
                                                                 <button type="button" @click="editing = true"
                                                                     class="text-blue-500 hover:text-blue-700 transition"
@@ -215,8 +231,109 @@
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                @endforeach
-                                            </tbody>
+                                                    {{-- BARIS RINCIAN BULANAN (Tersembunyi secara default) --}}
+                                                    <tr x-show="detailBuka" x-cloak
+                                                        class="bg-indigo-50 border-b border-indigo-200">
+                                                        <td colspan="7" class="py-4 px-6">
+                                                            <div class="text-sm text-gray-700">
+                                                                <h4
+                                                                    class="font-bold mb-3 text-indigo-800 flex items-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        class="h-4 w-4 mr-1" fill="none"
+                                                                        viewBox="0 0 24 24" stroke="currentColor"
+                                                                        stroke-width="2">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round"
+                                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                    Rincian Kehadiran per Bulan
+                                                                </h4>
+
+                                                                @if (isset($histori->detail_absensi) && $histori->detail_absensi->isEmpty())
+                                                                    <p
+                                                                        class="italic text-gray-500 bg-white p-3 rounded border">
+                                                                        Belum ada data absensi yang tercatat untuk tahun
+                                                                        ajaran ini.</p>
+                                                                @else
+                                                                    <div
+                                                                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                                        @foreach ($histori->detail_absensi as $bulan => $absensiBulan)
+                                                                            <div
+                                                                                class="bg-white p-3 rounded shadow-sm border border-indigo-100">
+                                                                                <div
+                                                                                    class="font-bold text-indigo-600 border-b pb-1 mb-2">
+                                                                                    {{ $bulan }}</div>
+                                                                                <ul class="space-y-1">
+                                                                                    @foreach ($absensiBulan as $absen)
+                                                                                        <li
+                                                                                            class="flex justify-between items-center text-xs p-1 hover:bg-gray-50 rounded">
+                                                                                            <span
+                                                                                                class="font-medium text-gray-600">
+                                                                                                {{ \Carbon\Carbon::parse($absen->agenda->tanggal)->translatedFormat('d M Y') }}
+                                                                                                @if ($absen->agenda->is_libur)
+                                                                                                    <span
+                                                                                                        class="text-red-500 italic ml-1">(Libur)</span>
+                                                                                                @endif
+                                                                                            </span>
+
+                                                                                            @php
+                                                                                                if (
+                                                                                                    $absen->agenda
+                                                                                                        ->is_libur
+                                                                                                ) {
+                                                                                                    $teksStatus =
+                                                                                                        'LIBUR';
+                                                                                                    $bgStat =
+                                                                                                        'bg-gray-100 text-gray-500 border border-gray-200';
+                                                                                                } else {
+                                                                                                    $teksStatus =
+                                                                                                        $absen->status_kehadiran;
+                                                                                                    $bgStat =
+                                                                                                        'bg-gray-200 text-gray-700';
+                                                                                                    if (
+                                                                                                        $teksStatus ==
+                                                                                                        'hadir'
+                                                                                                    ) {
+                                                                                                        $bgStat =
+                                                                                                            'bg-green-100 text-green-700';
+                                                                                                    } elseif (
+                                                                                                        $teksStatus ==
+                                                                                                        'sakit'
+                                                                                                    ) {
+                                                                                                        $bgStat =
+                                                                                                            'bg-yellow-100 text-yellow-700';
+                                                                                                    } elseif (
+                                                                                                        $teksStatus ==
+                                                                                                        'izin'
+                                                                                                    ) {
+                                                                                                        $bgStat =
+                                                                                                            'bg-blue-100 text-blue-700';
+                                                                                                    } elseif (
+                                                                                                        $teksStatus ==
+                                                                                                        'alpa'
+                                                                                                    ) {
+                                                                                                        $bgStat =
+                                                                                                            'bg-red-100 text-red-700';
+                                                                                                    }
+                                                                                                }
+                                                                                            @endphp
+                                                                                            <span
+                                                                                                class="px-2 py-0.5 rounded font-bold uppercase {{ $bgStat }}">
+                                                                                                {{ $teksStatus }}
+                                                                                            </span>
+
+                                                                                        </li>
+                                                                                    @endforeach
+                                                                                </ul>
+                                                                            </div>
+                                                                        @endforeach
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            @endforeach
                                         </table>
                                     </div>
                                 </div>

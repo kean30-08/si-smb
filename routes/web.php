@@ -66,6 +66,7 @@ Route::post('/grid', [App\Http\Controllers\AbsensiController::class, 'storeGrid'
     Route::put('/pengajar/{pengajar}', [PengajarController::class, 'update'])->name('pengajar.update');
     Route::delete('/pengajar/{pengajar}', [PengajarController::class, 'destroy'])->name('pengajar.destroy');
     Route::get('/pengajar/{pengajar}', [PengajarController::class, 'show'])->name('pengajar.show');
+    Route::get('/pengajar/{pengajar}/histori', [App\Http\Controllers\PengajarController::class, 'histori'])->name('pengajar.histori');
     
     // === KELAS ===
     Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');

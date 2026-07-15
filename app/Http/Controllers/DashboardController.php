@@ -125,6 +125,11 @@ class DashboardController extends Controller
             $jumlah_scan = 0;
             
             foreach ($absensi_history as $tanggal => $records) {
+                // TAMBAHAN: Cegat dan lewati jadwal Libur agar tidak dihitung
+                if ($records->first()->agenda->is_libur) {
+                    continue; 
+                }
+
                 $status = $records->first()->status_kehadiran;
                 $waktu_hadir = $records->first()->waktu_hadir;
 
@@ -200,10 +205,16 @@ class DashboardController extends Controller
 
             $absensi = $absensiQuery->get();
 
-            $hadir = $absensi->where('status_kehadiran', 'hadir')->count();
-            $izin = $absensi->where('status_kehadiran', 'izin')->count();
-            $sakit = $absensi->where('status_kehadiran', 'sakit')->count();
-            $alpa = $absensi->where('status_kehadiran', 'alpa')->count();
+            // TAMBAHAN: Filter membuang status libur agar tidak masuk dalam perhitungan
+            $absensiValid = $absensi->filter(function($absen) {
+                return $absen->agenda && !$absen->agenda->is_libur;
+            });
+
+            // GANTI $absensi menjadi $absensiValid
+            $hadir = $absensiValid->where('status_kehadiran', 'hadir')->count();
+            $izin = $absensiValid->where('status_kehadiran', 'izin')->count();
+            $sakit = $absensiValid->where('status_kehadiran', 'sakit')->count();
+            $alpa = $absensiValid->where('status_kehadiran', 'alpa')->count();
 
             $total = $hadir + $izin + $sakit + $alpa;
             $persentase = $total > 0 ? round(($hadir / $total) * 100) : 0;

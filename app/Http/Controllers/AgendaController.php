@@ -159,7 +159,7 @@ class AgendaController extends Controller
         }
         
         $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
-        $filterTahun = $request->input('tahun_ajaran_id', $tahunAktif ? $tahunAktif->id : null);
+        $filterTahun = $request->input('tahun_ajaran_id');
         
         // PERBAIKAN DI SINI: Gunakan 'tahun_ajaran' bukan 'created_at'
         $tahunAjarans = TahunAjaran::orderBy('tahun_ajaran', 'desc')->get();

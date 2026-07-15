@@ -311,9 +311,22 @@ class AbsensiController extends Controller
         })->values();
 
         // Kelompokkan berdasarkan kelas
+       // Kelompokkan berdasarkan kelas
         $siswaPerKelas = $siswas->groupBy('kelas_laporan');
 
-        return view('absensi.grid', compact('agendas', 'siswaPerKelas', 'bulanVal'));
+        // TAMBAHAN: Tarik Data Pengajar Aktif dan petakan absensinya
+        $absensiPengajars = \App\Models\AbsensiPengajar::whereIn('agenda_id', $agendas->pluck('id'))->get();
+        $absenPengajarMap = [];
+        foreach ($absensiPengajars as $ap) {
+            $absenPengajarMap[$ap->pengajar_id][$ap->agenda_id] = $ap->status_kehadiran;
+        }
+
+        $pengajars = \App\Models\Pengajar::with('jabatan')->where('status', 'aktif')->orderBy('nama_lengkap', 'asc')->get();
+        foreach ($pengajars as $p) {
+            $p->absen_map = $absenPengajarMap[$p->id] ?? [];
+        }
+
+        return view('absensi.grid', compact('agendas', 'siswaPerKelas', 'pengajars', 'bulanVal'));
     }
 
     public function storeGrid(Request $request)
@@ -327,7 +340,12 @@ class AbsensiController extends Controller
         $kehadiran = $request->input('kehadiran', []); 
         
         // Array id siswa rahasia untuk tahu siapa saja yang TIDAK dicentang (supaya di-Alpa-kan)
+        // Array id siswa rahasia untuk tahu siapa saja yang TIDAK dicentang (supaya di-Alpa-kan)
         $validSiswaIds = $request->input('siswa_ids', []); 
+        
+        // TAMBAHAN: Tangkap array centangan pengajar
+        $kehadiran_pengajar = $request->input('kehadiran_pengajar', []);
+        $validPengajarIds = $request->input('pengajar_ids', []);
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
@@ -335,32 +353,40 @@ class AbsensiController extends Controller
                 // Jangan utak-atik hari libur
                 if ($agenda->is_libur) continue; 
 
+                // 1. SIMPAN ABSENSI SISWA
                 foreach ($validSiswaIds as $siswa_id) {
-                    // Jika ada di array centang = hadir. Jika tidak ada = alpa.
                     $status = isset($kehadiran[$agenda->id][$siswa_id]) ? 'hadir' : 'alpa';
-
                     $absenExisting = \App\Models\Absensi::where('agenda_id', $agenda->id)->where('siswa_id', $siswa_id)->first();
 
                     if ($absenExisting) {
-                        // Jika status berubah dari alpa/izin/sakit menjadi hadir, catat waktunya
-                        $waktuHadir = ($status == 'hadir' && $absenExisting->status_kehadiran != 'hadir') 
-                                        ? now()->format('H:i:s') 
-                                        : $absenExisting->waktu_hadir;
-                                        
-                        if($status != 'hadir') $waktuHadir = null; // Reset waktu jika di-alpa-kan
+                        $waktuHadir = ($status == 'hadir' && $absenExisting->status_kehadiran != 'hadir') ? now()->format('H:i:s') : $absenExisting->waktu_hadir;
+                        if($status != 'hadir') $waktuHadir = null;
 
-                        $absenExisting->update([
-                            'status_kehadiran' => $status,
-                            'waktu_hadir' => $waktuHadir
-                        ]);
+                        $absenExisting->update(['status_kehadiran' => $status, 'waktu_hadir' => $waktuHadir]);
                     } else {
-                        // Buat data absen baru
                         \App\Models\Absensi::create([
-                            'agenda_id' => $agenda->id,
-                            'siswa_id' => $siswa_id,
-                            'status_kehadiran' => $status,
-                            'metode_absen' => 'manual',
+                            'agenda_id' => $agenda->id, 'siswa_id' => $siswa_id,
+                            'status_kehadiran' => $status, 'metode_absen' => 'manual',
                             'waktu_hadir' => $status == 'hadir' ? now()->format('H:i:s') : null
+                        ]);
+                    }
+                }
+
+                // 2. SIMPAN ABSENSI PENGAJAR
+                foreach ($validPengajarIds as $p_id) {
+                    $status_p = isset($kehadiran_pengajar[$agenda->id][$p_id]) ? 'hadir' : 'alpa';
+                    $absenPExisting = \App\Models\AbsensiPengajar::where('agenda_id', $agenda->id)->where('pengajar_id', $p_id)->first();
+
+                    if ($absenPExisting) {
+                        $waktuHadirP = ($status_p == 'hadir' && $absenPExisting->status_kehadiran != 'hadir') ? now()->format('H:i:s') : $absenPExisting->waktu_hadir;
+                        if($status_p != 'hadir') $waktuHadirP = null;
+
+                        $absenPExisting->update(['status_kehadiran' => $status_p, 'waktu_hadir' => $waktuHadirP]);
+                    } else {
+                        \App\Models\AbsensiPengajar::create([
+                            'agenda_id' => $agenda->id, 'pengajar_id' => $p_id,
+                            'status_kehadiran' => $status_p,
+                            'waktu_hadir' => $status_p == 'hadir' ? now()->format('H:i:s') : null
                         ]);
                     }
                 }

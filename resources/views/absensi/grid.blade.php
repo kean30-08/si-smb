@@ -21,20 +21,42 @@
         <div class="max-w-[95%] mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm sm:rounded-lg border-t-4 border-emerald-500 overflow-hidden">
 
-                {{-- NAVIGASI PEMILIHAN BULAN --}}
-                <div class="bg-gray-50 border-b border-gray-200 p-4">
+                {{-- NAVIGASI & PENCARIAN --}}
+                <div
+                    class="bg-gray-50 border-b border-gray-200 p-4 flex flex-col md:flex-row justify-between items-end gap-4">
                     <form action="{{ route('absensi.grid') }}" method="GET"
-                        class="flex flex-col sm:flex-row items-end gap-4">
-                        <div class="w-full sm:w-1/3">
+                        class="flex flex-col sm:flex-row items-end gap-4 w-full md:w-auto">
+                        <div class="w-full sm:w-auto min-w-[250px]">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Pilih Bulan & Tahun:</label>
-                            <input type="month" name="bulan" value="{{ $bulanVal }}"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                                onchange="this.form.submit()">
-                        </div>
-                        <div class="hidden sm:block pb-2 text-sm text-gray-500 italic">
-                            Data yang ditampilkan adalah jadwal pada bulan terpilih.
+                            <div class="flex">
+                                {{-- Input dengan sudut melengkung di kiri saja (rounded-l-md) --}}
+                                <input type="month" name="bulan" value="{{ $bulanVal }}"
+                                    class="w-full border-gray-300 rounded-l-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                    onchange="this.form.submit()">
+
+                                {{-- Tombol Cari menempel di kanan (rounded-r-md) --}}
+                                <button type="submit"
+                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-r-md transition shadow-sm flex items-center justify-center font-bold text-sm cursor-pointer">
+                                    Cari
+                                </button>
+                            </div>
                         </div>
                     </form>
+
+                    {{-- SEARCH BAR (Filter Klien/JS agar centangan tidak hilang) --}}
+                    <div class="w-full md:w-1/3 flex">
+                        <input type="text" id="cariGrid" placeholder="Cari Nama Siswa/Pengajar..."
+                            class="w-full border-gray-300 rounded-l-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+                        <button type="button" onclick="filterGrid()"
+                            class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r-md transition shadow-sm flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <polyline points="21 21 16.65 16.65"></polyline>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="p-0 overflow-x-auto">
@@ -87,15 +109,15 @@
                                         {{-- Baris Siswa --}}
                                         @foreach ($siswasKelas as $siswa)
                                             @php $allSiswaIds[] = $siswa->id; @endphp
-                                            <tr class="border-b border-gray-100 hover:bg-emerald-50 transition">
+                                            <tr
+                                                class="border-b border-gray-100 hover:bg-emerald-50 transition grid-row-search">
                                                 <td class="py-2 px-4 border-r border-gray-100 text-center">
                                                     {{ $globalNo++ }}</td>
                                                 <td
-                                                    class="py-2 px-4 font-bold text-gray-800 border-r border-gray-100 sticky left-0 bg-white z-10">
+                                                    class="py-2 px-4 font-bold text-gray-800 border-r border-gray-100 sticky left-0 bg-white z-10 row-name">
                                                     {{ $siswa->nama_lengkap }}
                                                 </td>
 
-                                                {{-- Kolom Checkbox Absensi --}}
                                                 {{-- Kolom Checkbox Absensi --}}
                                                 @foreach ($agendas as $agenda)
                                                     @php
@@ -133,17 +155,62 @@
                                             </tr>
                                         @endforeach
                                     @endforeach
+
+                                    {{-- BAGIAN PENGAJAR DI BAWAH SISWA --}}
+                                    @if (isset($pengajars) && $pengajars->isNotEmpty())
+                                        <tr class="bg-indigo-200/80 border-b border-gray-300">
+                                            <td colspan="{{ 2 + count($agendas) }}"
+                                                class="py-3 px-4 font-black text-indigo-900 text-xs tracking-wider">
+                                                DATA PENGAJAR / PENGURUS
+                                            </td>
+                                        </tr>
+                                        @foreach ($pengajars as $p)
+                                            <tr
+                                                class="border-b border-gray-100 hover:bg-emerald-50 transition grid-row-search">
+                                                <td class="py-2 px-4 border-r border-gray-100 text-center">
+                                                    {{ $globalNo++ }}</td>
+                                                <td
+                                                    class="py-2 px-4 font-bold text-indigo-800 border-r border-gray-100 sticky left-0 bg-white z-10 row-name">
+                                                    {{ $p->nama_lengkap }}
+                                                    <span
+                                                        class="block text-[10px] font-normal text-gray-500">{{ $p->jabatan->nama_jabatan ?? '-' }}</span>
+                                                </td>
+                                                @foreach ($agendas as $agenda)
+                                                    @php $statusP = $p->absen_map[$agenda->id] ?? null; @endphp
+                                                    @if ($agenda->is_libur)
+                                                        <td
+                                                            class="py-2 px-2 border-r border-gray-100 text-center bg-red-50 text-red-600 font-bold text-[10px] italic">
+                                                            LIBUR</td>
+                                                    @else
+                                                        <td
+                                                            class="py-2 px-2 border-r border-gray-100 text-center cursor-pointer hover:bg-emerald-100 cell-clicker">
+                                                            <input type="checkbox"
+                                                                name="kehadiran_pengajar[{{ $agenda->id }}][{{ $p->id }}]"
+                                                                value="hadir"
+                                                                {{ $statusP == 'hadir' ? 'checked' : '' }}
+                                                                class="w-5 h-5 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer pointer-events-none">
+                                                        </td>
+                                                    @endif
+                                                @endforeach
+                                            </tr>
+                                        @endforeach
+                                    @endif
                                 </tbody>
                             </table>
 
-                            {{-- Kirim semua ID siswa ke controller agar sistem tahu siapa saja yang TIDAK dicentang --}}
+                            {{-- Kirim semua ID rahasia ke controller agar sistem tahu siapa yang tidak dicentang --}}
                             @foreach ($allSiswaIds as $s_id)
                                 <input type="hidden" name="siswa_ids[]" value="{{ $s_id }}">
                             @endforeach
+                            @if (isset($pengajars))
+                                @foreach ($pengajars as $p)
+                                    <input type="hidden" name="pengajar_ids[]" value="{{ $p->id }}">
+                                @endforeach
+                            @endif
 
                             <div class="p-6 bg-gray-50 flex justify-end sticky bottom-0 border-t border-gray-200">
                                 <button type="submit"
-                                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center transition">
+                                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center transition z-50">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                         stroke-linecap="round" stroke-linejoin="round" class="mr-2">
@@ -162,7 +229,7 @@
         </div>
     </div>
 
-    {{-- Script agar seluruh kotak TD bisa diklik (tidak harus pas kena kotak checkbox-nya) --}}
+    {{-- Script Klik & Filter Grid --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const cells = document.querySelectorAll('.cell-clicker');
@@ -175,5 +242,23 @@
                 });
             });
         });
+
+        // FUNGSI PENCARIAN CLIENT-SIDE (Sangat Cepat & Tidak menghilangkan centang user)
+        function filterGrid() {
+            const query = document.getElementById('cariGrid').value.toLowerCase();
+            const rows = document.querySelectorAll('.grid-row-search');
+
+            rows.forEach(row => {
+                const name = row.querySelector('.row-name').textContent.toLowerCase();
+                if (name.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Panggil fungsi search otomatis setiap user mengetik
+        document.getElementById('cariGrid').addEventListener('keyup', filterGrid);
     </script>
 </x-app-layout>

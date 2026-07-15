@@ -158,4 +158,73 @@ class PengajarController extends Controller
         
         return redirect()->route('pengajar.index')->with('success', 'Data pengajar berhasil dihapus.');
     }
+
+    public function histori(\App\Models\Pengajar $pengajar)
+    {
+        // 1. Tarik riwayat absensi yang BENAR-BENAR TERSIMPAN untuk pengajar ini (Sebagai Peta/Kamus)
+        $absensisMap = \App\Models\AbsensiPengajar::where('pengajar_id', $pengajar->id)
+            ->pluck('status_kehadiran', 'agenda_id')
+            ->toArray();
+
+        // 2. Tarik SEMUA jadwal (Agenda) yang terdaftar pada sistem
+        $agendas = \App\Models\Agenda::with('tahunAjaran')
+            ->whereNotNull('tahun_ajaran_id')
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        // Tanggal pengajar didaftarkan ke sistem (Agar agenda di masa lalu sebelum dia masuk tidak ikut dihitung)
+        $tglDaftar = \Carbon\Carbon::parse($pengajar->created_at)->format('Y-m-d');
+
+        // 3. Kelompokkan agenda berdasarkan Tahun Ajaran
+        $historisGrouped = $agendas->filter(function($agenda) use ($tglDaftar) {
+            return $agenda->tanggal >= $tglDaftar; // Hanya tampilkan jadwal setelah dia bergabung
+        })->groupBy(function($agenda) {
+            return $agenda->tahunAjaran->tahun_ajaran;
+        });
+
+        $historiData = [];
+
+        foreach ($historisGrouped as $ta => $agendaGroup) {
+            $hadir = 0; $izin = 0; $sakit = 0; $alpa = 0;
+            $detail_absensi = [];
+
+            foreach ($agendaGroup as $agenda) {
+                // Cek status dari peta absensi. Jika datanya tidak ada/kosong, otomatis dianggap 'Alpa'
+                $status = $absensisMap[$agenda->id] ?? 'alpa';
+
+                // Jika bukan hari libur, masukkan ke dalam perhitungan nilai
+                if (!$agenda->is_libur) {
+                    if ($status == 'hadir') $hadir++;
+                    elseif ($status == 'izin') $izin++;
+                    elseif ($status == 'sakit') $sakit++;
+                    else $alpa++;
+                }
+
+                // Susun format untuk ditampilkan di rincian bulanan
+                $bulan = \Carbon\Carbon::parse($agenda->tanggal)->translatedFormat('F Y');
+                
+                // Bikin object buatan agar bisa dibaca oleh Blade View tanpa harus mengubah file HTML
+                $detail_absensi[$bulan][] = (object)[
+                    'status_kehadiran' => $status,
+                    'agenda' => $agenda
+                ];
+            }
+
+            $poin = ($hadir * 5) + ($izin * 1) + ($sakit * 1);
+
+            $historiData[$ta] = (object)[
+                'hadir' => $hadir,
+                'izin' => $izin,
+                'sakit' => $sakit,
+                'alpa' => $alpa,
+                'poin' => $poin,
+                'detail_absensi' => $detail_absensi
+            ];
+        }
+
+        // Urutkan dari Tahun Ajaran terbaru (Z-A)
+        krsort($historiData);
+
+        return view('pengajar.histori', compact('pengajar', 'historiData'));
+    }
 }

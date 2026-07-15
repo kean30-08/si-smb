@@ -269,17 +269,30 @@ class SiswaController extends Controller
                             ->get();
 
         $historiMentah->each(function ($histori) use ($siswa) {
-            $absensis = \App\Models\Absensi::where('siswa_id', $siswa->id)
+            $absensis = \App\Models\Absensi::with('agenda')->where('siswa_id', $siswa->id)
                 ->whereHas('agenda', function($q) use ($histori) {
                     $q->where('tahun_ajaran_id', $histori->tahun_ajaran_id);
                 })->get();
 
-            $histori->hadir = $absensis->where('status_kehadiran', 'hadir')->count();
-            $histori->izin = $absensis->where('status_kehadiran', 'izin')->count();
-            $histori->sakit = $absensis->where('status_kehadiran', 'sakit')->count();
-            $histori->alpa = $absensis->where('status_kehadiran', 'alpa')->count();
+            // TAMBAHAN: Saring (filter) membuang kegiatan "Libur" agar tidak masuk perhitungan
+            $absensiValid = $absensis->filter(function($absen) {
+                return $absen->agenda && !$absen->agenda->is_libur;
+            });
+
+            // GANTI $absensis menjadi $absensiValid khusus untuk hitungan matematika
+            $histori->hadir = $absensiValid->where('status_kehadiran', 'hadir')->count();
+            $histori->izin = $absensiValid->where('status_kehadiran', 'izin')->count();
+            $histori->sakit = $absensiValid->where('status_kehadiran', 'sakit')->count();
+            $histori->alpa = $absensiValid->where('status_kehadiran', 'alpa')->count();
             
             $histori->poin = ($histori->hadir * 5) + ($histori->izin * 1) + ($histori->sakit * 1);
+
+            // Susun rincian per bulan untuk ditampilkan di view (Tetap pakai $absensis utuh agar libur tetap muncul di daftar)
+            $histori->detail_absensi = $absensis->sortBy(function($absen) {
+                return $absen->agenda->tanggal;
+            })->groupBy(function($absen) {
+                return \Carbon\Carbon::parse($absen->agenda->tanggal)->translatedFormat('F Y');
+            });
         });
 
         // PEMBOBOTAN URUTAN KELAS AGAR ACCORDION RAPI (PG -> TK -> SD -> SMP -> SMA)
