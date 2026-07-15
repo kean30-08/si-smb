@@ -45,7 +45,17 @@
                                 @forelse ($historis as $index => $item)
                                     <tr class="bg-white border-b hover:bg-gray-50 transition">
                                         <td class="py-4 px-6 text-center font-medium">{{ $index + 1 }}</td>
-                                        <td class="py-4 px-6 font-bold text-gray-900">{{ $item->siswa->nama_lengkap }}
+                                        <td class="py-4 px-6 font-bold text-gray-900 flex items-center gap-2">
+                                            {{ $item->siswa->nama_lengkap }}
+
+                                            {{-- Munculkan Lencana Biru Jika Dia Murid Baru --}}
+                                            @if ($item->is_murid_baru)
+                                                <span
+                                                    class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] uppercase rounded-full border border-blue-200 flex-shrink-0"
+                                                    title="Murid Baru / Tambahan di Tahun Ajaran Ini">
+                                                    Baru
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="py-4 px-6 text-center">{{ $item->siswa->nis }}</td>
                                         <td class="py-4 px-6 text-center">

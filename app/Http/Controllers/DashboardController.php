@@ -49,6 +49,7 @@ class DashboardController extends Controller
                                         return $q->where('tahun_ajaran_id', $filter_ta_id);
                                      })
                                      ->whereBetween('tanggal', [$start_date, $end_date])
+                                     ->where('is_libur', 0) // TAMBAHAN: Buang hari libur dari KPI Total Agenda
                                      ->distinct('tanggal')
                                      ->count('tanggal');
 
@@ -56,6 +57,7 @@ class DashboardController extends Controller
                                         return $q->where('tahun_ajaran_id', $filter_ta_id);
                                      })
                                      ->whereBetween('tanggal', [$start_date, $end_date])
+                                     ->where('is_libur', 0) // TAMBAHAN: Buang hari libur dari pembagi persentase
                                      ->distinct('tanggal')
                                      ->count('tanggal');
 
@@ -64,6 +66,7 @@ class DashboardController extends Controller
                                     return $q->where('tahun_ajaran_id', $filter_ta_id);
                                })
                                ->whereBetween('tanggal', [$start_date, $end_date])
+                               ->where('is_libur', 0) // TAMBAHAN: Buang hari libur dari data Grafik
                                ->orderBy('tanggal', 'asc')
                                ->get()
                                ->groupBy('tanggal');

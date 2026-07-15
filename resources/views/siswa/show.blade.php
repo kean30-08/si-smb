@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     {{ __('Detail Siswa') }}: {{ $siswa->nama_lengkap }}
@@ -19,10 +19,22 @@
                 </p>
             </div>
 
-            <div class="w-full sm:w-auto flex">
+            <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap gap-2">
                 <a href="{{ route('siswa.index') }}"
-                    class="w-full sm:w-auto text-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    class="w-full sm:w-auto justify-center text-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition">
                     Kembali
+                </a>
+
+                {{-- TOMBOL HISTORI SISWA PINDAH KE HEADER --}}
+                <a href="{{ route('siswa.histori', $siswa->id) }}"
+                    class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 flex items-center rounded transition gap-2 shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M3 3v18h18" />
+                        <path d="m19 9-5 5-4-4-3 3" />
+                    </svg>
+                    Lihat Histori Kehadiran & Kelas
                 </a>
             </div>
         </div>
@@ -34,20 +46,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
 
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-lg font-bold text-gray-700">Informasi Siswa</h2>
 
-                        <a href="{{ route('siswa.histori', $siswa->id) }}"
-                            class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-sm font-bold shadow-sm transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="mr-2">
-                                <path d="M3 3v18h18" />
-                                <path d="m19 9-5 5-4-4-3 3" />
-                            </svg>
-                            Lihat Histori Kehadiran & Kelas Siswa
-                        </a>
-                    </div>
 
 
 

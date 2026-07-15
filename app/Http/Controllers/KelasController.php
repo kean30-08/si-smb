@@ -215,7 +215,16 @@ class KelasController extends Controller
             ->map(function ($h) use ($selectedTa) {
                 $siswa = $h->siswa;
                 
-                // LOGIKA MESIN WAKTU UNTUK STATUS DINAMIS
+                // 1. LOGIKA CEK MURID BARU (Sama seperti di fungsi histori)
+                $punyaHistoriLama = \App\Models\HistoriSiswa::where('siswa_id', $siswa->id)
+                    ->whereHas('tahunAjaran', function($q) use ($selectedTa) {
+                        $q->where('tahun_ajaran', '<', $selectedTa->tahun_ajaran);
+                    })->exists();
+
+                // Tandai jika dia tidak punya masa lalu di sistem = Murid Baru
+                $h->is_murid_baru = !$punyaHistoriLama;
+
+                // 2. LOGIKA MESIN WAKTU UNTUK STATUS DINAMIS (Bawaan Anda)
                 if ($siswa->status == 'aktif') {
                     $h->dynamic_status = 'Aktif';
                     $h->status_class = 'bg-green-100 text-green-700';
