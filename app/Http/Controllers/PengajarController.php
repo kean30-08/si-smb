@@ -83,12 +83,22 @@ class PengajarController extends Controller
 
     public function edit(Pengajar $pengajar)
     {
+        // PROTEKSI: Pengajar biasa tidak boleh masuk ke form edit Kepala Sekolah
+        if (!auth()->user()->isAdmin() && ($pengajar->user_id == 1 || $pengajar->jabatan_id == 2)) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Anda tidak memiliki izin untuk mengubah data Kepala Sekolah.');
+        }
+
         $jabatans = Jabatan::all();
         return view('pengajar.edit', compact('pengajar', 'jabatans'));
     }
 
     public function update(Request $request, Pengajar $pengajar)
     {
+        // PROTEKSI: Pengajar biasa tidak boleh memproses update data Kepala Sekolah
+        if (!auth()->user()->isAdmin() && ($pengajar->user_id == 1 || $pengajar->jabatan_id == 2)) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Anda tidak memiliki izin untuk mengubah data Kepala Sekolah.');
+        }
+        
         $rules = [
             'nama_lengkap' => 'required',
             'jenis_kelamin' => 'required',
