@@ -40,7 +40,8 @@
                     @endphp
 
                     <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                        {{-- 1. Sembunyikan Header di Mobile (hidden md:table-header-group) --}}
+                        <thead class="hidden md:table-header-group text-xs text-gray-700 uppercase bg-gray-50 border-b">
                             <tr>
                                 <th class="py-4 px-6 w-16">No</th>
                                 <th class="py-4 px-6">Nama Pengajar</th>
@@ -49,22 +50,41 @@
                                 <th class="py-4 px-6 text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-100 md:divide-none">
                             @forelse ($laporans as $index => $lap)
-                                <tr class="bg-white border-b hover:bg-gray-50 transition">
-                                    <td class="py-4 px-6 font-medium text-gray-900">
-                                        {{ $laporans->firstItem() + $index }}</td>
-                                    <td class="py-4 px-6 font-bold text-gray-800">
+                                {{-- 2. Ubah TR menjadi Block di Mobile (block md:table-row) --}}
+                                <tr class="block md:table-row bg-white border-b hover:bg-gray-50 transition p-4 md:p-0">
+
+                                    {{-- 3. Tambahkan Label Khusus Mobile & Jadikan Block --}}
+                                    <td class="block md:table-cell py-2 md:py-4 md:px-6 font-medium text-gray-900">
+                                        <span
+                                            class="md:hidden font-bold text-gray-400 text-xs uppercase mr-2">No:</span>
+                                        {{ $laporans->firstItem() + $index }}
+                                    </td>
+
+                                    <td class="block md:table-cell py-2 md:py-4 md:px-6 font-bold text-gray-800">
+                                        <span class="md:hidden font-bold text-gray-400 text-xs uppercase mr-2">Nama
+                                            Pengajar:</span>
                                         {{ $lap->pengajar->nama_lengkap ?? 'Pengajar Dihapus' }}
                                     </td>
-                                    <td class="py-4 px-6 text-center font-semibold text-indigo-600">
+
+                                    <td
+                                        class="block md:table-cell py-2 md:py-4 md:px-6 md:text-center font-semibold text-indigo-600">
+                                        <span class="md:hidden font-bold text-gray-400 text-xs uppercase mr-2">Periode
+                                            Laporan:</span>
                                         {{ $namaBulanArray[$lap->bulan] ?? $lap->bulan }} {{ $lap->tahun }}
                                     </td>
-                                    <td class="py-4 px-6 text-center text-gray-500">
+
+                                    <td class="block md:table-cell py-2 md:py-4 md:px-6 md:text-center text-gray-500">
+                                        <span class="md:hidden font-bold text-gray-400 text-xs uppercase mr-2">Tanggal
+                                            Dibuat:</span>
                                         {{ $lap->created_at->translatedFormat('d M Y, H:i') }}
                                     </td>
-                                    <td class="py-4 px-6 text-center">
-                                        <div class="flex justify-center items-center gap-2">
+
+                                    <td class="block md:table-cell py-3 md:py-4 md:px-6 text-center">
+                                        {{-- 4. Tombol rata kiri di Mobile, rata tengah di Desktop --}}
+                                        <div
+                                            class="flex justify-start md:justify-center items-center gap-2 mt-2 md:mt-0">
                                             <a href="{{ route('laporan_insentif.download', $lap->id) }}"
                                                 class="p-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg transition"
                                                 title="Download PDF">
@@ -99,7 +119,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="py-12 text-center text-gray-500">
+                                    <td colspan="5" class="py-12 text-center text-gray-500 block md:table-cell">
                                         <svg xmlns="http://www.w3.org/2000/svg"
                                             class="h-12 w-12 mx-auto text-gray-300 mb-3" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
