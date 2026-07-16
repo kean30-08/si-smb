@@ -10,7 +10,6 @@
         @page {
             size: A4 portrait;
             margin: 10mm;
-            /* Margin kertas */
         }
 
         body {
@@ -43,21 +42,40 @@
             display: flex;
             flex-direction: column;
             page-break-inside: avoid;
-            /* PENTING: Mencegah kartu terpotong di tengah halaman */
+            /* Mencegah kartu terpotong di tengah halaman */
+            overflow: hidden;
+            /* Mencegah konten meluber jika nama terlalu panjang */
         }
 
         /* Bagian Header Kartu */
         .header {
+            position: relative;
+            /* Untuk memposisikan logo */
             text-align: center;
             border-bottom: 2px solid #1e1b4b;
             padding-bottom: 2mm;
-            margin-bottom: 2mm;
+            margin-bottom: 3mm;
+            min-height: 12mm;
+            /* Memastikan ruang cukup untuk logo */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .header-logo {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 12mm;
+            width: auto;
+            object-fit: contain;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 11px;
-            /* Diperkecil untuk ID card */
+            font-size: 13px;
+            /* Diperbesar */
             color: #1e1b4b;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -66,7 +84,8 @@
 
         .header p {
             margin: 1px 0 0 0;
-            font-size: 7px;
+            font-size: 8px;
+            /* Diperbesar */
             color: #4b5563;
         }
 
@@ -85,6 +104,9 @@
             padding: 2mm;
             border-radius: 6px;
             border: 1px dashed #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         /* Teks Detail */
@@ -95,13 +117,16 @@
         .details-row {
             display: flex;
             margin-bottom: 1.5mm;
-            align-items: center;
-            font-size: 8px;
-            /* Font kecil karena ukuran ID Card */
+            align-items: flex-start;
+            /* Berubah agar saat teks wrap, label tetap di atas */
+            font-size: 10px;
+            /* Diperbesar */
+            line-height: 1.2;
         }
 
         .details-label {
-            width: 20mm;
+            width: 15mm;
+            /* Disesuaikan dengan ukuran font baru */
             color: #6b7280;
             font-weight: bold;
         }
@@ -110,6 +135,8 @@
             color: #111827;
             font-weight: 900;
             flex: 1;
+            word-wrap: break-word;
+            /* Mengizinkan teks (nama) panjang untuk turun ke baris baru */
         }
     </style>
 </head>
@@ -122,20 +149,24 @@
             <div class="kartu">
 
                 <div class="header">
+                    {{-- Penambahan Logo SMB --}}
+                    <img src="{{ asset('img/logo2_smb.jpg') }}" alt="Logo SMB" class="header-logo">
+
                     <h1>Kartu Identitas</h1>
                     <p>Pendidikan Anak Sekolah Minggu Buddha</p>
                 </div>
 
                 <div class="content">
-                    {{-- QR Code diubah ukurannya menjadi 55 --}}
+                    {{-- QR Code diperbesar menjadi 70 --}}
                     <div class="qr-section">
-                        {!! QrCode::size(55)->margin(1)->generate('SMB-' . $s->id) !!}
+                        {!! QrCode::size(70)->margin(1)->generate('SMB-' . $s->id) !!}
                     </div>
 
                     <div class="details-section">
                         <div class="details-row">
                             <div class="details-label">Nama</div>
-                            <div class="details-value">: {{ Str::limit($s->nama_lengkap, 20) }}</div>
+                            {{-- Menghapus Str::limit agar nama tampil penuh --}}
+                            <div class="details-value">: {{ $s->nama_lengkap }}</div>
                         </div>
                         <div class="details-row">
                             <div class="details-label">NIS</div>
