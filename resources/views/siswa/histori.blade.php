@@ -72,7 +72,7 @@
                                     <div class="p-0 md:p-6 overflow-x-auto">
                                         <table class="w-full text-sm text-left text-gray-600">
                                             <thead
-                                                class="text-xs text-gray-500 uppercase bg-white border-b border-gray-200">
+                                                class="hidden md:table-header-group text-xs text-gray-500 uppercase bg-white border-b border-gray-200">
                                                 <tr>
                                                     <th class="py-3 px-4 whitespace-nowrap">Tahun Ajaran</th>
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Hadir</th>
@@ -80,7 +80,6 @@
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Izin</th>
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Alpa</th>
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Total Poin</th>
-                                                    {{-- TAMBAHAN KOLOM AKSI --}}
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Aksi</th>
                                                 </tr>
                                             </thead>
@@ -88,146 +87,95 @@
                                                 <tbody class="divide-y divide-gray-100" x-data="{ editing: false, detailBuka: false }">
 
                                                     {{-- ALPINE JS STATE UNTUK INLINE EDIT --}}
-                                                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                                                        <td
-                                                            class="py-3 px-4 font-bold text-indigo-700 whitespace-nowrap">
+                                                    <tr
+                                                        class="block md:table-row hover:bg-gray-50 transition border-b border-gray-200 p-2">
 
-                                                            {{-- TAMPILAN NORMAL (Teks Biasa) --}}
+                                                        {{-- Gunakan 'block md:table-cell' untuk setiap kolom --}}
+                                                        <td
+                                                            class="block md:table-cell py-3 px-4 font-bold text-indigo-700 whitespace-nowrap border-b md:border-none">
+                                                            <span
+                                                                class="md:hidden text-[10px] text-gray-400 uppercase">Tahun
+                                                                Ajaran: </span>
                                                             <span
                                                                 x-show="!editing">{{ $histori->tahunAjaran->tahun_ajaran ?? '-' }}</span>
 
-                                                            {{-- TAMPILAN EDIT (Dropdown Form) --}}
+                                                            {{-- Form Edit Inline (Sesuaikan lebar di HP) --}}
                                                             <form x-show="editing"
                                                                 action="{{ route('histori_siswa.update', $histori->id) }}"
-                                                                method="POST" class="flex items-center gap-2" x-cloak>
-                                                                @csrf
-                                                                @method('PUT')
-
-                                                                {{-- TAMBAHAN: DROPDOWN PILIH KELAS --}}
+                                                                method="POST" class="flex flex-wrap items-center gap-2"
+                                                                x-cloak>
+                                                                @csrf @method('PUT')
                                                                 <select name="kelas_id"
-                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-700">
+                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
                                                                     @foreach (\App\Models\Kelas::all() as $k)
                                                                         <option value="{{ $k->id }}"
                                                                             {{ $histori->kelas_id == $k->id ? 'selected' : '' }}>
-                                                                            {{ $k->nama_kelas }}
-                                                                        </option>
+                                                                            {{ $k->nama_kelas }}</option>
                                                                     @endforeach
                                                                 </select>
-
-                                                                {{-- DROPDOWN TAHUN AJARAN (YANG SUDAH ADA) --}}
                                                                 <select name="tahun_ajaran_id"
-                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500 font-semibold text-gray-700">
+                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
                                                                     @foreach ($semuaTahunAjaran as $ta)
                                                                         <option value="{{ $ta->id }}"
                                                                             {{ $histori->tahun_ajaran_id == $ta->id ? 'selected' : '' }}>
-                                                                            {{ $ta->tahun_ajaran }}
-                                                                        </option>
+                                                                            {{ $ta->tahun_ajaran }}</option>
                                                                     @endforeach
                                                                 </select>
-
                                                                 <button type="submit"
-                                                                    class="p-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
-                                                                    title="Simpan Perubahan">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                        class="h-4 w-4" viewBox="0 0 20 20"
-                                                                        fill="currentColor">
-                                                                        <path fill-rule="evenodd"
-                                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                                            clip-rule="evenodd" />
-                                                                    </svg>
-                                                                </button>
-                                                                <button type="button" @click="editing = false"
-                                                                    class="p-1 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
-                                                                    title="Batal">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                        class="h-4 w-4" viewBox="0 0 20 20"
-                                                                        fill="currentColor">
-                                                                        <path fill-rule="evenodd"
-                                                                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                                            clip-rule="evenodd" />
-                                                                    </svg>
-                                                                </button>
+                                                                    class="p-1 bg-green-500 text-white rounded">Simpan</button>
                                                             </form>
-
                                                         </td>
-                                                        <td class="py-3 px-4 text-center font-medium">
-                                                            {{ $histori->hadir }}</td>
-                                                        <td class="py-3 px-4 text-center font-medium">
-                                                            {{ $histori->sakit }}</td>
-                                                        <td class="py-3 px-4 text-center font-medium">
-                                                            {{ $histori->izin }}</td>
-                                                        <td class="py-3 px-4 text-center font-medium text-red-500">
-                                                            {{ $histori->alpa }}</td>
+
                                                         <td
-                                                            class="py-3 px-4 text-center font-black text-indigo-600 text-base">
-                                                            {{ $histori->poin }} <span
-                                                                class="text-xs font-normal text-gray-400">Pts</span>
+                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium">
+                                                            <span
+                                                                class="md:hidden font-bold text-gray-400 text-xs">Hadir:
+                                                            </span> {{ $histori->hadir }}
+                                                        </td>
+                                                        <td
+                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium">
+                                                            <span
+                                                                class="md:hidden font-bold text-gray-400 text-xs">Sakit:
+                                                            </span> {{ $histori->sakit }}
+                                                        </td>
+                                                        <td
+                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium">
+                                                            <span
+                                                                class="md:hidden font-bold text-gray-400 text-xs">Izin:
+                                                            </span> {{ $histori->izin }}
+                                                        </td>
+                                                        <td
+                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium text-red-500">
+                                                            <span
+                                                                class="md:hidden font-bold text-gray-400 text-xs">Alpa:
+                                                            </span> {{ $histori->alpa }}
+                                                        </td>
+                                                        <td
+                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-black text-indigo-600">
+                                                            <span
+                                                                class="md:hidden font-bold text-gray-400 text-xs">Poin:
+                                                            </span> {{ $histori->poin }} Pts
                                                         </td>
 
-                                                        {{-- TOMBOL AKSI --}}
-                                                        <td class="py-3 px-4 text-center whitespace-nowrap">
-                                                            <div class="flex justify-center items-center gap-3"
+                                                        <td
+                                                            class="block md:table-cell py-3 px-4 text-center whitespace-nowrap">
+                                                            <div class="flex justify-start md:justify-center items-center gap-4"
                                                                 x-show="!editing">
-                                                                {{-- Tombol Lihat Rincian Bulanan --}}
                                                                 <button type="button" @click="detailBuka = !detailBuka"
-                                                                    class="text-indigo-500 hover:text-indigo-800 transition"
-                                                                    title="Lihat Rincian Kehadiran Per Bulan">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                        width="18" height="18"
-                                                                        viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="2"
-                                                                        stroke-linecap="round"
-                                                                        stroke-linejoin="round">
-                                                                        <path
-                                                                            d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                                                        <circle cx="12" cy="12" r="3" />
+                                                                    class="text-indigo-500 flex items-center gap-1">
+                                                                    <svg class="w-4 h-4" fill="none"
+                                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                                     </svg>
+                                                                    <span class="md:hidden text-xs">Lihat Rincian</span>
                                                                 </button>
-                                                                {{-- Tombol Edit Tampil Inline --}}
                                                                 <button type="button" @click="editing = true"
-                                                                    class="text-blue-500 hover:text-blue-700 transition"
-                                                                    title="Koreksi Tahun Ajaran">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                        width="16" height="16"
-                                                                        viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="2"
-                                                                        stroke-linecap="round"
-                                                                        stroke-linejoin="round">
-                                                                        <path d="M12 20h9" />
-                                                                        <path
-                                                                            d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                                                                    </svg>
-                                                                </button>
-
-                                                                {{-- Tombol Hapus Histori --}}
-                                                                <form
-                                                                    action="{{ route('histori_siswa.destroy', $histori->id) }}"
-                                                                    method="POST"
-                                                                    onsubmit="return confirm('Hapus histori ini? Jika ini dihapus, riwayat kelas dan poin kehadiran siswa di tahun ajaran ini akan ikut lenyap.');"
-                                                                    class="m-0 p-0 inline-block">
-                                                                    @csrf
-                                                                    @method('DELETE')
-                                                                    <button type="submit"
-                                                                        class="text-red-500 hover:text-red-700 transition mt-1.5"
-                                                                        title="Hapus Histori Kelas Ini">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                                            width="16" height="16"
-                                                                            viewBox="0 0 24 24" fill="none"
-                                                                            stroke="currentColor" stroke-width="2"
-                                                                            stroke-linecap="round"
-                                                                            stroke-linejoin="round">
-                                                                            <path d="M3 6h18" />
-                                                                            <path
-                                                                                d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                                            <path
-                                                                                d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                                            <line x1="10" y1="11"
-                                                                                x2="10" y2="17" />
-                                                                            <line x1="14" y1="11"
-                                                                                x2="14" y2="17" />
-                                                                        </svg>
-                                                                    </button>
-                                                                </form>
+                                                                    class="text-blue-500" title="Edit">Edit</button>
                                                             </div>
                                                         </td>
                                                     </tr>

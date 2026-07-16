@@ -269,29 +269,54 @@ class SiswaController extends Controller
                             ->get();
 
         $historiMentah->each(function ($histori) use ($siswa) {
-            $absensis = \App\Models\Absensi::with('agenda')->where('siswa_id', $siswa->id)
-                ->whereHas('agenda', function($q) use ($histori) {
-                    $q->where('tahun_ajaran_id', $histori->tahun_ajaran_id);
-                })->get();
+            // 1. Ambil SEMUA agenda pada Tahun Ajaran tersebut (sebagai pondasi utama)
+            $agendas = \App\Models\Agenda::where('tahun_ajaran_id', $histori->tahun_ajaran_id)
+                ->orderBy('tanggal', 'asc')
+                ->get();
 
-            // TAMBAHAN: Saring (filter) membuang kegiatan "Libur" agar tidak masuk perhitungan
-            $absensiValid = $absensis->filter(function($absen) {
-                return $absen->agenda && !$absen->agenda->is_libur;
-            });
+            // 2. Ambil data absensi siswa khusus untuk agenda-agenda di atas
+            $absensisSiswa = \App\Models\Absensi::where('siswa_id', $siswa->id)
+                ->whereIn('agenda_id', $agendas->pluck('id'))
+                ->get()
+                ->keyBy('agenda_id'); // Jadikan id agenda sebagai kunci pencarian cepat
 
-            // GANTI $absensis menjadi $absensiValid khusus untuk hitungan matematika
-            $histori->hadir = $absensiValid->where('status_kehadiran', 'hadir')->count();
-            $histori->izin = $absensiValid->where('status_kehadiran', 'izin')->count();
-            $histori->sakit = $absensiValid->where('status_kehadiran', 'sakit')->count();
-            $histori->alpa = $absensiValid->where('status_kehadiran', 'alpa')->count();
+            $detailGabungan = collect();
+            $hadir = 0; $izin = 0; $sakit = 0; $alpa = 0;
+
+            // 3. Gabungkan data Agenda dengan data Absensi siswa
+            foreach ($agendas as $agenda) {
+                // Cari apakah siswa punya rekam absen di tanggal ini
+                $absen = $absensisSiswa->get($agenda->id);
+                
+                // Jika tidak ada data absen (karena libur atau terlewat), default-kan ke alpa
+                $status = $absen ? $absen->status_kehadiran : 'alpa'; 
+
+                // Masukkan format objek tiruan agar bisa dibaca oleh view Blade
+                $detailGabungan->push((object)[
+                    'agenda' => $agenda,
+                    'status_kehadiran' => $status
+                ]);
+
+                // 4. Hitung poin dan rekapitulasi (ABAIKAN JIKA HARI LIBUR)
+                if (!$agenda->is_libur) {
+                    if ($status == 'hadir') $hadir++;
+                    elseif ($status == 'izin') $izin++;
+                    elseif ($status == 'sakit') $sakit++;
+                    elseif ($status == 'alpa') $alpa++;
+                }
+            }
+
+            // Simpan hasil kalkulasi ke dalam objek histori
+            $histori->hadir = $hadir;
+            $histori->izin = $izin;
+            $histori->sakit = $sakit;
+            $histori->alpa = $alpa;
             
-            $histori->poin = ($histori->hadir * 5) + ($histori->izin * 1) + ($histori->sakit * 1);
+            $histori->poin = ($hadir * 5) + ($izin * 1) + ($sakit * 1);
 
-            // Susun rincian per bulan untuk ditampilkan di view (Tetap pakai $absensis utuh agar libur tetap muncul di daftar)
-            $histori->detail_absensi = $absensis->sortBy(function($absen) {
-                return $absen->agenda->tanggal;
-            })->groupBy(function($absen) {
-                return \Carbon\Carbon::parse($absen->agenda->tanggal)->translatedFormat('F Y');
+            // 5. Susun rincian per bulan untuk ditampilkan di view (Berdasarkan $detailGabungan)
+            $histori->detail_absensi = $detailGabungan->groupBy(function($item) {
+                return \Carbon\Carbon::parse($item->agenda->tanggal)->translatedFormat('F Y');
             });
         });
 
@@ -314,10 +339,9 @@ class SiswaController extends Controller
                 return $urutanKelas[$key] ?? 99; 
             });
 
-        // TAMBAHAN: Ambil semua data Tahun Ajaran untuk dropdown edit
+        // Ambil semua data Tahun Ajaran untuk dropdown edit
         $semuaTahunAjaran = \App\Models\TahunAjaran::orderBy('tahun_ajaran', 'desc')->get();
 
-        // Jangan lupa tambahkan $semuaTahunAjaran ke dalam compact
         return view('siswa.histori', compact('siswa', 'historisGrouped', 'semuaTahunAjaran'));
     }
 
