@@ -331,7 +331,8 @@
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
 
-                                                                <select name="status" onchange="this.form.submit()"
+                                                                <select name="status"
+                                                                    onchange="simpanAbsenOtomatis(this)"
                                                                     {{ $isLewat || $isBedaTahun ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
                                                                     @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
@@ -374,7 +375,7 @@
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Waktu
                                                             Kehadiran</span>
                                                         <div
-                                                            class="text-right md:text-center font-medium text-gray-800 md:text-gray-600">
+                                                            class="text-right md:text-center font-medium text-gray-800 md:text-gray-600 waktu-container">
                                                             @if ($absenSiswa && $absenSiswa->waktu_hadir)
                                                                 @php $dt = \Carbon\Carbon::parse($absenSiswa->waktu_hadir); @endphp
                                                                 <span
@@ -466,7 +467,8 @@
                                                                     value="{{ $tanggal }}">
 
                                                                 {{-- KUNCI PERBAIKAN DROPDOWN: Hapus 'disabled' hardcoded, gunakan kondisi $isLewat --}}
-                                                                <select name="status" onchange="this.form.submit()"
+                                                                <select name="status"
+                                                                    onchange="simpanAbsenOtomatis(this)"
                                                                     {{ $isLewat ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
                                                                     @if ($statusSaatIni == 'alpa') bg-red-100 text-red-800 border-red-200
@@ -509,7 +511,7 @@
                                                             class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider">Waktu
                                                             Kehadiran</span>
                                                         <div
-                                                            class="text-right md:text-center font-medium text-gray-800 md:text-gray-600">
+                                                            class="text-right md:text-center font-medium text-gray-800 md:text-gray-600 waktu-container">
                                                             @if ($absenPengajar && $absenPengajar->waktu_hadir)
                                                                 @php $dt = \Carbon\Carbon::parse($absenPengajar->waktu_hadir); @endphp
                                                                 <span
@@ -580,6 +582,76 @@
             if (btnScanner) {
                 btnScanner.style.display = enabled ? 'flex' : 'none';
             }
+        }
+    </script>
+    {{-- SCRIPT UNTUK AJAX SUBMIT ABSENSI TANPA RELOAD --}}
+    <script>
+        function simpanAbsenOtomatis(selectElement) {
+            const form = selectElement.closest('form');
+            const formData = new FormData(form);
+            const url = form.action;
+
+            // Beri efek transparan sedikit saat sedang loading menyimpan
+            selectElement.style.opacity = '0.5';
+
+            fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // Penting agar Laravel tahu ini AJAX
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    selectElement.style.opacity = '1';
+
+                    if (data.success) {
+                        // 1. UBAH WARNA DROPDOWN
+                        // Bersihkan class warna lama
+                        selectElement.classList.remove(
+                            'bg-red-100', 'text-red-800', 'border-red-200',
+                            'bg-green-100', 'text-green-800', 'border-green-200',
+                            'bg-blue-100', 'text-blue-800', 'border-blue-200',
+                            'bg-yellow-100', 'text-yellow-800', 'border-yellow-200'
+                        );
+
+                        // Pasang class warna baru
+                        if (data.status === 'alpa') {
+                            selectElement.classList.add('bg-red-100', 'text-red-800', 'border-red-200');
+                        } else if (data.status === 'hadir') {
+                            selectElement.classList.add('bg-green-100', 'text-green-800', 'border-green-200');
+                        } else if (data.status === 'izin') {
+                            selectElement.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-200');
+                        } else if (data.status === 'sakit') {
+                            selectElement.classList.add('bg-yellow-100', 'text-yellow-800', 'border-yellow-200');
+                        }
+
+                        // 2. UBAH TEKS WAKTU HADIR (Jam & Tanggal)
+                        const tr = selectElement.closest('tr');
+                        const waktuContainer = tr.querySelector('.waktu-container');
+
+                        if (waktuContainer) {
+                            if (data.status === 'hadir' && data.waktu_hadir) {
+                                waktuContainer.innerHTML = `
+                                <span class="block md:inline">${data.tanggal}</span>
+                                <span class="hidden md:inline mx-1 text-gray-400 font-light">|</span>
+                                <span class="block md:inline">${data.waktu_hadir}</span>
+                                <div class="text-[10px] text-gray-400 mt-1">(${data.metode})</div>
+                            `;
+                            } else {
+                                // Jika diganti menjadi alpa/izin/sakit, hilangkan jamnya menjadi strip
+                                waktuContainer.innerHTML = `<span class="text-gray-400">-</span>`;
+                            }
+                        }
+                    } else {
+                        alert(data.message || 'Terjadi kesalahan saat menyimpan data.');
+                    }
+                })
+                .catch(error => {
+                    selectElement.style.opacity = '1';
+                    console.error('Error:', error);
+                    alert('Gagal menghubungi server. Periksa koneksi Anda.');
+                });
         }
     </script>
 </x-app-layout>

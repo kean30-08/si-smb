@@ -118,11 +118,12 @@ class AbsensiController extends Controller
 
         $agenda = Agenda::find($request->agenda_id);
         if (!$agenda || !$this->isAuthorizedPic($agenda)) {
+            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda bukan PIC.']);
             return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk hari ini.');
         }
 
-        // TAMBAHAN KEAMANAN LIBUR
         if ($agenda->is_libur) {
+            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Absensi ditutup! Hari Libur.']);
             return back()->with('error', 'Absensi ditutup! Tanggal ini telah ditetapkan sebagai Hari Libur.');
         }
 
@@ -132,6 +133,17 @@ class AbsensiController extends Controller
             ['agenda_id' => $request->agenda_id, 'pengajar_id' => $request->pengajar_id],
             ['status_kehadiran' => $request->status, 'waktu_hadir' => $waktu]
         );
+
+        // JIKA REQUEST BERASAL DARI AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'status' => $request->status,
+                'waktu_hadir' => $waktu,
+                'tanggal' => Carbon::now()->format('d/m/Y'),
+                'metode' => 'Manual'
+            ]);
+        }
 
         return back()->with('success', 'Status kehadiran Pengajar berhasil diperbarui!');
     }
@@ -149,11 +161,12 @@ class AbsensiController extends Controller
 
         $agenda = Agenda::find($request->agenda_id);
         if (!$agenda || !$this->isAuthorizedPic($agenda)) {
+            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda bukan PIC.']);
             return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk hari ini.');
         }
 
-        // TAMBAHAN KEAMANAN LIBUR
         if ($agenda->is_libur) {
+            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Absensi ditutup! Hari Libur.']);
             return back()->with('error', 'Absensi ditutup! Tanggal ini telah ditetapkan sebagai Hari Libur.');
         }
 
@@ -170,6 +183,17 @@ class AbsensiController extends Controller
                 'waktu_hadir' => $waktu
             ]
         );
+
+        // JIKA REQUEST BERASAL DARI AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'status' => $request->status,
+                'waktu_hadir' => $waktu,
+                'tanggal' => Carbon::now()->format('d/m/Y'),
+                'metode' => 'Manual'
+            ]);
+        }
 
         return back()->with('success', 'Status kehadiran siswa berhasil diperbarui!');
     }
