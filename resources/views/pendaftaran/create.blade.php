@@ -34,7 +34,7 @@
                                 <label class="block font-medium text-sm text-gray-700">Nama Lengkap *</label>
                                 <input type="text" name="nama_lengkap"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic @error('nama_lengkap') border-red-500 @enderror"
-                                    value="{{ old('nama_lengkap') }}" placeholder="Masukkan Nama Lengkap ..." required>
+                                    value="{{ old('nama_lengkap') }}" placeholder="Masukkan Nama Lengkap..." required>
                                 @error('nama_lengkap')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -54,7 +54,7 @@
                                 <label class="block font-medium text-sm text-gray-700">NIK</label>
                                 <input type="text" name="nis"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic @error('nis') border-red-500 @enderror"
-                                    value="{{ old('nis') }}" placeholder="Masukkan NIK dari KK ..." required>
+                                    value="{{ old('nis') }}" placeholder="Masukkan NIK dari KK..." required>
                                 @error('nis')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -94,7 +94,8 @@
                                 <label class="block font-medium text-sm text-gray-700">Tempat Lahir *</label>
                                 <input type="text" name="tempat_lahir"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('tempat_lahir') }}" placeholder="Masukkan Tempat Lahir ..." required>
+                                    value="{{ old('tempat_lahir') }}"
+                                    placeholder="Masukkan Tempat Lahir (Contoh: Tabanan)..." required>
                             </div>
 
                             <div>
@@ -126,7 +127,7 @@
                                 <label class="block font-medium text-sm text-gray-700">Nama Orang Tua/Wali *</label>
                                 <input type="text" name="nama_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('nama_orang_tua') }}" placeholder="Masukkan Nama Orang Tua/Wali ..."
+                                    value="{{ old('nama_orang_tua') }}" placeholder="Masukkan Nama Orang Tua/Wali..."
                                     required>
                             </div>
 
@@ -134,16 +135,17 @@
                                 <label class="block font-medium text-sm text-gray-700">Email</label>
                                 <input type="email" name="email_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    value="{{ old('email_orang_tua') }}" placeholder="(Opsional) Masukkan Email ...">
+                                    value="{{ old('email_orang_tua') }}"
+                                    placeholder="Opsional (Kosongkan Bila Tidak Ada)...">
                             </div>
 
                             <div>
-                                <label class="block font-medium text-sm text-gray-700">No HP / WA Orang Tua/Wali
+                                <label class="block font-medium text-sm text-gray-700">No HP/WA Aktif Orang Tua/Wali
                                     *</label>
                                 <input type="tel" name="nomor_hp_orang_tua"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic @error('nomor_hp_orang_tua') border-red-500 @enderror"
-                                    value="{{ old('nomor_hp_orang_tua') }}"
-                                    placeholder="Masukkan No HP / WA yang aktif ..." required>
+                                    value="{{ old('nomor_hp_orang_tua') }}" placeholder="Contoh: 08123456789..."
+                                    required>
                                 @error('nomor_hp_orang_tua')
                                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
@@ -154,14 +156,13 @@
                                 <label class="block font-medium text-sm text-gray-700">Alamat Lengkap *</label>
                                 <textarea name="alamat" rows="3"
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm placeholder:italic"
-                                    placeholder="Masukkan Alamat Lengkap ..." required>{{ old('alamat') }}</textarea>
+                                    placeholder="Contoh: Jl. Melati No.18, Delod Peken, Kec. Tabanan..." required>{{ old('alamat') }}</textarea>
                             </div>
                         </div>
 
                         <div class="flex items-center justify-end mt-6">
                             {{-- DIUBAH: Batal mengarah ke halaman agenda publik --}}
-                            <a href="{{ route('agenda.index') }}"
-                                class="bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 font-bold py-2.5 px-6 mr-3 rounded-lg shadow-sm transition">Batal</a>
+
                             <button type="submit"
                                 class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm transition">
                                 Kirim Pendaftaran
