@@ -218,13 +218,24 @@
                                                                                             <span
                                                                                                 class="font-medium text-gray-600">
                                                                                                 {{ \Carbon\Carbon::parse($absen->agenda->tanggal)->translatedFormat('d M Y') }}
+
                                                                                                 @if ($absen->agenda->is_libur)
                                                                                                     <span
                                                                                                         class="text-red-500 italic ml-1">(Libur)</span>
+                                                                                                @elseif(isset($absen->is_belum_daftar) && $absen->is_belum_daftar)
+                                                                                                    <span
+                                                                                                        class="text-gray-400 italic ml-1 text-[10px]">(Belum
+                                                                                                        Terdaftar)</span>
                                                                                                 @endif
                                                                                             </span>
 
                                                                                             @php
+                                                                                                $isBelumDaftar =
+                                                                                                    isset(
+                                                                                                        $absen->is_belum_daftar,
+                                                                                                    ) &&
+                                                                                                    $absen->is_belum_daftar;
+
                                                                                                 if (
                                                                                                     $absen->agenda
                                                                                                         ->is_libur
@@ -233,11 +244,18 @@
                                                                                                         'LIBUR';
                                                                                                     $bgStat =
                                                                                                         'bg-gray-100 text-gray-500 border border-gray-200';
+                                                                                                } elseif (
+                                                                                                    $isBelumDaftar
+                                                                                                ) {
+                                                                                                    $teksStatus = '-';
+                                                                                                    $bgStat =
+                                                                                                        'bg-gray-50 text-gray-300 border border-gray-100 shadow-none';
                                                                                                 } else {
                                                                                                     $teksStatus =
                                                                                                         $absen->status_kehadiran;
                                                                                                     $bgStat =
                                                                                                         'bg-gray-200 text-gray-700';
+
                                                                                                     if (
                                                                                                         $teksStatus ==
                                                                                                         'hadir'

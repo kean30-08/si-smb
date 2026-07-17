@@ -38,12 +38,22 @@ class PengajarController extends Controller
 
     public function create()
     {
+        // PROTEKSI: Hanya Admin yang bisa buka form tambah
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Hanya Admin yang berhak menambahkan pengajar baru.');
+        }
+
         $jabatans = Jabatan::all();
         return view('pengajar.create', compact('jabatans'));
     }
 
     public function store(Request $request)
     {
+        // PROTEKSI: Hanya Admin yang bisa proses simpan data
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak!');
+        }
+
         $request->validate([
             'nama_lengkap' => 'required',
             'nomor_hp' => 'required|regex:/^[0-9]+$/',
@@ -83,9 +93,9 @@ class PengajarController extends Controller
 
     public function edit(Pengajar $pengajar)
     {
-        // PROTEKSI: Pengajar biasa tidak boleh masuk ke form edit Kepala Sekolah
-        if (!auth()->user()->isAdmin() && ($pengajar->user_id == 1 || $pengajar->jabatan_id == 2)) {
-            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Anda tidak memiliki izin untuk mengubah data Kepala Sekolah.');
+        // PROTEKSI: Hanya Admin yang boleh masuk ke form edit siapa pun
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Hanya Admin yang berhak mengubah data pengajar.');
         }
 
         $jabatans = Jabatan::all();
@@ -94,9 +104,9 @@ class PengajarController extends Controller
 
     public function update(Request $request, Pengajar $pengajar)
     {
-        // PROTEKSI: Pengajar biasa tidak boleh memproses update data Kepala Sekolah
-        if (!auth()->user()->isAdmin() && ($pengajar->user_id == 1 || $pengajar->jabatan_id == 2)) {
-            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Anda tidak memiliki izin untuk mengubah data Kepala Sekolah.');
+        // PROTEKSI: Hanya Admin yang boleh memproses update
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Hanya Admin yang berhak mengubah data pengajar.');
         }
         
         $rules = [
@@ -105,7 +115,7 @@ class PengajarController extends Controller
             'jabatan_id' => 'required|exists:jabatans,id',
             'alamat' => 'required',
             'nomor_hp' => 'required|regex:/^[0-9]+$/',
-            'status' => 'required|in:aktif,tidak aktif', // Validasi status baru
+            'status' => 'required|in:aktif,tidak aktif',
         ];
 
         // Cegah pengubahan status Kepala Sekolah Utama (Admin)
@@ -131,12 +141,6 @@ class PengajarController extends Controller
                     $userData['password'] = Hash::make($request->password);
                 }
             }
-            
-            // Jika status tidak aktif, hancurkan akses login user dengan mengubah password acak (Opsional untuk keamanan ekstra)
-            if ($request->status == 'tidak aktif') {
-                 // Anda juga bisa menambahkan logika suspend di LoginController, 
-                 // tapi cara termudah memutus akses adalah mereset password / email
-            }
 
             $pengajar->user->update($userData);
 
@@ -155,7 +159,11 @@ class PengajarController extends Controller
 
     public function destroy(Pengajar $pengajar)
     {
-        // PROTEKSI: Kepala Sekolah (Jabatan ID 2 atau User ID 1) TIDAK BOLEH dihapus
+        // PROTEKSI: Hanya Admin yang boleh menghapus (dan tidak boleh hapus diri sendiri/kepsek)
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Hanya Admin yang berhak menghapus data pengajar.');
+        }
+
         if ($pengajar->user_id == 1 || $pengajar->jabatan_id == 2 || $pengajar->id == auth()->user()->pengajar->id) {
             return redirect()->route('pengajar.index')->with('error', 'Akses Ditolak! Akun Anda sendiri atau Kepala Sekolah tidak dapat dihapus.');
         }

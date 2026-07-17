@@ -16,9 +16,9 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                            {{-- CEK APAKAH USER ADALAH ADMIN --}}
-                            @if (auth()->check() && auth()->user()->isAdmin())
-                                {{-- TOGGLE EDIT AKUN LOGIN (Hanya Tampil Untuk Admin) --}}
+
+                            {{-- 
+                                
                                 <div
                                     class="md:col-span-2 border-b pb-4 mb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                     <h3 class="text-lg font-bold text-gray-800">Data Akun Login (Akses Admin)</h3>
@@ -32,7 +32,7 @@
                                     </label>
                                 </div>
 
-                                {{-- KONTANER EMAIL & PASSWORD (Sembunyi by default) --}}
+                                
                                 <div id="kredensialContainer"
                                     class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 {{ old('ubah_kredensial') ? '' : 'hidden' }} bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
                                     <div class="md:col-span-2">
@@ -64,8 +64,8 @@
                                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm placeholder:italic">
                                     </div>
                                 </div>
-                                {{-- END KONTANER EMAIL & PASSWORD --}}
-                            @endif
+                            --}}
+
 
 
                             {{-- BIODATA PENGAJAR --}}
@@ -117,8 +117,7 @@
 
                             <div>
                                 <label class="block font-medium text-sm text-gray-700">Nomor HP / WA</label>
-                                <input type="tel" name="nomor_hp"
-                                    value="{{ old('nomor_hp', $pengajar->nomor_hp) }}"
+                                <input type="tel" name="nomor_hp" value="{{ old('nomor_hp', $pengajar->nomor_hp) }}"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('nomor_hp') border-red-500 @enderror"
                                     required>
                                 @error('nomor_hp')

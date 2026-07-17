@@ -284,21 +284,32 @@ class SiswaController extends Controller
             $hadir = 0; $izin = 0; $sakit = 0; $alpa = 0;
 
             // 3. Gabungkan data Agenda dengan data Absensi siswa
+            // Ambil tanggal daftar siswa (format Y-m-d)
+            $tglDaftar = \Carbon\Carbon::parse($siswa->created_at)->format('Y-m-d');
+
+            // 3. Gabungkan data Agenda dengan data Absensi siswa
             foreach ($agendas as $agenda) {
-                // Cari apakah siswa punya rekam absen di tanggal ini
+                // Cek apakah jadwal ini terjadi sebelum siswa mendaftar
+                $isBelumDaftar = $agenda->tanggal < $tglDaftar;
+
                 $absen = $absensisSiswa->get($agenda->id);
                 
-                // Jika tidak ada data absen (karena libur atau terlewat), default-kan ke alpa
-                $status = $absen ? $absen->status_kehadiran : 'alpa'; 
+                // Jika belum daftar, jangan jadikan Alpa. Berikan status khusus
+                if ($isBelumDaftar) {
+                    $status = '-';
+                } else {
+                    $status = $absen ? $absen->status_kehadiran : 'alpa'; 
+                }
 
                 // Masukkan format objek tiruan agar bisa dibaca oleh view Blade
                 $detailGabungan->push((object)[
                     'agenda' => $agenda,
-                    'status_kehadiran' => $status
+                    'status_kehadiran' => $status,
+                    'is_belum_daftar' => $isBelumDaftar // Lempar flag ini ke View
                 ]);
 
-                // 4. Hitung poin dan rekapitulasi (ABAIKAN JIKA HARI LIBUR)
-                if (!$agenda->is_libur) {
+                // 4. Hitung poin dan rekapitulasi (ABAIKAN JIKA HARI LIBUR ATAU BELUM DAFTAR)
+                if (!$agenda->is_libur && !$isBelumDaftar) {
                     if ($status == 'hadir') $hadir++;
                     elseif ($status == 'izin') $izin++;
                     elseif ($status == 'sakit') $sakit++;

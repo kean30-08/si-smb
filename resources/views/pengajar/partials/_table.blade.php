@@ -92,54 +92,58 @@
 
                             @if ($canManage)
                                 {{-- Tombol Edit --}}
-                                <a href="{{ route('pengajar.edit', $pengajar->id) }}"
-                                    class="text-blue-500 hover:text-blue-700 transition" title="Edit">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                        <path
-                                            d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
-                                    </svg>
-                                </a>
+                                {{-- LOGIKA AKSES EDIT & HAPUS --}}
+                                @if ($isAdmin)
+                                    {{-- Tombol Edit --}}
+                                    <a href="{{ route('pengajar.edit', $pengajar->id) }}"
+                                        class="text-blue-500 hover:text-blue-700 transition" title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                            <path
+                                                d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+                                        </svg>
+                                    </a>
 
-                                {{-- Tombol Hapus (Dilindungi proteksi ganda agar tidak bisa hapus diri sendiri) --}}
-                                @if (
-                                    !(
-                                        $pengajar->user_id == 1 ||
-                                        $pengajar->jabatan_id == 2 ||
-                                        (auth()->user()->pengajar && $pengajar->id == auth()->user()->pengajar->id)
-                                    ))
-                                    <form action="{{ route('pengajar.destroy', $pengajar->id) }}" method="POST"
-                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pengajar ini beserta akun loginnya?');"
-                                        class="m-0">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" onclick="event.stopPropagation();"
-                                            class="text-red-500 hover:text-red-700 transition" title="Hapus">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M3 6h18" />
-                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                <line x1="10" x2="10" y1="11" y2="17" />
-                                                <line x1="14" x2="14" y1="11" y2="17" />
-                                            </svg>
-                                        </button>
-                                    </form>
+                                    {{-- Tombol Hapus (Dilindungi proteksi ganda agar admin tidak bisa hapus diri sendiri/kepsek) --}}
+                                    @if (
+                                        !(
+                                            $pengajar->user_id == 1 ||
+                                            $pengajar->jabatan_id == 2 ||
+                                            (auth()->user()->pengajar && $pengajar->id == auth()->user()->pengajar->id)
+                                        ))
+                                        <form action="{{ route('pengajar.destroy', $pengajar->id) }}" method="POST"
+                                            onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pengajar ini beserta akun loginnya?');"
+                                            class="m-0">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="event.stopPropagation();"
+                                                class="text-red-500 hover:text-red-700 transition" title="Hapus">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M3 6h18" />
+                                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                    <line x1="10" x2="10" y1="11" y2="17" />
+                                                    <line x1="14" x2="14" y1="11" y2="17" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @endif
+                                @else
+                                    {{-- Ikon gembok untuk memberi tahu pengajar biasa bahwa akses terbatas --}}
+                                    <div class="text-gray-300 cursor-not-allowed" title="Akses edit/hapus terbatas">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="18" height="11" x="3" y="11" rx="2"
+                                                ry="2" />
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                        </svg>
+                                    </div>
                                 @endif
-                            @else
-                                {{-- Ikon gembok untuk memberi tahu pengajar biasa bahwa akses terbatas --}}
-                                <div class="text-gray-300 cursor-not-allowed" title="Akses edit/hapus terbatas">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <rect width="18" height="11" x="3" y="11" rx="2"
-                                            ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                </div>
                             @endif
                         </div>
                     </td>
