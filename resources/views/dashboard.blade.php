@@ -1,31 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Dashboard Statistik Utama') }}
-            </h2>
-
-            {{-- DROPDOWN TAHUN AJARAN DI HEADER --}}
-            <div class="inline-flex items-center w-full md:w-auto">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600 hidden md:block" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                {{-- Dropdown ini terhubung ke id="filterForm" di bawah menggunakan atribut html form="id" --}}
-                <select name="tahun_ajaran_id" form="filterForm"
-                    onchange="document.getElementById('filterForm').submit()"
-                    class="bg-indigo-50 text-indigo-800 border border-indigo-200 text-sm font-bold rounded-full px-4 py-1.5 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm w-full md:w-auto outline-none">
-                    <option value="semua" {{ $selected_ta_id === 'semua' ? 'selected' : '' }}>Semua Tahun Ajaran
-                    </option>
-                    @foreach ($tahunAjarans as $ta)
-                        <option value="{{ $ta->id }}" {{ $selected_ta_id == $ta->id ? 'selected' : '' }}>
-                            {{ $ta->tahun_ajaran }} {{ $ta->status == 'aktif' ? '(Sedang Aktif)' : '' }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Dashboard Statistik Utama') }}
+        </h2>
     </x-slot>
 
     <div class="py-8">
@@ -33,11 +10,27 @@
 
             {{-- FILTER DATA DI ATAS DENGAN ALPINE.JS --}}
             <div class="mb-6">
-                {{-- ID form ini wajib ada agar dropdown di header bisa nge-submit form ini --}}
                 <form id="filterForm" action="{{ route('dashboard') }}" method="GET" x-data="{ filterType: '{{ $filter_type }}' }"
-                    class="bg-white p-3 md:p-4 rounded-lg shadow-sm border-l-4 border-indigo-500 w-full lg:w-fit">
+                    class="bg-white p-3 md:p-4 rounded-lg shadow-sm border-l-4 border-indigo-500 w-full xl:w-fit">
 
                     <div class="flex flex-col md:flex-row md:items-center gap-4">
+
+                        {{-- DROPDOWN TAHUN AJARAN (Dipindah ke sini) --}}
+                        <div class="w-full md:w-auto">
+                            <select name="tahun_ajaran_id"
+                                class="bg-indigo-50 text-indigo-800 border-none text-sm font-bold rounded-md px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm w-full outline-none">
+                                <option value="semua" {{ $selected_ta_id === 'semua' ? 'selected' : '' }}>Semua Tahun
+                                    Ajaran</option>
+                                @foreach ($tahunAjarans as $ta)
+                                    <option value="{{ $ta->id }}"
+                                        {{ $selected_ta_id == $ta->id ? 'selected' : '' }}>
+                                        {{ $ta->tahun_ajaran }} {{ $ta->status == 'aktif' ? '(Sedang Aktif)' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="h-8 border-l border-gray-200 hidden md:block"></div>
 
                         {{-- Pilihan Radio Button --}}
                         <div class="flex items-center space-x-4 border-b md:border-b-0 pb-3 md:pb-0 border-gray-100">
@@ -99,6 +92,7 @@
 
             {{-- 1. KARTU RINGKASAN (KPI CARDS) - SEKARANG 3 KOLOM --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- (Bagian Kartu KPI tidak ada yang diubah, biarkan seperti aslinya di file Anda) -->
                 <div
                     class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500 flex items-center justify-between">
                     <div>
@@ -158,7 +152,10 @@
 
                 <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg flex flex-col">
                     <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="text-lg font-bold text-gray-800 mb-6">Grafik Kehadiran Siswa</h3>
+                        <h3 class="text-lg font-bold text-gray-800">Grafik Kehadiran Siswa</h3>
+                        {{-- CATATAN TAMBAHAN: INFO JADWAL LIBUR --}}
+                        <p class="text-xs text-gray-400 italic mb-6 mt-1">*Catatan: Jadwal hari libur tidak ditampilkan
+                            ke dalam grafik ini.</p>
 
                         {{-- Area Grafik --}}
                         <div class="relative h-64 w-full mb-6">

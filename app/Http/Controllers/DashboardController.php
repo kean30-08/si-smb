@@ -22,12 +22,12 @@ class DashboardController extends Controller
         $tahunAjarans = TahunAjaran::orderBy('created_at', 'desc')->get();
 
         // 1. TENTUKAN FILTER TAHUN AJARAN (Dari Dropdown Header)
-        $selected_ta_id = $request->input('tahun_ajaran_id');
+        $selected_ta_id = $request->input('tahun_ajaran_id', 'semua');
         
-        // Jika baru pertama kali buka halaman, default ke Tahun Ajaran Aktif
-        if ($selected_ta_id === null && $tahunAktif) {
-            $selected_ta_id = $tahunAktif->id;
-        }
+        // // Jika baru pertama kali buka halaman, default ke Tahun Ajaran Aktif
+        // if ($selected_ta_id === null && $tahunAktif) {
+        //     $selected_ta_id = $tahunAktif->id;
+        // }
 
         // Jika user memilih "Semua Tahun Ajaran", nilai filternya kita lepas (null)
         $filter_ta_id = ($selected_ta_id === 'semua') ? null : $selected_ta_id;
@@ -41,9 +41,15 @@ class DashboardController extends Controller
             $end_date = Carbon::now()->endOfMonth()->toDateString();
         }
 
+       
         // 3. KARTU RINGKASAN (KPI)
-        $total_siswa = Siswa::where('status', 'aktif')->count();
-        $total_pengajar = Pengajar::count();
+        // Filter total siswa dan pengajar maksimal sampai batas akhir rentang waktu ($end_date)
+        $total_siswa = Siswa::where('status', 'aktif')
+                            ->whereDate('created_at', '<=', $end_date)
+                            ->count();
+                            
+        $total_pengajar = Pengajar::whereDate('created_at', '<=', $end_date)
+                                  ->count();
         
         $total_agenda_harian = Agenda::when($filter_ta_id, function($q) use ($filter_ta_id) {
                                         return $q->where('tahun_ajaran_id', $filter_ta_id);
@@ -96,7 +102,13 @@ class DashboardController extends Controller
                                  ->distinct('siswa_id')
                                  ->count('siswa_id');
             
-            $alpa_count = max(0, $total_siswa - ($hadir_count + $izin_count + $sakit_count));
+            // HITUNG DINAMIS: Jumlah siswa aktif yang terdaftar HINGGA tanggal agenda ini berlangsung
+            $siswa_aktif_saat_itu = Siswa::where('status', 'aktif')
+                                         ->whereDate('created_at', '<=', $tanggal)
+                                         ->count();
+
+            // Rumus Alpa menggunakan total siswa pada HARI ITU, bukan total siswa saat ini
+            $alpa_count = max(0, $siswa_aktif_saat_itu - ($hadir_count + $izin_count + $sakit_count));
 
             $data_hadir[] = $hadir_count;
             $data_izin[]  = $izin_count;
