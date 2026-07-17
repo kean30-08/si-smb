@@ -126,7 +126,7 @@
             </div>
 
             <div class="nama-siswa">
-                {{ strtoupper($siswa->nama_panggilan ?? $siswa->nama_lengkap) }}
+                {{ strtoupper($siswa->nama_lengkap) }}
             </div>
         </div>
     @endforeach
