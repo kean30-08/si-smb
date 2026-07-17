@@ -80,23 +80,7 @@
                 </div>
 
                 <div class="p-4 sm:p-6 text-gray-900">
-                    {{-- BANNER HARI LIBUR --}}
-                    @if ($isLibur)
-                        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
-                            <div class="flex items-center font-bold mb-1">
-                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Pemberitahuan Hari Libur
-                            </div>
-                            <p class="text-sm">
-                                Kegiatan pada tanggal ini ditetapkan sebagai Hari Libur. Sistem secara otomatis
-                                menonaktifkan fitur absensi.
-                            </p>
-                        </div>
-                    @endif
+
                     {{-- INFORMASI TAHUN AJARAN & PERINGATAN BEDA TAHUN --}}
                     @php
                         $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
@@ -134,6 +118,23 @@
                                     Tanggal ini berada pada <strong>Tahun Ajaran {{ $agendaTa->tahun_ajaran }}</strong>.
                                     Anda <strong>tidak dapat</strong> mengubah data absensi ini karena sistem saat ini
                                     berada pada Tahun Ajaran {{ $tahunAktif->tahun_ajaran }}.
+                                </p>
+                            </div>
+                        @endif
+                        {{-- BANNER HARI LIBUR --}}
+                        @if ($isLibur)
+                            <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-700 rounded shadow-sm">
+                                <div class="flex items-center font-bold mb-1">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    Pemberitahuan Hari Libur
+                                </div>
+                                <p class="text-sm">
+                                    Kegiatan pada tanggal ini ditetapkan sebagai Hari Libur. Sistem secara otomatis
+                                    membuat status absensi menjadi <strong>LIBUR</strong>.
                                 </p>
                             </div>
                         @endif
@@ -317,7 +318,7 @@
                                                         @if ($isLibur)
                                                             {{-- TAMPILAN JIKA HARI LIBUR --}}
                                                             <div
-                                                                class="px-3 py-1 rounded-full text-xs font-bold shadow-sm text-center bg-red-100 text-red-800 border border-red-200">
+                                                                class="px-3 py-1 rounded-full text-xs font-bold shadow-sm text-center bg-gray-100 text-gray-800 border border-gray-200">
                                                                 LIBUR
                                                             </div>
                                                         @elseif ($isPic)
