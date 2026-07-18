@@ -17,11 +17,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
 
-                            {{-- 
-                                
+                            
+                                {{-- EMAIL DAN PASSWORD PENGAJAR --}}
                                 <div
                                     class="md:col-span-2 border-b pb-4 mb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                                    <h3 class="text-lg font-bold text-gray-800">Data Akun Login (Akses Admin)</h3>
+                                    <h3 class="text-lg font-bold text-gray-800">Data Akun Login</h3>
                                     <label
                                         class="inline-flex items-center cursor-pointer mt-2 sm:mt-0 bg-yellow-100 px-3 py-1.5 rounded-md border border-yellow-300">
                                         <input type="checkbox" name="ubah_kredensial" id="toggleKredensial"
@@ -64,7 +64,7 @@
                                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm placeholder:italic">
                                     </div>
                                 </div>
-                            --}}
+                            
 
 
 
