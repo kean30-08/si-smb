@@ -4,10 +4,13 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Histori & Statistik Kelas') }}
             </h2>
-            <a href="{{ route('kelas.index') }}"
-                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-sm transition shadow-sm">
-                &larr; Kembali ke Kelas
-            </a>
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
+                <a href="{{ route('kelas.index') }}"
+                    class="w-full sm:w-auto text-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    Kembali ke Daftar Kelas
+                </a>
+            </div>
+            
         </div>
     </x-slot>
 
@@ -82,33 +85,38 @@
 
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-sm text-left text-gray-600">
-                                        <thead
-                                            class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+                                        <thead class="hidden md:table-header-group text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                                             <tr>
-                                                <th scope="col" class="px-6 py-3 text-center">Total Murid Saat Ini
-                                                </th>
-                                                <th scope="col" class="px-6 py-3 text-center text-blue-600">Murid
-                                                    Tambahan (Baru)</th>
-                                                <th scope="col" class="px-6 py-3 text-center text-green-600">Status
-                                                    Aktif</th>
-                                                <th scope="col" class="px-6 py-3 text-center text-red-600">Status
-                                                    Tidak Aktif / Lulus</th>
+                                                <th scope="col" class="px-6 py-3 text-center">Total Murid Saat Ini</th>
+                                                <th scope="col" class="px-6 py-3 text-center text-blue-600">Murid Tambahan (Baru)</th>
+                                                <th scope="col" class="px-6 py-3 text-center text-green-600">Status Aktif</th>
+                                                <th scope="col" class="px-6 py-3 text-center text-red-600">Status Tidak Aktif / Lulus</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr class="bg-white hover:bg-gray-50 transition border-b border-gray-50">
-                                                <td class="px-6 py-4 font-bold text-gray-900 text-center text-lg">
-                                                    {{ $kelas->jumlah_murid }}
+                                        <tbody class="block md:table-row-group">
+                                            {{-- Jadikan Grid 2x2 di Mobile --}}
+                                            <tr class="grid grid-cols-2 md:table-row bg-white hover:bg-gray-50 transition border-b border-gray-50 p-4 md:p-0 gap-y-4">
+                                                
+                                                <td class="block md:table-cell px-2 md:px-6 py-2 md:py-4 text-center md:border-none border-b border-dashed border-gray-200 md:border-b-0">
+                                                    <div class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1">Total Murid</div>
+                                                    <div class="font-bold text-gray-900 text-xl md:text-lg">{{ $kelas->jumlah_murid }}</div>
                                                 </td>
-                                                <td class="px-6 py-4 font-bold text-blue-600 text-center text-lg">
-                                                    +{{ $kelas->murid_tambahan }}
+                                                
+                                                <td class="block md:table-cell px-2 md:px-6 py-2 md:py-4 text-center md:border-none border-b border-dashed border-gray-200 md:border-b-0">
+                                                    <div class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1">Murid Tambahan</div>
+                                                    <div class="font-bold text-blue-600 text-xl md:text-lg">+{{ $kelas->murid_tambahan }}</div>
                                                 </td>
-                                                <td class="px-6 py-4 font-bold text-green-600 text-center text-lg">
-                                                    {{ $kelas->murid_aktif }}
+                                                
+                                                <td class="block md:table-cell px-2 md:px-6 py-2 md:py-4 text-center">
+                                                    <div class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1">Status Aktif</div>
+                                                    <div class="font-bold text-green-600 text-xl md:text-lg">{{ $kelas->murid_aktif }}</div>
                                                 </td>
-                                                <td class="px-6 py-4 font-bold text-red-500 text-center text-lg">
-                                                    {{ $kelas->murid_tidak_aktif }}
+                                                
+                                                <td class="block md:table-cell px-2 md:px-6 py-2 md:py-4 text-center">
+                                                    <div class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1">Tdk Aktif/Lulus</div>
+                                                    <div class="font-bold text-red-500 text-xl md:text-lg">{{ $kelas->murid_tidak_aktif }}</div>
                                                 </td>
+                                                
                                             </tr>
                                         </tbody>
                                     </table>

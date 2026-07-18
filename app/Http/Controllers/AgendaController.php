@@ -305,6 +305,6 @@ class AgendaController extends Controller
 
         Agenda::where('tanggal', $tanggal)->delete();
         return redirect()->route('agenda.index')
-            ->with('success', 'Semua agenda pada ' . Carbon::parse($tanggal)->translatedFormat('d F Y') . ' berhasil dihapus! (' . $count . ' kegiatan)');
+            ->with('success', 'Semua agenda pada ' . Carbon::parse($tanggal)->translatedFormat('d F Y') . ' berhasil dihapus.');
     }
 }

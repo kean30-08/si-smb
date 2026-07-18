@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
+            <div class="w-full sm:w-auto">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     {{ __('Daftar Kelas') }}
                 </h2>
@@ -18,8 +18,9 @@
                     TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
                 </p>
             </div>
-            <div class="w-full sm:w-auto flex gap-2">
-                {{-- TOMBOL HISTORI KELAS BARU --}}
+            
+            {{-- KUMPULAN TOMBOL KELAS --}}
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
                 <a href="{{ route('kelas.histori') }}"
                     class="w-full sm:w-auto text-center bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition">
                     Histori Kelas
@@ -29,7 +30,6 @@
                     + Tambah Kelas
                 </a>
             </div>
-
         </div>
     </x-slot>
 

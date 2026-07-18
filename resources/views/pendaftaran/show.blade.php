@@ -1,14 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Detail Pendaftaran') }}: {{ $pendaftaran->nama_panggilan }}
-            </h2>
-            <a href="{{ route('kelola_pendaftaran.index') }}"
-                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-sm transition">
-                &larr; Kembali
-            </a>
-        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        {{ __('Detail Pendaftaran') }}: {{ $pendaftaran->nama_panggilan }}
+    </h2>
+    
+    <a href="{{ route('kelola_pendaftaran.index') }}"
+        class="w-full sm:w-auto justify-center text-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition shadow-sm">
+        &larr; Kembali
+    </a>
+</div>
     </x-slot>
 
     <div class="py-12">

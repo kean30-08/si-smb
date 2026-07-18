@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="w-full lg:w-auto">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     {{ __('Daftar Siswa') }}
                 </h2>
@@ -19,27 +19,25 @@
                 </p>
             </div>
 
-            {{-- TAMBAHKAN flex-wrap AGAR RAPI DI LAYAR KECIL --}}
-            <div class="flex flex-wrap items-center gap-2">
-
-                {{-- TOMBOL BARU: CETAK KARTU (MURID BARU SAJA) --}}
+            {{-- KUMPULAN TOMBOL: Kolom penuh di HP, baris di layar besar --}}
+            <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap items-center gap-2 mt-2 lg:mt-0">
                 <a href="{{ route('siswa.cetakKartuBaru') }}" target="_blank"
-                    class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                    class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
                     Cetak Kartu (Murid Baru)
                 </a>
 
-                {{-- TOMBOL LAMA --}}
                 <a href="{{ route('siswa.cetakBarcodeMassal') }}" target="_blank"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                    class="w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
                     Cetak Semua Barcode
                 </a>
 
                 <a href="{{ route('siswa.cetakMassal') }}" target="_blank"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                    class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
                     Cetak Semua Kartu
                 </a>
+                
                 <a href="{{ route('siswa.create') }}"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                    class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
                     + Tambah Siswa
                 </a>
             </div>

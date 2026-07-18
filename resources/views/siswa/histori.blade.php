@@ -83,211 +83,158 @@
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Aksi</th>
                                                 </tr>
                                             </thead>
-                                            @foreach ($items as $histori)
-                                                <tbody class="divide-y divide-gray-100" x-data="{ editing: false, detailBuka: false }">
+                                           @foreach ($items as $histori)
+                                                <tbody class="divide-y divide-gray-100 block md:table-row-group" x-data="{ editing: false, detailBuka: false }">
+                                                    
+                                                    {{-- BARIS DATA UTAMA --}}
+                                                    {{-- Ubah tr menjadi grid grid-cols-2 khusus di tampilan mobile --}}
+                                                    <tr class="grid grid-cols-2 md:table-row hover:bg-gray-50 transition border-b border-gray-200 p-3 md:p-0">
 
-                                                    {{-- ALPINE JS STATE UNTUK INLINE EDIT --}}
-                                                    <tr
-                                                        class="block md:table-row hover:bg-gray-50 transition border-b border-gray-200 p-2">
+                                                        {{-- 1. Tahun Ajaran (Penuh di atas) --}}
+                                                        <td class="order-1 col-span-2 block md:table-cell py-2 md:py-3 px-4 font-bold text-indigo-700 whitespace-nowrap border-b md:border-none border-dashed border-gray-200 mb-2 md:mb-0">
+                                                            <span class="md:hidden text-xs text-gray-400 uppercase">Tahun Ajaran: </span>
+                                                            <span x-show="!editing">{{ $histori->tahunAjaran->tahun_ajaran ?? '-' }}</span>
 
-                                                        {{-- Gunakan 'block md:table-cell' untuk setiap kolom --}}
-                                                        <td
-                                                            class="block md:table-cell py-3 px-4 font-bold text-indigo-700 whitespace-nowrap border-b md:border-none">
-                                                            <span
-                                                                class="md:hidden text-[10px] text-gray-400 uppercase">Tahun
-                                                                Ajaran: </span>
-                                                            <span
-                                                                x-show="!editing">{{ $histori->tahunAjaran->tahun_ajaran ?? '-' }}</span>
-
-                                                            {{-- Form Edit Inline (Sesuaikan lebar di HP) --}}
+                                                            {{-- Form Edit Inline (Disembunyikan/Komentar sementara) --}}
                                                             <form x-show="editing"
                                                                 action="{{ route('histori_siswa.update', $histori->id) }}"
                                                                 method="POST" class="flex flex-wrap items-center gap-2"
                                                                 x-cloak>
                                                                 @csrf @method('PUT')
-                                                                <select name="kelas_id"
-                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
+                                                                <select name="kelas_id" class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
                                                                     @foreach (\App\Models\Kelas::all() as $k)
-                                                                        <option value="{{ $k->id }}"
-                                                                            {{ $histori->kelas_id == $k->id ? 'selected' : '' }}>
-                                                                            {{ $k->nama_kelas }}</option>
+                                                                        <option value="{{ $k->id }}" {{ $histori->kelas_id == $k->id ? 'selected' : '' }}>
+                                                                            {{ $k->nama_kelas }}
+                                                                        </option>
                                                                     @endforeach
                                                                 </select>
-                                                                <select name="tahun_ajaran_id"
-                                                                    class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
+                                                                <select name="tahun_ajaran_id" class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
                                                                     @foreach ($semuaTahunAjaran as $ta)
-                                                                        <option value="{{ $ta->id }}"
-                                                                            {{ $histori->tahun_ajaran_id == $ta->id ? 'selected' : '' }}>
-                                                                            {{ $ta->tahun_ajaran }}</option>
+                                                                        <option value="{{ $ta->id }}" {{ $histori->tahun_ajaran_id == $ta->id ? 'selected' : '' }}>
+                                                                            {{ $ta->tahun_ajaran }}
+                                                                        </option>
                                                                     @endforeach
                                                                 </select>
-                                                                <button type="submit"
-                                                                    class="p-1 bg-green-500 text-white rounded">Simpan</button>
+                                                                <button type="submit" class="p-1 bg-green-500 text-white rounded text-xs">Simpan</button>
+                                                                <button type="button" @click="editing = false" class="p-1 bg-gray-400 text-white rounded text-xs">Batal</button>
                                                             </form>
                                                         </td>
 
-                                                        <td
-                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium">
-                                                            <span
-                                                                class="md:hidden font-bold text-gray-400 text-xs">Hadir:
-                                                            </span> {{ $histori->hadir }}
+                                                        {{-- 2. Kiri Atas: Hadir --}}
+                                                        <td class="order-2 block md:table-cell py-1.5 md:py-3 px-4 text-sm md:text-center font-medium">
+                                                            <span class="md:hidden font-bold text-gray-400 text-xs">Hadir: </span> 
+                                                            {{ $histori->hadir }}
                                                         </td>
-                                                        <td
-                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium">
-                                                            <span
-                                                                class="md:hidden font-bold text-gray-400 text-xs">Sakit:
-                                                            </span> {{ $histori->sakit }}
+                                                        
+                                                        {{-- 4. Kiri Bawah: Sakit --}}
+                                                        <td class="order-4 block md:table-cell py-1.5 md:py-3 px-4 text-sm md:text-center font-medium">
+                                                            <span class="md:hidden font-bold text-gray-400 text-xs">Sakit: </span> 
+                                                            {{ $histori->sakit }}
                                                         </td>
-                                                        <td
-                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium">
-                                                            <span
-                                                                class="md:hidden font-bold text-gray-400 text-xs">Izin:
-                                                            </span> {{ $histori->izin }}
-                                                        </td>
-                                                        <td
-                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-medium text-red-500">
-                                                            <span
-                                                                class="md:hidden font-bold text-gray-400 text-xs">Alpa:
-                                                            </span> {{ $histori->alpa }}
-                                                        </td>
-                                                        <td
-                                                            class="block md:table-cell py-1 md:py-3 px-4 text-sm md:text-center font-black text-indigo-600">
-                                                            <span
-                                                                class="md:hidden font-bold text-gray-400 text-xs">Poin:
-                                                            </span> {{ $histori->poin }} Pts
+                                                        
+                                                        {{-- 3. Kanan Atas: Izin --}}
+                                                        <td class="order-3 block md:table-cell py-1.5 md:py-3 px-4 text-sm md:text-center font-medium">
+                                                            <span class="md:hidden font-bold text-gray-400 text-xs">Izin: </span> 
+                                                            {{ $histori->izin }}
                                                         </td>
 
-                                                        <td
-                                                            class="block md:table-cell py-3 px-4 text-center whitespace-nowrap">
-                                                            <div class="flex justify-start md:justify-center items-center gap-4"
-                                                                x-show="!editing">
+                                                        {{-- 5. Kanan Bawah: Alpa --}}
+                                                        <td class="order-5 block md:table-cell py-1.5 md:py-3 px-4 text-sm md:text-center font-medium text-red-500">
+                                                            <span class="md:hidden font-bold text-gray-400 text-xs">Alpa: </span> 
+                                                            {{ $histori->alpa }}
+                                                        </td>
+
+                                                        {{-- 6. Total Poin (Bawah Penuh) --}}
+                                                        <td class="order-6 col-span-2 block md:table-cell py-2 md:py-3 px-4 text-sm md:text-center font-black text-indigo-600 border-t md:border-none border-dashed border-gray-200 mt-2 md:mt-0">
+                                                            <span class="md:hidden font-bold text-gray-400 text-xs">Total Poin: </span> 
+                                                            {{ $histori->poin }} <span class="text-xs font-normal text-gray-400">Pts</span>
+                                                        </td>
+
+                                                        {{-- 7. Tombol Aksi (Paling Bawah Penuh) --}}
+                                                        <td class="order-7 col-span-2 block md:table-cell py-2 md:py-3 px-4 text-center whitespace-nowrap mb-1 md:mb-0">
+                                                            <div class="flex flex-col md:flex-row justify-start md:justify-center items-center gap-2 w-full" x-show="!editing">
+                                                                
+                                                                {{-- Tombol Lihat Rincian (Disamakan dgn pengajar) --}}
                                                                 <button type="button" @click="detailBuka = !detailBuka"
-                                                                    class="text-indigo-500 flex items-center gap-1">
-                                                                    <svg class="w-4 h-4" fill="none"
-                                                                        stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round"
-                                                                            stroke-linejoin="round" stroke-width="2"
-                                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                        <path stroke-linecap="round"
-                                                                            stroke-linejoin="round" stroke-width="2"
-                                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    class="text-indigo-500 hover:text-indigo-800 transition bg-indigo-100 px-3 py-2 md:py-1.5 rounded-full inline-flex items-center gap-1 w-full md:w-auto justify-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                                                        <circle cx="12" cy="12" r="3" />
                                                                     </svg>
-                                                                    <span class="md:hidden text-xs">Lihat Rincian</span>
+                                                                    <span class="text-xs font-bold">Lihat Rincian</span>
                                                                 </button>
+                                                                
+                                                                {{-- Tombol Edit (Dikomentari Dulu) --}}
+                                                                {{-- 
                                                                 <button type="button" @click="editing = true"
-                                                                    class="text-blue-500" title="Edit">Edit</button>
+                                                                    class="text-blue-500 hover:text-blue-700 transition px-3 py-2 md:py-1.5 bg-blue-50 md:bg-transparent rounded-full w-full md:w-auto font-bold text-xs" title="Edit">
+                                                                    Edit Histori
+                                                                </button> 
+                                                                --}}
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                    {{-- BARIS RINCIAN BULANAN (Tersembunyi secara default) --}}
-                                                    <tr x-show="detailBuka" x-cloak
-                                                        class="bg-indigo-50 border-b border-indigo-200">
-                                                        <td colspan="7" class="py-4 px-6">
-                                                            <div class="text-sm text-gray-700">
-                                                                <h4
-                                                                    class="font-bold mb-3 text-indigo-800 flex items-center">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                        class="h-4 w-4 mr-1" fill="none"
-                                                                        viewBox="0 0 24 24" stroke="currentColor"
-                                                                        stroke-width="2">
-                                                                        <path stroke-linecap="round"
-                                                                            stroke-linejoin="round"
-                                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+
+                                                    {{-- BARIS RINCIAN BULANAN --}}
+                                                    <tr x-show="detailBuka" x-cloak class="block md:table-row bg-gray-50 border-b border-gray-200">
+                                                        <td colspan="7" class="block md:table-cell py-4 px-4 md:px-6">
+                                                            <div class="text-sm text-gray-700 w-full overflow-x-auto">
+                                                                <h4 class="font-bold mb-3 text-indigo-800 flex items-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                                     </svg>
                                                                     Rincian Kehadiran per Bulan
                                                                 </h4>
 
                                                                 @if (isset($histori->detail_absensi) && $histori->detail_absensi->isEmpty())
-                                                                    <p
-                                                                        class="italic text-gray-500 bg-white p-3 rounded border">
-                                                                        Belum ada data absensi yang tercatat untuk tahun
-                                                                        ajaran ini.</p>
+                                                                    <p class="italic text-gray-500 bg-white p-3 rounded border">
+                                                                        Belum ada data absensi yang tercatat untuk tahun ajaran ini.
+                                                                    </p>
                                                                 @else
-                                                                    <div
-                                                                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                                         @foreach ($histori->detail_absensi as $bulan => $absensiBulan)
-                                                                            <div
-                                                                                class="bg-white p-3 rounded shadow-sm border border-indigo-100">
-                                                                                <div
-                                                                                    class="font-bold text-indigo-600 border-b pb-1 mb-2">
-                                                                                    {{ $bulan }}</div>
+                                                                            <div class="bg-white p-3 rounded shadow-sm border border-gray-200">
+                                                                                <div class="font-bold text-indigo-600 border-b pb-1 mb-2">{{ $bulan }}</div>
                                                                                 <ul class="space-y-1">
                                                                                     @foreach ($absensiBulan as $absen)
-                                                                                        <li
-                                                                                            class="flex justify-between items-center text-xs p-1 hover:bg-gray-50 rounded">
-                                                                                            <span
-                                                                                                class="font-medium text-gray-600">
+                                                                                        <li class="flex justify-between items-center text-xs p-1 hover:bg-gray-50 rounded">
+                                                                                            <span class="font-medium text-gray-600">
                                                                                                 {{ \Carbon\Carbon::parse($absen->agenda->tanggal)->translatedFormat('d M Y') }}
-
+                                                                                                
                                                                                                 @if ($absen->agenda->is_libur)
-                                                                                                    <span
-                                                                                                        class="text-red-500 italic ml-1">(Libur)</span>
+                                                                                                    <span class="text-red-500 italic ml-1">(Libur)</span>
                                                                                                 @elseif(isset($absen->is_belum_daftar) && $absen->is_belum_daftar)
-                                                                                                    <span
-                                                                                                        class="text-gray-400 italic ml-1 text-[10px]">(Belum
-                                                                                                        Terdaftar)</span>
+                                                                                                    <span class="text-gray-400 italic ml-1 text-[10px]">(Belum Terdaftar)</span>
                                                                                                 @endif
                                                                                             </span>
 
                                                                                             @php
-                                                                                                $isBelumDaftar =
-                                                                                                    isset(
-                                                                                                        $absen->is_belum_daftar,
-                                                                                                    ) &&
-                                                                                                    $absen->is_belum_daftar;
+                                                                                                $isBelumDaftar = isset($absen->is_belum_daftar) && $absen->is_belum_daftar;
 
-                                                                                                if (
-                                                                                                    $absen->agenda
-                                                                                                        ->is_libur
-                                                                                                ) {
-                                                                                                    $teksStatus =
-                                                                                                        'LIBUR';
-                                                                                                    $bgStat =
-                                                                                                        'bg-gray-100 text-gray-500 border border-gray-200';
-                                                                                                } elseif (
-                                                                                                    $isBelumDaftar
-                                                                                                ) {
+                                                                                                if ($absen->agenda->is_libur) {
+                                                                                                    $teksStatus = 'LIBUR';
+                                                                                                    $bgStat = 'bg-gray-100 text-gray-500 border border-gray-200';
+                                                                                                } elseif ($isBelumDaftar) {
                                                                                                     $teksStatus = '-';
-                                                                                                    $bgStat =
-                                                                                                        'bg-gray-50 text-gray-300 border border-gray-100 shadow-none';
+                                                                                                    $bgStat = 'bg-gray-50 text-gray-300 border border-gray-100 shadow-none';
                                                                                                 } else {
-                                                                                                    $teksStatus =
-                                                                                                        $absen->status_kehadiran;
-                                                                                                    $bgStat =
-                                                                                                        'bg-gray-200 text-gray-700';
+                                                                                                    $teksStatus = $absen->status_kehadiran;
+                                                                                                    $bgStat = 'bg-gray-200 text-gray-700';
 
-                                                                                                    if (
-                                                                                                        $teksStatus ==
-                                                                                                        'hadir'
-                                                                                                    ) {
-                                                                                                        $bgStat =
-                                                                                                            'bg-green-100 text-green-700';
-                                                                                                    } elseif (
-                                                                                                        $teksStatus ==
-                                                                                                        'sakit'
-                                                                                                    ) {
-                                                                                                        $bgStat =
-                                                                                                            'bg-yellow-100 text-yellow-700';
-                                                                                                    } elseif (
-                                                                                                        $teksStatus ==
-                                                                                                        'izin'
-                                                                                                    ) {
-                                                                                                        $bgStat =
-                                                                                                            'bg-blue-100 text-blue-700';
-                                                                                                    } elseif (
-                                                                                                        $teksStatus ==
-                                                                                                        'alpa'
-                                                                                                    ) {
-                                                                                                        $bgStat =
-                                                                                                            'bg-red-100 text-red-700';
+                                                                                                    if ($teksStatus == 'hadir') {
+                                                                                                        $bgStat = 'bg-green-100 text-green-700';
+                                                                                                    } elseif ($teksStatus == 'sakit') {
+                                                                                                        $bgStat = 'bg-yellow-100 text-yellow-700';
+                                                                                                    } elseif ($teksStatus == 'izin') {
+                                                                                                        $bgStat = 'bg-blue-100 text-blue-700';
+                                                                                                    } elseif ($teksStatus == 'alpa') {
+                                                                                                        $bgStat = 'bg-red-100 text-red-700';
                                                                                                     }
                                                                                                 }
                                                                                             @endphp
-                                                                                            <span
-                                                                                                class="px-2 py-0.5 rounded font-bold uppercase {{ $bgStat }}">
+                                                                                            <span class="px-2 py-0.5 rounded font-bold uppercase {{ $bgStat }}">
                                                                                                 {{ $teksStatus }}
                                                                                             </span>
-
                                                                                         </li>
                                                                                     @endforeach
                                                                                 </ul>

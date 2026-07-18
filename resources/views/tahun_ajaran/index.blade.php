@@ -17,6 +17,14 @@
                 TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
             </p>
         </div>
+        @if (auth()->user()->isAdmin())
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
+                <a href="{{ route('tahun_ajaran.create') }}"
+                    class="w-full sm:w-auto text-center bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    + Tambah Tahun Ajaran
+                </a>
+            </div>
+        @endif
     </x-slot>
 
     <div class="py-12" x-data="{ showModalAktif: false, activeFormId: '', confirmInput: '', showModalDelete: false, deleteFormId: '', deleteTaName: '', deleteAgendaCount: 0, confirmDeleteInput: '' }">
@@ -29,12 +37,8 @@
                         <h3 class="text-lg font-bold text-gray-800">Daftar Tahun Ajaran</h3>
 
                         {{-- TOMBOL TAMBAH DATA HANYA UNTUK ADMIN --}}
-                        @if (auth()->user()->isAdmin())
-                            <a href="{{ route('tahun_ajaran.create') }}"
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-sm transition shadow-sm">
-                                + Tambah Data
-                            </a>
-                        @endif
+                        
+                            
                     </div>
 
                     <div class="w-full">
