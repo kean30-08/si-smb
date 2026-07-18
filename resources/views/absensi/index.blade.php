@@ -21,7 +21,7 @@
             {{-- TOMBOL SCANNER HANYA MUNCUL JIKA USER ADALAH PIC / ADMIN --}}
             <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 {{-- TOMBOL INPUT GRID (BARU) --}}
-                <a href="{{ route('absensi.grid') }}"
+                {{-- <a href="{{ route('absensi.grid') }}"
                     class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -32,8 +32,8 @@
                         <path d="M9 3v18" />
                         <path d="M15 3v18" />
                     </svg>
-                    Input Cepat (Grid)
-                </a>
+                    Input Cepat (Perbulan)
+                </a> --}}
 
                 {{-- TOMBOL SCANNER --}}
                 @if ($type == 'siswa' && $selectedAgenda && $isPic && !$isLibur)
