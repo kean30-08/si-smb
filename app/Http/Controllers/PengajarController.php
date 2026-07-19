@@ -191,11 +191,31 @@ class PengajarController extends Controller
             ->get();
 
         // Tanggal pengajar didaftarkan ke sistem (Agar agenda di masa lalu sebelum dia masuk tidak ikut dihitung)
+        // Tanggal pengajar didaftarkan ke sistem (Agar agenda di masa lalu sebelum dia masuk tidak ikut dihitung)
         $tglDaftar = \Carbon\Carbon::parse($pengajar->created_at)->format('Y-m-d');
 
+        // ==========================================
+        // LOGIKA BARU: BATAS AKHIR AGENDA
+        // ==========================================
+        $tglBatasAkhir = \Carbon\Carbon::now()->format('Y-m-d'); // Default: Batas akhir adalah hari ini
+
+        if ($pengajar->status == 'tidak aktif') {
+            $agendaPernahAbsen = array_keys($absensisMap); // Ambil ID agenda yang dia pernah absen
+            
+            if (count($agendaPernahAbsen) > 0) {
+                // Jika pernah absen, cari tanggal paling akhir dari rekam jejak tersebut
+                $tglBatasAkhir = $agendas->whereIn('id', $agendaPernahAbsen)->max('tanggal');
+            } else {
+                // Jika belum pernah absen sama sekali, batasnya berhenti di hari dia mendaftar
+                $tglBatasAkhir = $tglDaftar; 
+            }
+        }
+        // ==========================================
+
         // 3. Kelompokkan agenda berdasarkan Tahun Ajaran
-        $historisGrouped = $agendas->filter(function($agenda) use ($tglDaftar) {
-            return $agenda->tanggal >= $tglDaftar; // Hanya tampilkan jadwal setelah dia bergabung
+        $historisGrouped = $agendas->filter(function($agenda) use ($tglDaftar, $tglBatasAkhir) {
+            // Tampilkan agenda sejak dia daftar, HINGGA batas akhir yang ditentukan di atas
+            return $agenda->tanggal >= $tglDaftar && $agenda->tanggal <= $tglBatasAkhir;
         })->groupBy(function($agenda) {
             return $agenda->tahunAjaran->tahun_ajaran;
         });
