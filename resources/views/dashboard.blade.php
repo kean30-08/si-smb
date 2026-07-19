@@ -194,8 +194,7 @@
                             </svg>
                             <h3 class="text-lg font-bold text-indigo-800">Peringkat Kehadiran Siswa</h3>
                         </div>
-                        <p class="text-xs text-indigo-600 mb-4">Jika terdapat poin yang sama, peringkat akan ditentukan
-                            berdasarkan rata-rata kedatangan paling awal.</p>
+                        <p class="text-xs text-indigo-600 mb-4">Untuk setiap kehadiran dihitung 5 poin, untuk sakit/izin dihitung 1 poin, dan alpa dihitung 0 poin</p>
 
                         <ul class="divide-y divide-indigo-100">
                             @foreach ($top_siswas as $index => $siswa)
