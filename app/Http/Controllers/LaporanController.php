@@ -162,7 +162,21 @@ class LaporanController extends Controller
             return Carbon::parse($date)->format('Y-m'); 
         });
 
-        $pengajars = Pengajar::orderBy('nama_lengkap', 'asc')->get();
+        // 1. Ambil semua ID Agenda pada bulan laporan ini
+        $agendaIds = $agendas->pluck('id')->toArray();
+        
+        // 2. Cari ID pengajar (aktif maupun tidak) yang pernah diabsen pada agenda-agenda di bulan ini
+        $pengajarPernahAbsen = \App\Models\AbsensiPengajar::whereIn('agenda_id', $agendaIds)
+                                ->pluck('pengajar_id')
+                                ->toArray();
+
+        // 3. Tarik data pengajar: Yang AKTIF, ditambah yang TIDAK AKTIF tapi masuk dalam array $pengajarPernahAbsen
+        $pengajars = Pengajar::where('status', 'aktif')
+            ->orWhereIn('id', $pengajarPernahAbsen)
+            ->orderBy('nama_lengkap', 'asc')
+            ->get();
+
+        // 4. Ambil semua absensi pengajar: Yang AKTIF, ditambah yang TIDAK AKTIF tapi masuk dalam array $pengajarPernahAbsen
 
         foreach ($pengajars as $pengajar) {
             $absensi_pengajar = AbsensiPengajar::where('pengajar_id', $pengajar->id)

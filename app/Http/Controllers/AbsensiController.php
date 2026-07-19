@@ -94,19 +94,27 @@ class AbsensiController extends Controller
             return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab', 'isPic', 'isLibur', 'summary'));
             
         // TAB PENGAJAR
+        // TAB PENGAJAR
         } else {
-            $pengajars = Pengajar::orderBy('nama_lengkap', 'asc')
+            // Pindahkan query ini ke atas untuk mengambil ID pengajar yang sudah terlanjur absen hari itu
+            $absensiPengajars = $agenda_id ? AbsensiPengajar::where('agenda_id', $agenda_id)->get() : collect();
+            $pengajarYgSudahAbsen = $absensiPengajars->pluck('pengajar_id')->toArray();
+
+            $pengajars = Pengajar::where('status', 'aktif')
+                ->orWhereIn('id', $pengajarYgSudahAbsen) // Logika Kunci: Tetap tampilkan jika dia ada di absen tanggal ini
+                ->orderBy('nama_lengkap', 'asc')
                 ->when($search, function($q, $search) {
                     return $q->where('nama_lengkap', 'like', "%{$search}%");
                 })
                 ->paginate(15)
                 ->appends(['tanggal' => $tanggal, 'type' => 'pengajar', 'search' => $search]);
                 
-            $absensiPengajars = $agenda_id ? AbsensiPengajar::where('agenda_id', $agenda_id)->get() : collect();
-
             // Kalkulasi Angka Ringkasan untuk Pengajar
             $summary['nama_kelas'] = 'Semua Pengajar / Pengurus';
-            $summary['total'] = Pengajar::count();
+            
+            // Hitung total dari pengajar aktif + pengajar tidak aktif yang hari ini terdata
+            $summary['total'] = Pengajar::where('status', 'aktif')->orWhereIn('id', $pengajarYgSudahAbsen)->count(); 
+            
             $summary['hadir'] = $absensiPengajars->where('status_kehadiran', 'hadir')->count();
             $summary['izin'] = $absensiPengajars->where('status_kehadiran', 'izin')->count();
             $summary['sakit'] = $absensiPengajars->where('status_kehadiran', 'sakit')->count();
