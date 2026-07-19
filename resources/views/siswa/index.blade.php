@@ -1,48 +1,59 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div class="w-full lg:w-auto">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ __('Daftar Siswa') }}
-                </h2>
-                {{-- INFO TAHUN AJARAN AKTIF --}}
-                @php
-                    $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
-                @endphp
-                <p class="text-sm text-indigo-600 font-bold mt-1 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
-                </p>
-            </div>
-
-            {{-- KUMPULAN TOMBOL: Kolom penuh di HP, baris di layar besar --}}
-            <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap items-center gap-2 mt-2 lg:mt-0">
-                <a href="{{ route('siswa.cetakKartuBaru') }}" target="_blank"
-                    class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                    Cetak Kartu (Murid Baru)
-                </a>
-
-                <a href="{{ route('siswa.cetakBarcodeMassal') }}" target="_blank"
-                    class="w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                    Cetak Semua Barcode
-                </a>
-
-                <a href="{{ route('siswa.cetakMassal') }}" target="_blank"
-                    class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                    Cetak Semua Kartu
-                </a>
-                
-                <a href="{{ route('siswa.create') }}"
-                    class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                    + Tambah Siswa
-                </a>
-            </div>
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div class="w-full lg:w-auto">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Daftar Siswa') }}
+            </h2>
+            {{-- INFO TAHUN AJARAN AKTIF --}}
+            @php
+                $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+            @endphp
+            <p class="text-sm text-indigo-600 font-bold mt-1 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
+            </p>
         </div>
-    </x-slot>
+
+        {{-- KUMPULAN TOMBOL: Kolom penuh di HP, baris di layar besar --}}
+        {{-- KUMPULAN TOMBOL: Kolom penuh di HP, baris di layar besar --}}
+        <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap items-center gap-2 mt-2 lg:mt-0">
+            
+            <a href="{{ route('siswa.ulangTahun') }}"
+                class="w-full sm:w-auto text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                🎂 Ulang Tahun
+            </a>
+
+            <a href="{{ route('siswa.cetakKartuBaru') }}" target="_blank"
+                class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                Cetak Kartu (Murid Baru)
+            </a>
+
+            {{-- TOMBOL BARU: CETAK BARCODE (MURID BARU) --}}
+            <a href="{{ route('siswa.cetakBarcodeBaru') }}" target="_blank"
+                class="w-full sm:w-auto text-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                Cetak Barcode (Murid Baru)
+            </a>
+
+            <a href="{{ route('siswa.cetakBarcodeMassal') }}" target="_blank"
+                class="w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                Cetak Semua Barcode
+            </a>
+
+            <a href="{{ route('siswa.cetakMassal') }}" target="_blank"
+                class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                Cetak Semua Kartu
+            </a>
+            
+            <a href="{{ route('siswa.create') }}"
+                class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+                + Tambah Siswa
+            </a>
+        </div>
+    </div>
+</x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">

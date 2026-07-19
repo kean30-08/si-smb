@@ -44,19 +44,17 @@
             page-break-inside: avoid;
             /* Mencegah kartu terpotong di tengah halaman */
             overflow: hidden;
-            /* Mencegah konten meluber jika nama terlalu panjang */
+            /* Mencegah konten meluber */
         }
 
         /* Bagian Header Kartu */
         .header {
             position: relative;
-            /* Untuk memposisikan logo */
             text-align: center;
             border-bottom: 2px solid #1e1b4b;
             padding-bottom: 2mm;
             margin-bottom: 3mm;
             min-height: 12mm;
-            /* Memastikan ruang cukup untuk logo */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -75,7 +73,6 @@
         .header h1 {
             margin: 0;
             font-size: 13px;
-            /* Diperbesar */
             color: #1e1b4b;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -85,7 +82,6 @@
         .header p {
             margin: 1px 0 0 0;
             font-size: 8px;
-            /* Diperbesar */
             color: #4b5563;
         }
 
@@ -116,19 +112,26 @@
 
         .details-row {
             display: flex;
-            margin-bottom: 1.5mm;
+            margin-bottom: 1mm; 
             align-items: flex-start;
-            /* Berubah agar saat teks wrap, label tetap di atas */
-            font-size: 10px;
-            /* Diperbesar */
+            font-size: 8.5px; 
             line-height: 1.2;
         }
 
+        /* Lebar label diperkecil sedikit karena titik dua dipisah */
         .details-label {
-            width: 15mm;
-            /* Disesuaikan dengan ukuran font baru */
+            width: 19mm; 
             color: #6b7280;
             font-weight: bold;
+        }
+
+        /* Class khusus untuk titik dua agar sejajar */
+        .details-colon {
+            width: 2mm;
+            color: #111827;
+            font-weight: 900;
+            margin-right: 1mm;
+            text-align: center;
         }
 
         .details-value {
@@ -136,7 +139,15 @@
             font-weight: 900;
             flex: 1;
             word-wrap: break-word;
-            /* Mengizinkan teks (nama) panjang untuk turun ke baris baru */
+        }
+
+        /* Class khusus untuk membatasi teks alamat maksimal 2 baris */
+        .alamat-limit {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -149,15 +160,12 @@
             <div class="kartu">
 
                 <div class="header">
-                    {{-- Penambahan Logo SMB --}}
                     <img src="{{ asset('img/logo2_smb.jpg') }}" alt="Logo SMB" class="header-logo">
-
-                    <h1>Kartu Identitas</h1>
-                    <p>Pendidikan Anak Sekolah Minggu Buddha</p>
+                    <h1>Sekolah Minggu Buddha<br>Vihara Dharma Cattra</h1>
+                    <p>Jl. Melati No.18, Tabanan - Bali</p>
                 </div>
 
                 <div class="content">
-                    {{-- QR Code diperbesar menjadi 70 --}}
                     <div class="qr-section">
                         {!! QrCode::size(70)->margin(1)->generate('SMB-' . $s->id) !!}
                     </div>
@@ -165,22 +173,33 @@
                     <div class="details-section">
                         <div class="details-row">
                             <div class="details-label">Nama</div>
-                            {{-- Menghapus Str::limit agar nama tampil penuh --}}
-                            <div class="details-value">: {{ $s->nama_lengkap }}</div>
+                            <div class="details-colon">:</div>
+                            <div class="details-value">{{ $s->nama_lengkap }}</div>
                         </div>
                         <div class="details-row">
-                            <div class="details-label">NIS</div>
-                            <div class="details-value">: {{ $s->nis }}</div>
+                            <div class="details-label">TTL</div>
+                            <div class="details-colon">:</div>
+                            <div class="details-value">{{ $s->tempat_lahir }}, {{ \Carbon\Carbon::parse($s->tanggal_lahir)->format('d-m-Y') }}</div>
                         </div>
                         <div class="details-row">
-                            {{-- Menggunakan ?? '-' untuk menghindari error jika kelas null --}}
-                            <div class="details-label">Kelas</div>
-                            <div class="details-value">: {{ $s->historiAktif->kelas->nama_kelas ?? '-' }}</div>
+                            <div class="details-label">NIK</div>
+                            <div class="details-colon">:</div>
+                            <div class="details-value">{{ $s->nis }}</div>
                         </div>
                         <div class="details-row">
-                            <div class="details-label">L/P</div>
-                            <div class="details-value">: {{ $s->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}
-                            </div>
+                            <div class="details-label">Sekolah</div>
+                            <div class="details-colon">:</div>
+                            <div class="details-value">{{ $s->asal_sekolah }}</div>
+                        </div>
+                        <div class="details-row">
+                            <div class="details-label">Alamat</div>
+                            <div class="details-colon">:</div>
+                            <div class="details-value alamat-limit">{{ $s->alamat }}</div>
+                        </div>
+                        <div class="details-row">
+                            <div class="details-label">No. Telp (Ortu)</div>
+                            <div class="details-colon">:</div>
+                            <div class="details-value">{{ $s->nomor_hp_orang_tua ?? '-' }}</div>
                         </div>
                     </div>
                 </div>

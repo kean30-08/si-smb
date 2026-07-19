@@ -111,7 +111,7 @@
                             <button type="submit"
                                 onclick="return confirm('Terima siswa ini? Data akan otomatis masuk ke tabel master Siswa dan Kelas saat ini.')"
                                 class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-lg transition shadow-sm">
-                                Terima & Masukkan ke Database Siswa
+                                Terima & Masukkan ke Siswa ke Sistem
                             </button>
                         </form>
                     </div>

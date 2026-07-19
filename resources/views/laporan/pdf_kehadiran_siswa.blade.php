@@ -174,7 +174,7 @@
                 }
 
                 // Chunk (Potong) tabel per 20 baris siswa agar tidak merusak halaman DOMPDF
-                $siswaChunks = $siswas->chunk(20);
+                $siswaChunks = $siswas->chunk(32);
             @endphp
 
             @foreach ($siswaChunks as $chunkIndex => $chunk)

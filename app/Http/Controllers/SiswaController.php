@@ -441,4 +441,52 @@ class SiswaController extends Controller
 
         return view('siswa.partials.cetak_massal', compact('siswa'));
     }
+
+    public function ulangTahun()
+    {
+        // Mengambil siswa aktif dan diurutkan berdasarkan Bulan, lalu berdasarkan Hari
+        $siswas = \App\Models\Siswa::where('status', 'aktif')
+            ->orderByRaw('MONTH(tanggal_lahir) ASC')
+            ->orderByRaw('DAY(tanggal_lahir) ASC')
+            ->get()
+            ->groupBy(function($siswa) {
+                // Mengelompokkan hasil query ke dalam nama bulan (Januari, Februari, dll)
+                return \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('F');
+            });
+
+        return view('siswa.ulang_tahun', compact('siswas'));
+    }
+
+    public function cetakBarcodeBaru()
+    {
+        $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
+
+        if (!$tahunAktif) {
+            return back()->with('error', 'Cetak gagal: Tidak ada Tahun Ajaran yang sedang aktif saat ini.');
+        }
+
+        // 1. Kumpulkan ID murid yang punya riwayat di Tahun Ajaran LAIN (Berarti mereka Murid Lama)
+        $idMuridLama = \App\Models\HistoriSiswa::where('tahun_ajaran_id', '!=', $tahunAktif->id)
+            ->pluck('siswa_id')
+            ->toArray();
+
+        // 2. Kumpulkan ID murid yang punya riwayat di Tahun Ajaran AKTIF
+        $idMuridDiTaAktif = \App\Models\HistoriSiswa::where('tahun_ajaran_id', $tahunAktif->id)
+            ->pluck('siswa_id')
+            ->toArray();
+
+        // 3. FILTER FINAL: Ambil siswa yang ADA di TA Aktif, tapi BUKAN Murid Lama
+        // Perhatikan variabel yang digunakan adalah $siswas (pakai s) agar sesuai dengan view cetak_barcode_massal
+        $siswas = \App\Models\Siswa::where('status', 'aktif')
+            ->whereIn('id', $idMuridDiTaAktif)
+            ->whereNotIn('id', $idMuridLama)
+            ->orderBy('nama_lengkap', 'asc')
+            ->get();
+
+        if ($siswas->isEmpty()) {
+            return back()->with('error', "Tidak ada murid baru (pendaftar murni) pada Tahun Ajaran {$tahunAktif->tahun_ajaran}.");
+        }
+
+        return view('siswa.partials.cetak_barcode_massal', compact('siswas'));
+    }
 }

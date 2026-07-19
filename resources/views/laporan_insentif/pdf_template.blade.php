@@ -124,6 +124,14 @@
             margin-top: 50px;
             font-family: 'Times New Roman', Times, serif;
             font-size: 15px;
+            page-break-inside: avoid; /* TAMBAHAN PENTING: Mencegah blok TTD terbelah dua halaman */
+        }
+
+.ttd-img {
+            height: 90px; /* Ukuran bisa disesuaikan agar stempel kepsek terlihat proporsional */
+            width: auto;
+            margin-top: 5px;
+            margin-bottom: 5px;
         }
 
         .ttd-left {
@@ -202,7 +210,7 @@
     <div class="cover-page">
         <div class="cover-title">
             <h1>LAPORAN</h1><br>
-            BANTUAN INTENSIF<br>
+            BANTUAN INSENTIF<br>
             GURU SEKOLAH MINGGU BUDDHA
         </div>
 
@@ -247,8 +255,7 @@
 
     <div class="center bold" style="margin-bottom: 40px; font-size: 16px; line-height: 1.5;">
         LAPORAN BANTUAN INSENTIF GURU<br>
-        PENDIDIKAN AGAMA DAN KEAGAMAAN BUDDHA<br>
-        BUKAN PEGAWAI NEGERI SIPIL<br>
+        PENDIDIKAN AGAMA BUDDHA NON ASN<br>
         KANTOR KEMENTERIAN AGAMA KABUPATEN TABANAN<br>
         TAHUN {{ $year }}
     </div>
@@ -290,12 +297,24 @@
     <div class="ttd-container">
         <div class="ttd-left">
             Mengetahui,<br>
-            Ketua SMB Vihara Dharma Cattra<br><br><br><br><br><br>
+            Ketua SMB Vihara Dharma Cattra<br>
+            {{-- Render TTD Kepsek jika ada --}}
+            @if ($base64TtdKepsek)
+                <img src="{{ $base64TtdKepsek }}" class="ttd-img" alt="TTD Kepsek"><br>
+            @else
+                <br><br><br><br><br>
+            @endif
             ( {{ $namaKepalaSekolah }} )
         </div>
         <div class="ttd-right">
             Tabanan, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
-            Pengajar<br><br><br><br><br><br>
+            Pengajar<br>
+            {{-- Render TTD Pengajar jika ada --}}
+            @if ($base64TtdPengajar)
+                <img src="{{ $base64TtdPengajar }}" class="ttd-img" alt="TTD Pengajar"><br>
+            @else
+                <br><br><br><br><br>
+            @endif
             ( {{ $pengajar->nama_lengkap }} )
         </div>
         <div class="clear"></div>
@@ -313,8 +332,38 @@
         }
         $totalHadirPerMinggu = array_fill(0, $jumlahKolom, 0);
 
-        // Membelah tabel siswa menjadi 25 baris per halaman agar rowspan DOMPDF tidak hancur
-        $siswaChunks = $siswas->chunk(15);
+        // LOGIKA CHUNKING DINAMIS BARU:
+        $siswaChunks = collect();
+        // Buat salinan koleksi agar data asli tidak hilang
+        $sisaSiswa = collect($siswas->all()); 
+        
+        // 1. HALAMAN PERTAMA: Ambil tepat 18 data (karena terpotong teks Judul yang panjang)
+        if ($sisaSiswa->count() > 0) {
+            $siswaChunks->push($sisaSiswa->splice(0, 19));
+        }
+
+        // 2. HALAMAN KEDUA & SETERUSNYA: Ambil per 23 data (memaksimalkan margin bawah)
+        if ($sisaSiswa->count() > 0) {
+            $tempChunks = $sisaSiswa->chunk(22);
+            
+            foreach ($tempChunks as $index => $chunk) {
+                // Cek apakah ini adalah halaman chunk yang PALING TERAKHIR
+                if ($index == $tempChunks->keys()->last()) {
+                    // Batas aman untuk TTD adalah 15 data. 
+                    // Jika halaman terakhir berisi lebih dari 15, potong agar TTD tidak turun ke halaman kosong.
+                    if ($chunk->count() > 15) {
+                        $siswaChunks->push($chunk->take(15));
+                        $siswaChunks->push($chunk->skip(15));
+                    } else {
+                        $siswaChunks->push($chunk);
+                    }
+                } else {
+                    // Untuk halaman tengah-tengah, gas pol 23 data
+                    $siswaChunks->push($chunk);
+                }
+            }
+        }
+        
         $globalNo = 1;
     @endphp
 
@@ -337,11 +386,12 @@
         </table>
         <div class="garis-kop"></div>
 
-        <div class="center bold" style="margin-bottom: 5px; font-size: 18px;">
-            DAFTAR HADIR PESERTA DIDIK {{ $chunkIndex > 0 ? '(Lanjutan)' : '' }}
-        </div>
+        
 
         @if ($chunkIndex == 0)
+        <div class="center bold" style="margin-bottom: 5px; font-size: 18px;">
+            DAFTAR HADIR PESERTA DIDIK<br>SEKOLAH MINGGU BUDDHA<br>VIHARA DHARMA CATTRA TABANAN
+        </div>
             <div style="font-size: 15px; margin-bottom: 10px; font-family: Arial;">
                 <strong>Keterangan:</strong> H = Hadir | I = Izin | S = Sakit | L = Libur | A = Alpa
             </div>
@@ -441,6 +491,33 @@
             </tbody>
         </table>
 
+        {{-- TAMBAHAN: TTD Di bawah absen siswa (Hanya muncul di halaman terakhir siswa) --}}
+        @if ($loop->last)
+            <div class="ttd-container">
+                <div class="ttd-left">
+                    Mengetahui,<br>
+                    Ketua SMB Vihara Dharma Cattra<br>
+                    @if ($base64TtdKepsek)
+                        <img src="{{ $base64TtdKepsek }}" class="ttd-img" alt="TTD Kepsek"><br>
+                    @else
+                        <br><br><br><br><br>
+                    @endif
+                    ( {{ $namaKepalaSekolah }} )
+                </div>
+                <div class="ttd-right">
+                    Tabanan, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+                    Pengajar<br>
+                    @if ($base64TtdPengajar)
+                        <img src="{{ $base64TtdPengajar }}" class="ttd-img" alt="TTD Pengajar"><br>
+                    @else
+                        <br><br><br><br><br>
+                    @endif
+                    ( {{ $pengajar->nama_lengkap }} )
+                </div>
+                <div class="clear"></div>
+            </div>
+        @endif
+
         <div class="page-break"></div>
     @endforeach
 
@@ -462,7 +539,7 @@
     </table>
     <div class="garis-kop"></div>
 
-    <div class="center bold" style="margin-bottom: 20px; font-size: 16px;">DAFTAR HADIR GURU</div>
+    <div class="center bold" style="margin-bottom: 20px; font-size: 16px;">DAFTAR HADIR GURU<br>SEKOLAH MINGGU BUDDHA VIHARA DHARMA CATTRA<br>TABANAN</div>
 
     <table class="tabel-data" style="width: 90%; margin: 0 auto;">
         <thead>
@@ -506,15 +583,26 @@
         </tbody>
     </table>
 
+    {{-- GANTI BLOCK TTD INI AGAR MEMBACA GAMBAR DIGITAL --}}
     <div class="ttd-container">
         <div class="ttd-left">
             Mengetahui,<br>
-            Ketua SMB Vihara Dharma Cattra<br><br><br><br><br><br>
+            Ketua SMB Vihara Dharma Cattra<br>
+            @if ($base64TtdKepsek)
+                <img src="{{ $base64TtdKepsek }}" class="ttd-img" alt="TTD Kepsek"><br>
+            @else
+                <br><br><br><br><br>
+            @endif
             ( {{ $namaKepalaSekolah }} )
         </div>
         <div class="ttd-right">
             Tabanan, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
-            Pengajar<br><br><br><br><br><br>
+            Pengajar<br>
+            @if ($base64TtdPengajar)
+                <img src="{{ $base64TtdPengajar }}" class="ttd-img" alt="TTD Pengajar"><br>
+            @else
+                <br><br><br><br><br>
+            @endif
             ( {{ $pengajar->nama_lengkap }} )
         </div>
         <div class="clear"></div>

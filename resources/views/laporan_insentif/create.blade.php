@@ -30,9 +30,17 @@
                             <p class="text-xs text-gray-500 mt-2">Pilih bulan dan tahun kegiatan yang ingin direkap.</p>
                         </div>
 
+                        {{-- TAMBAHAN: FIELD UPLOAD TTD PENGAJAR --}}
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">2. Upload TTD Pengajar (Digital) *</label>
+                            <input type="file" name="ttd_pengajar" accept="image/png, image/jpeg, image/jpg" required
+                                class="w-full md:w-1/2 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <p class="text-xs text-gray-500 mt-2">Upload foto tanda tangan Anda (Disarankan berlatar putih bersih/transparan, format JPG/PNG).</p>
+                        </div>
+
+                        {{-- Ubah nomor urut menjadi 3 --}}
                         <div class="mb-8">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">2. Upload Foto Dokumentasi
-                                *</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">3. Upload Foto Dokumentasi *</label>
                             <div class="flex items-center justify-center w-full">
                                 <label for="dropzone-file"
                                     class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 border-indigo-300 hover:bg-indigo-50 transition">
@@ -43,11 +51,8 @@
                                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
                                             </path>
                                         </svg>
-                                        <p class="mb-2 text-sm text-gray-500"><span
-                                                class="font-semibold text-indigo-600">Klik untuk upload</span> atau drag
-                                            and drop</p>
-                                        <p class="text-xs text-gray-500">Bisa memilih banyak foto sekaligus (PNG, JPG,
-                                            JPEG)</p>
+                                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold text-indigo-600">Klik untuk upload</span> atau drag and drop</p>
+                                        <p class="text-xs text-gray-500">Bisa memilih banyak foto sekaligus (PNG, JPG, JPEG)</p>
                                     </div>
                                     <input id="dropzone-file" type="file" name="dokumentasi[]" multiple
                                         accept="image/*" class="hidden" required />

@@ -34,7 +34,8 @@ class LaporanInsentifController extends Controller
 
         $request->validate([
             'bulan' => 'required',
-            'dokumentasi.*' => 'required|image|mimes:jpeg,png,jpg|max:5120' // Max 5MB per foto
+            'ttd_pengajar' => 'required|image|mimes:jpeg,png,jpg|max:2048', // TAMBAHAN: Validasi maksimal 2MB
+            'dokumentasi.*' => 'required|image|mimes:jpeg,png,jpg|max:5120' 
         ]);
 
         [$year, $month] = explode('-', $request->bulan);
@@ -129,9 +130,26 @@ class LaporanInsentifController extends Controller
             }
         }
 
+// 6.5. PROSES TANDA TANGAN (KEPSEK STATIS & PENGAJAR DINAMIS)
+        
+        // A. TTD Pengajar (Dari Upload)
+        $base64TtdPengajar = '';
+        if ($request->hasFile('ttd_pengajar')) {
+            $ttdFile = $request->file('ttd_pengajar');
+            $ttdExt = $ttdFile->getClientOriginalExtension();
+            $base64TtdPengajar = 'data:image/' . $ttdExt . ';base64,' . base64_encode(file_get_contents($ttdFile->getRealPath()));
+        }
+
+        // B. TTD Kepala Sekolah (Statis dari public folder)
+        $pathTtdKepsek = public_path('img/ttd_kepsek.jpg');
+        $base64TtdKepsek = '';
+        if (file_exists($pathTtdKepsek)) {
+            $base64TtdKepsek = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($pathTtdKepsek));
+        }
+
         // 7. Generate PDF
         $pdf = Pdf::loadView('laporan_insentif.pdf_template', compact(
-            'namaBulan', 'year', 'pengajar', 'agendas', 'siswas', 'nama_ta', 'absenPengajars', 'base64Images', 'agendaStatusMap', 'namaKepalaSekolah'
+            'namaBulan', 'year', 'pengajar', 'agendas', 'siswas', 'nama_ta', 'absenPengajars', 'base64Images', 'agendaStatusMap', 'namaKepalaSekolah', 'base64TtdPengajar', 'base64TtdKepsek'
         ));
         $pdf->setPaper('A4', 'portrait');
         

@@ -84,7 +84,7 @@ class AgendaController extends Controller
         return null;
     }
 
-    public function index(Request $request)
+   public function index(Request $request)
     {
         $now = now();
         $today = $now->toDateString();
@@ -106,13 +106,12 @@ class AgendaController extends Controller
                     });
             })->update(['status' => 'selesai']);
 
-       $search = $request->input('search');
-        $querySearch = $search; // Variabel khusus untuk disuntikkan ke database
+        $search = $request->input('search');
+        $querySearch = $search; 
 
         if ($search) {
             $searchClean = strtolower(trim($search));
             
-            // Peta nama bulan Indonesia ke format angka (dengan pengapit strip)
             $bulanIndo = [
                 'januari' => '01', 'februari' => '02', 'maret' => '03',
                 'april' => '04', 'mei' => '05', 'juni' => '06',
@@ -130,29 +129,24 @@ class AgendaController extends Controller
             }
 
             if ($isMonthTranslated) {
-                // Pecah teks pencarian berdasarkan spasi untuk menyusun YYYY-MM-DD parsial
                 $parts = array_values(array_filter(explode(' ', $searchClean)));
                 
                 if (count($parts) === 3) {
-                    // Kasus "6 juli 2026" -> mencari "2026-07-06"
                     $tgl = str_pad($parts[0], 2, '0', STR_PAD_LEFT);
                     $bln = str_replace('-', '', $parts[1]);
                     $thn = $parts[2];
                     $querySearch = "$thn-$bln-$tgl";
                 } elseif (count($parts) === 2) {
                     if (str_contains($parts[0], '-')) {
-                        // Kasus "juli 2026" -> mencari "%2026-07-%"
                         $bln = str_replace('-', '', $parts[0]);
                         $thn = $parts[1];
                         $querySearch = "$thn-$bln-";
                     } else {
-                        // Kasus "6 juli" -> mencari "%-07-06"
                         $tgl = str_pad($parts[0], 2, '0', STR_PAD_LEFT);
                         $bln = str_replace('-', '', $parts[1]);
                         $querySearch = "-$bln-$tgl";
                     }
                 } elseif (count($parts) === 1) {
-                    // Kasus "juli" -> mencari "%-07-%"
                     $querySearch = $parts[0];
                 }
             }
@@ -160,8 +154,8 @@ class AgendaController extends Controller
         
         $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
         $filterTahun = $request->input('tahun_ajaran_id');
+        $filterStatus = $request->input('status_filter'); // TANGKAP FILTER STATUS BARU
         
-        // PERBAIKAN DI SINI: Gunakan 'tahun_ajaran' bukan 'created_at'
         $tahunAjarans = TahunAjaran::orderBy('tahun_ajaran', 'desc')->get();
 
         $agendasGrouped = Agenda::selectRaw('tanggal, tahun_ajaran_id, count(id) as total_kegiatan, MIN(id) as first_agenda_id')
@@ -171,15 +165,28 @@ class AgendaController extends Controller
             ->when($querySearch, function ($query, $querySearch) {
                 return $query->where('tanggal', 'like', "%{$querySearch}%");
             })
-            // TAMBAHAN: Sembunyikan agenda internal dari tamu (Guest) yang belum login
+            // LOGIKA UNTUK FILTER STATUS BARU
+            ->when($filterStatus, function ($query, $filterStatus) {
+                if ($filterStatus === 'dipublikasikan') {
+                    return $query->where('is_public', 1);
+                } elseif ($filterStatus === 'internal') {
+                    return $query->where('is_public', 0);
+                } elseif ($filterStatus === 'libur') {
+                    return $query->where('is_libur', 1);
+                }
+            })
             ->when(!auth()->check(), function ($query) { 
                 return $query->where('is_public', 1);
-                })
+            })
             ->with('tahunAjaran') 
             ->groupBy('tanggal', 'tahun_ajaran_id') 
             ->orderBy('tanggal', 'desc')
             ->paginate(8)
-            ->appends(['search' => $search, 'tahun_ajaran_id' => $filterTahun]);
+            ->appends([
+                'search' => $search, 
+                'tahun_ajaran_id' => $filterTahun,
+                'status_filter' => $filterStatus // TAMBAHKAN PARAMETER INI KE PAGINASI
+            ]);
 
         $firstAgendaIds = $agendasGrouped->pluck('first_agenda_id');
         $agendasWithPicsRaw = Agenda::with('penanggungJawab')->whereIn('id', $firstAgendaIds)->get();
@@ -194,7 +201,7 @@ class AgendaController extends Controller
             return view('agenda.partials._table', compact('agendasGrouped', 'agendasWithPics', 'isAdmin'))->render();
         }
 
-        return view('agenda.index', compact('agendasGrouped', 'agendasWithPics', 'isAdmin', 'tahunAjarans', 'filterTahun'));
+        return view('agenda.index', compact('agendasGrouped', 'agendasWithPics', 'isAdmin', 'tahunAjarans', 'filterTahun', 'filterStatus'));
     }
 
     public function showDate($tanggal)

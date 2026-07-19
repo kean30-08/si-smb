@@ -134,13 +134,15 @@ Route::get('/laporan_insentif/{id}/download', [App\Http\Controllers\LaporanInsen
     Route::delete('/siswa/{siswa}', [SiswaController::class, 'destroy'])->name('siswa.destroy');
     Route::get('/siswa/{siswa}/cetak-kartu', [SiswaController::class, 'cetakKartu'])->name('siswa.cetakKartu');
     Route::get('/siswa/{siswa}/histori', [SiswaController::class, 'histori'])->name('siswa.histori');
+    Route::get('/siswa/ulang-tahun', [App\Http\Controllers\SiswaController::class, 'ulangTahun'])->name('siswa.ulangTahun');
     // TAMBAHKAN DUA RUTE INI
+    Route::get('/siswa/cetak-barcode-baru', [App\Http\Controllers\SiswaController::class, 'cetakBarcodeBaru'])->name('siswa.cetakBarcodeBaru');
     Route::put('/histori-siswa/{id}', [SiswaController::class, 'updateHistori'])->name('histori_siswa.update');
     Route::delete('/histori-siswa/{id}', [SiswaController::class, 'destroyHistori'])->name('histori_siswa.destroy');
 Route::get('/siswa/cetak-barcode-massal', [\App\Http\Controllers\SiswaController::class, 'cetakBarcodeMassal'])->name('siswa.cetakBarcodeMassal');
 Route::get('/siswa/{siswa}/cetak-barcode', [\App\Http\Controllers\SiswaController::class, 'cetakBarcode'])->name('siswa.cetakBarcode');
 Route::get('/siswa/cetak-kartu-baru', [\App\Http\Controllers\SiswaController::class, 'cetakKartuBaru'])->name('siswa.cetakKartuBaru');
-
+Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
     // rute pendaftaran
     Route::get('/kelola-pendaftaran', [\App\Http\Controllers\PendaftaranController::class, 'index'])->name('kelola_pendaftaran.index');
 Route::post('/kelola-pendaftaran/{id}/terima', [\App\Http\Controllers\PendaftaranController::class, 'terima'])->name('kelola_pendaftaran.terima');
@@ -150,7 +152,7 @@ Route::get('/kelola-pendaftaran/{id}', [\App\Http\Controllers\PendaftaranControl
 
 // PERBAIKAN: Rute PUBLIK `show` diletakkan paling bawah di luar middleware Auth
 Route::get('/pemberitahuan/{pemberitahuan}', [PemberitahuanController::class, 'show'])->name('pemberitahuan.show');
-Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
+
 
 require __DIR__.'/auth.php';
 

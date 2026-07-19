@@ -37,6 +37,7 @@
                 <div class="p-4 sm:p-6 text-gray-900 bg-gray-50 md:bg-white">
 
                     {{-- Form Pencarian & Filter Tahun Ajaran --}}
+                    {{-- Form Pencarian & Filter Tahun Ajaran --}}
                     <form id="searchForm" action="{{ route('agenda.index') }}" method="GET"
                         class="mb-6 flex flex-col md:flex-row items-center gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
 
@@ -51,6 +52,18 @@
                                         {{ $ta->tahun_ajaran }} {{ $ta->status == 'aktif' ? '(Sedang Aktif)' : '' }}
                                     </option>
                                 @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Dropdown Filter Status (BARU) --}}
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Filter Status:</label>
+                            <select id="statusSelect" name="status_filter"
+                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-indigo-700">
+                                <option value="">Semua Status</option>
+                                <option value="dipublikasikan" {{ request('status_filter') == 'dipublikasikan' ? 'selected' : '' }}>Dipublikasikan</option>
+                                <option value="internal" {{ request('status_filter') == 'internal' ? 'selected' : '' }}>Tidak Dipublikasikan / Internal</option>
+                                <option value="libur" {{ request('status_filter') == 'libur' ? 'selected' : '' }}>Libur</option>
                             </select>
                         </div>
 
@@ -85,11 +98,13 @@
     </div>
 
     {{-- Script Live Search AJAX --}}
+    {{-- Script Live Search AJAX --}}
     <script>
         let typingTimer;
         let doneTypingInterval = 500;
         let searchInput = document.getElementById('searchInput');
         let tahunSelect = document.getElementById('tahunSelect');
+        let statusSelect = document.getElementById('statusSelect'); // Variabel Baru
         let searchForm = document.getElementById('searchForm');
         let tableContainer = document.getElementById('table-container');
 
@@ -130,6 +145,11 @@
 
         // Trigger AJAX saat Dropdown Tahun Ajaran diubah
         tahunSelect.addEventListener('change', function() {
+            updateData();
+        });
+
+        // Trigger AJAX saat Dropdown Status diubah (Fungsi Baru)
+        statusSelect.addEventListener('change', function() {
             updateData();
         });
 
