@@ -16,19 +16,12 @@ use Carbon\Carbon;
 
 class LaporanController extends Controller
 {
-    /**
-     * Menampilkan halaman utama menu laporan.
-     */
     public function index()
     {
         $kelas = Kelas::all();
-        // Halaman Index kini bersih, murni mengandalkan tanggal kalender
         return view('laporan.index', compact('kelas'));
     }
 
-    /**
-     * Menghasilkan laporan rekapitulasi keaktifan siswa dalam format PDF.
-     */
     public function cetakKehadiranSiswa(Request $request)
     {
         ini_set('memory_limit', '256M');
@@ -37,7 +30,6 @@ class LaporanController extends Controller
         $selesai = $request->tanggal_selesai;
         $kelas_id = $request->kelas_id;
 
-        // 1. Dapatkan semua jadwal dalam rentang waktu
         $agendas = Agenda::whereBetween('tanggal', [$mulai, $selesai])
             ->orderBy('tanggal', 'asc')
             ->get();
@@ -46,26 +38,20 @@ class LaporanController extends Controller
             return back()->with('error', 'Tidak ada data jadwal kegiatan pada rentang tanggal tersebut.');
         }
 
-        // KUNCI UTAMA: Ambil otomatis ID Tahun Ajaran dari jadwal-jadwal tersebut
         $ta_ids = $agendas->pluck('tahun_ajaran_id')->unique()->toArray();
 
-        // KELOMPOKKAN PER BULAN (Untuk Kolom PDF)
         $agendasPerBulan = $agendas->pluck('tanggal')->unique()->values()->groupBy(function($date) {
             return Carbon::parse($date)->format('Y-m'); 
         });
 
-        // TAMBAHAN: Buat Peta Status Libur berdasarkan tanggal
-       // TAMBAHAN: Buat Peta Status Libur & Ambil Nama Kegiatannya
         $agendaStatusMap = $agendas->where('is_libur', true)->pluck('nama_kegiatan', 'tanggal')->toArray();
 
-        // 2. Filter Siswa yang BENAR-BENAR TERDAFTAR pada Tahun Ajaran tersebut (Mencegah data masa depan bocor)
         $historiQuery = HistoriSiswa::whereIn('tahun_ajaran_id', $ta_ids);
         if ($kelas_id != 'semua') {
              $historiQuery->where('kelas_id', $kelas_id);
         }
         $validSiswaIds = $historiQuery->pluck('siswa_id')->unique();
 
-        // 3. Ambil data Siswa beserta absensinya
         $siswas = Siswa::with(['riwayatHistori' => function ($query) use ($ta_ids) {
             $query->whereIn('tahun_ajaran_id', $ta_ids);
         }, 'riwayatHistori.kelas', 'absensi' => function($q) use ($mulai, $selesai) {
@@ -74,7 +60,6 @@ class LaporanController extends Controller
             });
         }, 'absensi.agenda'])->whereIn('id', $validSiswaIds)->get();
 
-        // 4. Map data kehadiran menjadi format sederhana: [Tanggal => Status]
         foreach ($siswas as $siswa) {
             $historiLaporan = $siswa->riwayatHistori->first();
             $siswa->kelas_laporan = $historiLaporan && $historiLaporan->kelas ? $historiLaporan->kelas->nama_kelas : '-';
@@ -88,7 +73,6 @@ class LaporanController extends Controller
             $siswa->absen_map = $absenMap;
         }
 
-        // 5. URUTAN HALAMAN (Semua Tingkatan Digabungkan berurutan dari PG ke SMA)
         $urutanKelas = [
             'Kelas PG' => 1, 'Kelas TK A' => 2, 'Kelas TK B' => 3,
             'Kelas 1 SD' => 4, 'Kelas 2 SD' => 5, 'Kelas 3 SD' => 6, 'Kelas 4 SD' => 7, 'Kelas 5 SD' => 8, 'Kelas 6 SD' => 9,
@@ -96,19 +80,37 @@ class LaporanController extends Controller
             'Kelas 1 SMA' => 13, 'Kelas 2 SMA' => 14, 'Kelas 3 SMA' => 15,
         ];
 
-        // Urutkan berdasarkan kelas_laporan terkecil, lalu abjad nama
+        // MENGGABUNGKAN SEMUA SISWA MENJADI SATU DAFTAR PANJANG BERURUTAN (TIDAK DIPISAH ARRAY)
         $siswas = $siswas->sortBy(function($siswa) use ($urutanKelas) {
             $namaKelas = $siswa->kelas_laporan;
             $urutan = str_pad($urutanKelas[$namaKelas] ?? 99, 2, '0', STR_PAD_LEFT);
             return $urutan . '-' . $siswa->nama_lengkap;
         })->values();
 
-        // Dapatkan nama Tahun Ajaran secara dinamis untuk Kop Surat PDF
+        // MENGHITUNG TOTAL HADIR PER KELAS SEBELUM DIKIRIM KE VIEW
+        $rekapHadirPerKelas = [];
+        foreach ($siswas as $siswa) {
+            $kls = $siswa->kelas_laporan;
+            if (!isset($rekapHadirPerKelas[$kls])) {
+                $rekapHadirPerKelas[$kls] = [];
+            }
+            if (isset($siswa->absen_map)) {
+                foreach ($siswa->absen_map as $tgl => $status) {
+                    if (!isset($rekapHadirPerKelas[$kls][$tgl])) {
+                        $rekapHadirPerKelas[$kls][$tgl] = 0;
+                    }
+                    if ($status == 'hadir') {
+                        $rekapHadirPerKelas[$kls][$tgl]++;
+                    }
+                }
+            }
+        }
+
         $namaTAs = TahunAjaran::whereIn('id', $ta_ids)->pluck('tahun_ajaran')->toArray();
         $nama_ta = empty($namaTAs) ? 'Tahun Ajaran Tidak Diketahui' : implode(' & ', $namaTAs);
 
-        // 6. Cetak PDF (Pastikan agendaStatusMap dikirim ke View)
-        $pdf = Pdf::loadView('laporan.pdf_kehadiran_siswa', compact('agendasPerBulan', 'siswas', 'nama_ta', 'agendaStatusMap'));
+        // VARIABEL siswas DIKIRIM KE VIEW
+        $pdf = Pdf::loadView('laporan.pdf_kehadiran_siswa', compact('agendasPerBulan', 'siswas', 'nama_ta', 'agendaStatusMap', 'rekapHadirPerKelas'));
         $pdf->setPaper('A4', 'portrait');
         return $pdf->stream('Laporan_Absensi_Siswa_Grid.pdf');
     }
@@ -118,7 +120,6 @@ class LaporanController extends Controller
         $mulai = $request->tanggal_mulai;
         $selesai = $request->tanggal_selesai;
 
-        // Ambil Agenda Sesuai Tanggal Saja
         $agendas = Agenda::whereBetween('tanggal', [$mulai, $selesai])
             ->orderBy('tanggal', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -134,7 +135,6 @@ class LaporanController extends Controller
                 ->count();
         }
 
-        // Teks Tahun Ajaran Dinamis
         $ta_ids = $agendas->pluck('tahun_ajaran_id')->unique()->toArray();
         $namaTAs = TahunAjaran::whereIn('id', $ta_ids)->pluck('tahun_ajaran')->toArray();
         $nama_ta = empty($namaTAs) ? '-' : implode(' & ', $namaTAs);
@@ -156,15 +156,12 @@ class LaporanController extends Controller
             return back()->with('error', 'Tidak ada data jadwal kegiatan pada rentang tanggal tersebut.');
         }
 
-        // 1. Buat Peta Status Libur & Ambil Nama Kegiatannya
         $agendaStatusMap = $agendas->where('is_libur', true)->pluck('nama_kegiatan', 'tanggal')->toArray();
 
-        // 2. Kelompokkan Agenda Per Bulan (Untuk Kolom Grid PDF)
         $agendasPerBulan = $agendas->pluck('tanggal')->unique()->values()->groupBy(function($date) {
             return Carbon::parse($date)->format('Y-m'); 
         });
 
-        // 3. Tarik semua pengajar dan mapping absensinya berdasarkan tanggal
         $pengajars = Pengajar::orderBy('nama_lengkap', 'asc')->get();
 
         foreach ($pengajars as $pengajar) {
@@ -184,14 +181,12 @@ class LaporanController extends Controller
             $pengajar->absen_map = $absenMap;
         }
 
-        // 4. Cari Kepala Sekolah yang Aktif untuk Tanda Tangan
         $kepalaSekolah = Pengajar::whereHas('jabatan', function($q) {
             $q->where('nama_jabatan', 'like', '%Kepala Sekolah%');
         })->where('status', 'aktif')->first();
         
         $namaKepalaSekolah = $kepalaSekolah ? $kepalaSekolah->nama_lengkap : '...............................';
 
-        // 5. Teks Tahun Ajaran Dinamis
         $ta_ids = $agendas->pluck('tahun_ajaran_id')->unique()->toArray();
         $namaTAs = TahunAjaran::whereIn('id', $ta_ids)->pluck('tahun_ajaran')->toArray();
         $nama_ta = empty($namaTAs) ? '-' : implode(' & ', $namaTAs);

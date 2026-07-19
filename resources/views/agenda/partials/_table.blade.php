@@ -6,7 +6,7 @@
                 <th class="py-3 px-6">Tahun Ajaran</th>
                 <th class="py-3 px-6">Tanggal Kegiatan</th>
                 {{-- <th class="py-3 px-6">Total Rangkaian Acara</th> --}}
-                <th class="py-3 px-6">Penanggung Jawab Absensi</th>
+                {{-- <th class="py-3 px-6">Penanggung Jawab Absensi</th> --}}
                 @auth
                     <th class="py-3 px-6 text-center">Aksi</th>
                 @endauth
@@ -83,7 +83,7 @@
                         </div>
                     </td> --}}
 
-                    {{-- PENANGGUNG JAWAB (PIC) --}}
+                    {{-- PENANGGUNG JAWAB (PIC)
                     <td class="block md:table-cell py-2 md:py-4 px-2 md:px-6">
                         <div class="flex flex-col md:justify-start">
                             <span class="md:hidden text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">PIC
@@ -115,7 +115,7 @@
                                 <span class="text-sm italic text-gray-400">Belum Ditentukan</span>
                             @endif
                         </div>
-                    </td>
+                    </td> --}}
 
                     {{-- AKSI --}}
 

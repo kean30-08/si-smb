@@ -15,23 +15,6 @@ use Illuminate\Support\Facades\DB;
 class AbsensiController extends Controller
 {
     /**
-     * Fungsi Bantuan untuk mengecek apakah user adalah PIC atau Admin
-     */
-    private function isAuthorizedPic($agenda)
-    {
-        $user = auth()->user();
-        
-        // Admin & Kepala Sekolah bebas mengakses semuanya
-        if ($user->isAdmin()) return true;
-
-        $pengajar = $user->pengajar;
-        if (!$pengajar) return false;
-
-        // Cek apakah ID pengajar yang sedang login ada di dalam daftar PIC agenda ini
-        return $agenda->penanggungJawab->contains('id', $pengajar->id);
-    }
-
-    /**
      * Menampilkan Halaman Kelola Absensi (BERBASIS TANGGAL HARIAN)
      */
     public function index(Request $request)
@@ -51,8 +34,13 @@ class AbsensiController extends Controller
         $penanggungJawab = $selectedAgenda ? $selectedAgenda->penanggungJawab : collect();
 
         // CEK HAK AKSES & STATUS LIBUR
-        $isPic = $selectedAgenda ? $this->isAuthorizedPic($selectedAgenda) : false;
-        $isLibur = $selectedAgenda ? $selectedAgenda->is_libur : false; // DEKLARASI DI SINI
+        $isPic = true; 
+        $isLibur = $selectedAgenda ? $selectedAgenda->is_libur : false; 
+
+        // VARIABEL UNTUK MENAMPUNG RINGKASAN DATA
+        $summary = [
+            'hadir' => 0, 'izin' => 0, 'sakit' => 0, 'alpa' => 0, 'total' => 0, 'nama_kelas' => 'Semua Kelas'
+        ];
 
         // TAB SISWA
         if ($type == 'siswa') {
@@ -62,10 +50,16 @@ class AbsensiController extends Controller
             if ($agendaTaId) {
                 // 1. Cari ID siswa yang BENAR-BENAR terdaftar pada Tahun Ajaran (masa lalu/kini) tersebut
                 $historiQuery = \App\Models\HistoriSiswa::where('tahun_ajaran_id', $agendaTaId);
+                
+                // Tangkap Info Kelas untuk Judul Ringkasan
                 if ($kelas_id) {
                     $historiQuery->where('kelas_id', $kelas_id);
+                    $kelasInfo = Kelas::find($kelas_id);
+                    $summary['nama_kelas'] = $kelasInfo ? $kelasInfo->nama_kelas : 'Semua Kelas';
                 }
+
                 $validSiswaIds = $historiQuery->pluck('siswa_id');
+                $summary['total'] = $validSiswaIds->count();
 
                 // 2. Tarik data siswa, dan muat relasi historinya KHUSUS untuk TA tersebut
                 $siswas = Siswa::with(['riwayatHistori' => function ($q) use ($agendaTaId) {
@@ -81,14 +75,23 @@ class AbsensiController extends Controller
                     ->orderBy('nama_lengkap', 'asc')
                     ->paginate(15)
                     ->appends(['tanggal' => $tanggal, 'kelas_id' => $kelas_id, 'type' => 'siswa', 'search' => $search]);
+                
+                $absensis = $agenda_id ? Absensi::where('agenda_id', $agenda_id)->get() : collect();
+
+                // 3. Kalkulasi Angka Ringkasan Absensi Berdasarkan Filter Saat Ini
+                $absensiValid = $absensis->whereIn('siswa_id', $validSiswaIds->toArray());
+                $summary['hadir'] = $absensiValid->where('status_kehadiran', 'hadir')->count();
+                $summary['izin'] = $absensiValid->where('status_kehadiran', 'izin')->count();
+                $summary['sakit'] = $absensiValid->where('status_kehadiran', 'sakit')->count();
+                $summary['alpa'] = $summary['total'] - ($summary['hadir'] + $summary['izin'] + $summary['sakit']);
+
             } else {
                 // Jika tidak ada jadwal/agenda di tanggal tersebut, kembalikan paginasi kosong
                 $siswas = Siswa::whereRaw('1 = 0')->paginate(15);
+                $absensis = collect();
             }
             
-            $absensis = $agenda_id ? Absensi::where('agenda_id', $agenda_id)->get() : collect();
-            
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab', 'isPic', 'isLibur'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'siswas', 'absensis', 'type', 'search', 'penanggungJawab', 'isPic', 'isLibur', 'summary'));
             
         // TAB PENGAJAR
         } else {
@@ -100,8 +103,16 @@ class AbsensiController extends Controller
                 ->appends(['tanggal' => $tanggal, 'type' => 'pengajar', 'search' => $search]);
                 
             $absensiPengajars = $agenda_id ? AbsensiPengajar::where('agenda_id', $agenda_id)->get() : collect();
+
+            // Kalkulasi Angka Ringkasan untuk Pengajar
+            $summary['nama_kelas'] = 'Semua Pengajar / Pengurus';
+            $summary['total'] = Pengajar::count();
+            $summary['hadir'] = $absensiPengajars->where('status_kehadiran', 'hadir')->count();
+            $summary['izin'] = $absensiPengajars->where('status_kehadiran', 'izin')->count();
+            $summary['sakit'] = $absensiPengajars->where('status_kehadiran', 'sakit')->count();
+            $summary['alpa'] = $summary['total'] - ($summary['hadir'] + $summary['izin'] + $summary['sakit']);
             
-            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab', 'isPic', 'isLibur'));
+            return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab', 'isPic', 'isLibur', 'summary'));
         }
     }
 
@@ -117,9 +128,10 @@ class AbsensiController extends Controller
         ]);
 
         $agenda = Agenda::find($request->agenda_id);
-        if (!$agenda || !$this->isAuthorizedPic($agenda)) {
-            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda bukan PIC.']);
-            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk hari ini.');
+        
+        if (!$agenda) {
+            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Data agenda tidak ditemukan!']);
+            return back()->with('error', 'Data agenda tidak ditemukan!');
         }
 
         if ($agenda->is_libur) {
@@ -160,9 +172,10 @@ class AbsensiController extends Controller
         ]);
 
         $agenda = Agenda::find($request->agenda_id);
-        if (!$agenda || !$this->isAuthorizedPic($agenda)) {
-            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda bukan PIC.']);
-            return back()->with('error', 'Akses Ditolak! Anda bukan PIC yang ditugaskan untuk hari ini.');
+        
+        if (!$agenda) {
+            if ($request->ajax()) return response()->json(['success' => false, 'message' => 'Data agenda tidak ditemukan!']);
+            return back()->with('error', 'Data agenda tidak ditemukan!');
         }
 
         if ($agenda->is_libur) {
@@ -210,10 +223,6 @@ class AbsensiController extends Controller
             return redirect()->route('absensi.index')->with('error', 'Tidak ada data kegiatan pada tanggal ini!');
         }
 
-        if (!$this->isAuthorizedPic($agenda)) {
-            return redirect()->route('absensi.index')->with('error', 'Akses Ditolak! Fitur Scanner hanya bisa dibuka oleh PIC Absensi.');
-        }
-
         return view('absensi.scanner', compact('agenda'));
     }
 
@@ -230,14 +239,8 @@ class AbsensiController extends Controller
             return response()->json(['success' => false, 'message' => 'Jangkar data tidak valid!']);
         }
 
-        // TAMBAHAN KEAMANAN LIBUR
         if ($agenda->is_libur) {
             return response()->json(['success' => false, 'message' => 'Hari Libur! Fitur Scanner dinonaktifkan.']);
-        }
-
-        // Lapis keamanan Scanner via AJAX
-        if (!$this->isAuthorizedPic($agenda)) {
-            return response()->json(['success' => false, 'message' => 'Akses Ditolak! Anda tidak memiliki izin memindai pada hari ini.']);
         }
 
         $parts = explode('-', $barcode);
@@ -282,25 +285,20 @@ class AbsensiController extends Controller
     // ========================================================
     public function gridInput(Request $request)
     {
-        // Default ke bulan saat ini jika tidak ada input
         $bulanVal = $request->input('bulan', date('Y-m'));
         [$year, $month] = explode('-', $bulanVal);
 
-        // Ambil semua agenda (jadwal) di bulan tersebut
         $agendas = \App\Models\Agenda::whereYear('tanggal', $year)
             ->whereMonth('tanggal', $month)
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        // Cari tahu TA mana saja yang berkaitan dengan jadwal di bulan ini
         $ta_ids = $agendas->pluck('tahun_ajaran_id')->filter()->unique()->toArray();
 
         $siswas = collect();
         if (!empty($ta_ids)) {
-            // Ambil ID siswa yang terdaftar di kelas pada TA tersebut
             $validSiswaIds = \App\Models\HistoriSiswa::whereIn('tahun_ajaran_id', $ta_ids)->pluck('siswa_id')->unique();
             
-            // Tarik data siswa beserta historinya dan absensinya (HANYA absensi di bulan ini)
             $siswas = \App\Models\Siswa::with(['riwayatHistori' => function ($query) use ($ta_ids) {
                 $query->whereIn('tahun_ajaran_id', $ta_ids);
             }, 'riwayatHistori.kelas', 'absensi' => function($q) use ($agendas) {
@@ -308,7 +306,6 @@ class AbsensiController extends Controller
             }])->whereIn('id', $validSiswaIds)->get();
         }
 
-        // Petakan data agar mudah dibaca oleh View Blade
         foreach ($siswas as $siswa) {
             $histori = $siswa->riwayatHistori->first();
             $siswa->kelas_laporan = $histori && $histori->kelas ? $histori->kelas->nama_kelas : 'Tanpa Kelas';
@@ -320,7 +317,6 @@ class AbsensiController extends Controller
             $siswa->absen_map = $map;
         }
 
-        // Urutkan siswa persis seperti urutan di Laporan PDF
         $urutanKelas = [
             'Kelas PG' => 1, 'Kelas TK A' => 2, 'Kelas TK B' => 3,
             'Kelas 1 SD' => 4, 'Kelas 2 SD' => 5, 'Kelas 3 SD' => 6, 'Kelas 4 SD' => 7, 'Kelas 5 SD' => 8, 'Kelas 6 SD' => 9,
@@ -334,11 +330,8 @@ class AbsensiController extends Controller
             return $urutan . '-' . $siswa->nama_lengkap;
         })->values();
 
-        // Kelompokkan berdasarkan kelas
-       // Kelompokkan berdasarkan kelas
         $siswaPerKelas = $siswas->groupBy('kelas_laporan');
 
-        // TAMBAHAN: Tarik Data Pengajar Aktif dan petakan absensinya
         $absensiPengajars = \App\Models\AbsensiPengajar::whereIn('agenda_id', $agendas->pluck('id'))->get();
         $absenPengajarMap = [];
         foreach ($absensiPengajars as $ap) {
@@ -360,24 +353,16 @@ class AbsensiController extends Controller
 
         $agendas = \App\Models\Agenda::whereYear('tanggal', $year)->whereMonth('tanggal', $month)->get();
         
-        // Data yang dicentang oleh user (Hanya yang dikirim oleh form)
         $kehadiran = $request->input('kehadiran', []); 
-        
-        // Array id siswa rahasia untuk tahu siapa saja yang TIDAK dicentang (supaya di-Alpa-kan)
-        // Array id siswa rahasia untuk tahu siapa saja yang TIDAK dicentang (supaya di-Alpa-kan)
         $validSiswaIds = $request->input('siswa_ids', []); 
-        
-        // TAMBAHAN: Tangkap array centangan pengajar
         $kehadiran_pengajar = $request->input('kehadiran_pengajar', []);
         $validPengajarIds = $request->input('pengajar_ids', []);
 
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             foreach ($agendas as $agenda) {
-                // Jangan utak-atik hari libur
                 if ($agenda->is_libur) continue; 
 
-                // 1. SIMPAN ABSENSI SISWA
                 foreach ($validSiswaIds as $siswa_id) {
                     $status = isset($kehadiran[$agenda->id][$siswa_id]) ? 'hadir' : 'alpa';
                     $absenExisting = \App\Models\Absensi::where('agenda_id', $agenda->id)->where('siswa_id', $siswa_id)->first();
@@ -396,7 +381,6 @@ class AbsensiController extends Controller
                     }
                 }
 
-                // 2. SIMPAN ABSENSI PENGAJAR
                 foreach ($validPengajarIds as $p_id) {
                     $status_p = isset($kehadiran_pengajar[$agenda->id][$p_id]) ? 'hadir' : 'alpa';
                     $absenPExisting = \App\Models\AbsensiPengajar::where('agenda_id', $agenda->id)->where('pengajar_id', $p_id)->first();

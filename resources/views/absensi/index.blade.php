@@ -18,41 +18,24 @@
                     TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
                 </p>
             </div>
-            {{-- TOMBOL SCANNER HANYA MUNCUL JIKA USER ADALAH PIC / ADMIN --}}
+            
             <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                {{-- TOMBOL INPUT GRID (BARU) --}}
-                {{-- <a href="{{ route('absensi.grid') }}"
-                    class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
+                {{-- TOMBOL SCANNER --}}
+                <a href="{{ route('absensi.scanner', ['agenda_id' => $agenda_id]) }}" id="btnScanner"
+                    class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" class="mr-2">
-                        <path d="M3 3h18v18H3z" />
-                        <path d="M3 9h18" />
-                        <path d="M3 15h18" />
-                        <path d="M9 3v18" />
-                        <path d="M15 3v18" />
+                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                        <path d="M7 7h.01" />
+                        <path d="M17 7h.01" />
+                        <path d="M7 17h.01" />
+                        <path d="M17 17h.01" />
+                        <path d="M12 7v10" />
+                        <path d="M7 12h10" />
                     </svg>
-                    Input Cepat (Perbulan)
-                </a> --}}
-
-                {{-- TOMBOL SCANNER --}}
-                @if ($type == 'siswa' && $selectedAgenda && $isPic && !$isLibur)
-                    <a href="{{ route('absensi.scanner', ['agenda_id' => $agenda_id]) }}" id="btnScanner"
-                        class="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded shadow transition flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="mr-2">
-                            <rect width="18" height="18" x="3" y="3" rx="2" />
-                            <path d="M7 7h.01" />
-                            <path d="M17 7h.01" />
-                            <path d="M7 17h.01" />
-                            <path d="M17 17h.01" />
-                            <path d="M12 7v10" />
-                            <path d="M7 12h10" />
-                        </svg>
-                        Kamera Scanner
-                    </a>
-                @endif
+                    Kamera Scanner
+                </a>
             </div>
         </div>
     </x-slot>
@@ -85,15 +68,12 @@
                     @php
                         $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
                         $agendaTa = $selectedAgenda ? $selectedAgenda->tahunAjaran : null;
-
-                        // Cek apakah agenda ini berada di tahun ajaran yang berbeda dengan tahun ajaran aktif saat ini
                         $isBedaTahun = $tahunAktif && $agendaTa && $tahunAktif->id !== $agendaTa->id;
                     @endphp
 
                     @if ($agendaTa)
                         <div class="mb-4">
-                            <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-800">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-800">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -130,7 +110,7 @@
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                                             clip-rule="evenodd" />
                                     </svg>
-                                    Pemberitahuan Hari Libur
+                                    Peringatan Hari Libur
                                 </div>
                                 <p class="text-sm">
                                     Kegiatan pada tanggal ini ditetapkan sebagai Hari Libur. Sistem secara otomatis
@@ -143,7 +123,6 @@
                     {{-- PERINGATAN JADWAL LAMPAU --}}
                     @php
                         $isLewat = false;
-
                     @endphp
 
                     @if ($selectedAgenda)
@@ -209,19 +188,6 @@
                             </div>
                         @endif
 
-                        {{-- TAMPILAN NAMA PIC ABSENSI --}}
-                        @if ($selectedAgenda && $penanggungJawab->isNotEmpty())
-                            <div class="w-full lg:w-auto hidden md:block">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab
-                                    Absensi</label>
-                                <div
-                                    class="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-md text-indigo-800 font-semibold text-sm flex items-center min-h-[42px]">
-                                    <i data-lucide="users" class="w-4 h-4 mr-2 shrink-0"></i>
-                                    {{ $penanggungJawab->pluck('nama_lengkap')->join(', ') }}
-                                </div>
-                            </div>
-                        @endif
-
                         {{-- SEARCH BAR --}}
                         <div class="flex-1 w-full lg:w-auto mt-2 lg:mt-0">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Cari
@@ -261,6 +227,43 @@
                             </p>
                         </div>
                     @else
+
+                        {{-- KARTU RINGKASAN KEHADIRAN DINAMIS --}}
+                        <div class="mb-6 border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
+                            <h3 class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-indigo-500">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                                Ringkasan Kehadiran: <span class="text-indigo-600 ml-1">{{ $summary['nama_kelas'] }}</span>
+                            </h3>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                <div class="bg-gray-50 border border-gray-200 p-3 rounded-lg flex flex-col justify-center items-center shadow-sm">
+                                    <span class="text-[10px] text-gray-500 font-bold uppercase mb-1">Total Data</span>
+                                    <span class="text-xl font-black text-gray-800">{{ $summary['total'] }}</span>
+                                </div>
+                                <div class="bg-green-50 border border-green-200 p-3 rounded-lg flex flex-col justify-center items-center shadow-sm">
+                                    <span class="text-[10px] text-green-600 font-bold uppercase mb-1">Hadir</span>
+                                    <span id="summary-hadir" class="text-xl font-black text-green-700">{{ $summary['hadir'] }}</span>
+                                </div>
+                                <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg flex flex-col justify-center items-center shadow-sm">
+                                    <span class="text-[10px] text-blue-600 font-bold uppercase mb-1">Izin</span>
+                                    <span id="summary-izin" class="text-xl font-black text-blue-700">{{ $summary['izin'] }}</span>
+                                </div>
+                                <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg flex flex-col justify-center items-center shadow-sm">
+                                    <span class="text-[10px] text-yellow-600 font-bold uppercase mb-1">Sakit</span>
+                                    <span id="summary-sakit" class="text-xl font-black text-yellow-700">{{ $summary['sakit'] }}</span>
+                                </div>
+                                <div class="bg-red-50 border border-red-200 p-3 rounded-lg flex flex-col justify-center items-center shadow-sm">
+                                    <span class="text-[10px] text-red-600 font-bold uppercase mb-1">Alpa</span>
+                                    <span id="summary-alpa" class="text-xl font-black text-red-700">{{ $summary['alpa'] }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         {{-- ============================== --}}
                         {{-- TAB 1: KONTEN ABSENSI SISWA    --}}
                         {{-- ============================== --}}
@@ -332,7 +335,9 @@
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
 
+                                                                {{-- Ditambahkan data-old-value --}}
                                                                 <select name="status"
+                                                                    data-old-value="{{ $statusSaatIni }}"
                                                                     onchange="simpanAbsenOtomatis(this)"
                                                                     {{ $isLewat || $isBedaTahun ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
@@ -467,8 +472,9 @@
                                                                 <input type="hidden" name="tanggal"
                                                                     value="{{ $tanggal }}">
 
-                                                                {{-- KUNCI PERBAIKAN DROPDOWN: Hapus 'disabled' hardcoded, gunakan kondisi $isLewat --}}
+                                                                {{-- Ditambahkan data-old-value --}}
                                                                 <select name="status"
+                                                                    data-old-value="{{ $statusSaatIni }}"
                                                                     onchange="simpanAbsenOtomatis(this)"
                                                                     {{ $isLewat ? 'disabled' : '' }}
                                                                     class="status-dropdown text-xs font-bold rounded-full border-gray-300 shadow-sm cursor-pointer focus:ring-0
@@ -545,10 +551,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             const btnToggleEdit = document.getElementById('btnToggleEdit');
 
-            // Jika tidak ada tombol "Aktifkan Edit" (berarti hari ini/mendatang), 
-            // Jangan jalankan applyEditMode() agar dropdown terbuka otomatis.
             if (!btnToggleEdit) {
-                localStorage.removeItem('editMode'); // Bersihkan state sisa dari hari lampau
+                localStorage.removeItem('editMode'); 
                 return;
             }
 
@@ -585,6 +589,7 @@
             }
         }
     </script>
+
     {{-- SCRIPT UNTUK AJAX SUBMIT ABSENSI TANPA RELOAD --}}
     <script>
         function simpanAbsenOtomatis(selectElement) {
@@ -592,14 +597,13 @@
             const formData = new FormData(form);
             const url = form.action;
 
-            // Beri efek transparan sedikit saat sedang loading menyimpan
             selectElement.style.opacity = '0.5';
 
             fetch(url, {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest' // Penting agar Laravel tahu ini AJAX
+                        'X-Requested-With': 'XMLHttpRequest' 
                     }
                 })
                 .then(response => response.json())
@@ -608,7 +612,6 @@
 
                     if (data.success) {
                         // 1. UBAH WARNA DROPDOWN
-                        // Bersihkan class warna lama
                         selectElement.classList.remove(
                             'bg-red-100', 'text-red-800', 'border-red-200',
                             'bg-green-100', 'text-green-800', 'border-green-200',
@@ -616,7 +619,6 @@
                             'bg-yellow-100', 'text-yellow-800', 'border-yellow-200'
                         );
 
-                        // Pasang class warna baru
                         if (data.status === 'alpa') {
                             selectElement.classList.add('bg-red-100', 'text-red-800', 'border-red-200');
                         } else if (data.status === 'hadir') {
@@ -627,7 +629,7 @@
                             selectElement.classList.add('bg-yellow-100', 'text-yellow-800', 'border-yellow-200');
                         }
 
-                        // 2. UBAH TEKS WAKTU HADIR (Jam & Tanggal)
+                        // 2. UBAH TEKS WAKTU HADIR
                         const tr = selectElement.closest('tr');
                         const waktuContainer = tr.querySelector('.waktu-container');
 
@@ -640,10 +642,29 @@
                                 <div class="text-[10px] text-gray-400 mt-1">(${data.metode})</div>
                             `;
                             } else {
-                                // Jika diganti menjadi alpa/izin/sakit, hilangkan jamnya menjadi strip
                                 waktuContainer.innerHTML = `<span class="text-gray-400">-</span>`;
                             }
                         }
+
+                        // 3. UBAH ANGKA RINGKASAN SECARA REALTIME DINAMIS
+                        let oldValue = selectElement.getAttribute('data-old-value');
+                        let newValue = data.status;
+
+                        if (oldValue !== newValue) {
+                            let elOld = document.getElementById('summary-' + oldValue);
+                            let elNew = document.getElementById('summary-' + newValue);
+
+                            if (elOld && parseInt(elOld.innerText) > 0) {
+                                elOld.innerText = parseInt(elOld.innerText) - 1;
+                            }
+                            if (elNew) {
+                                elNew.innerText = parseInt(elNew.innerText) + 1;
+                            }
+
+                            // Perbarui state value lamanya untuk perhitungan ke depannya
+                            selectElement.setAttribute('data-old-value', newValue);
+                        }
+
                     } else {
                         alert(data.message || 'Terjadi kesalahan saat menyimpan data.');
                     }

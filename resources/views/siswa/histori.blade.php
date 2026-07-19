@@ -39,7 +39,7 @@
                             Berikut adalah rekam jejak kehadiran siswa yang diurutkan berdasarkan tingkat
                             <strong>Kelas</strong> yang pernah diduduki. Klik pada masing-masing baris kelas untuk
                             melihat rincian Tahun Ajaran dan Poin Kehadiran. Untuk 1x Kehadiran <b>5 Poin</b>, 1x Sakit
-                            atau Izin <b>1 Poin</b></b>, dan 1x Alpa <b>0 Poin</b>.
+                            atau Izin <b>1 Poin</b>, dan 1x Alpa <b>0 Poin</b>.
                         </p>
                     </div>
 
@@ -87,7 +87,6 @@
                                                 <tbody class="divide-y divide-gray-100 block md:table-row-group" x-data="{ editing: false, detailBuka: false }">
                                                     
                                                     {{-- BARIS DATA UTAMA --}}
-                                                    {{-- Ubah tr menjadi grid grid-cols-2 khusus di tampilan mobile --}}
                                                     <tr class="grid grid-cols-2 md:table-row hover:bg-gray-50 transition border-b border-gray-200 p-3 md:p-0">
 
                                                         {{-- 1. Tahun Ajaran (Penuh di atas) --}}
@@ -95,29 +94,35 @@
                                                             <span class="md:hidden text-xs text-gray-400 uppercase">Tahun Ajaran: </span>
                                                             <span x-show="!editing">{{ $histori->tahunAjaran->tahun_ajaran ?? '-' }}</span>
 
-                                                            {{-- Form Edit Inline (Disembunyikan/Komentar sementara) --}}
-                                                            <form x-show="editing"
-                                                                action="{{ route('histori_siswa.update', $histori->id) }}"
-                                                                method="POST" class="flex flex-wrap items-center gap-2"
-                                                                x-cloak>
-                                                                @csrf @method('PUT')
-                                                                <select name="kelas_id" class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
-                                                                    @foreach (\App\Models\Kelas::all() as $k)
-                                                                        <option value="{{ $k->id }}" {{ $histori->kelas_id == $k->id ? 'selected' : '' }}>
-                                                                            {{ $k->nama_kelas }}
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
-                                                                <select name="tahun_ajaran_id" class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
-                                                                    @foreach ($semuaTahunAjaran as $ta)
-                                                                        <option value="{{ $ta->id }}" {{ $histori->tahun_ajaran_id == $ta->id ? 'selected' : '' }}>
-                                                                            {{ $ta->tahun_ajaran }}
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
-                                                                <button type="submit" class="p-1 bg-green-500 text-white rounded text-xs">Simpan</button>
-                                                                <button type="button" @click="editing = false" class="p-1 bg-gray-400 text-white rounded text-xs">Batal</button>
-                                                            </form>
+                                                            {{-- Form Edit Inline (Sudah Dibuka & Aktif beserta Hapus) --}}
+                                                            <div x-show="editing" class="flex flex-wrap items-center gap-2 mt-1 md:mt-0" x-cloak>
+                                                                <form action="{{ route('histori_siswa.update', $histori->id) }}"
+                                                                    method="POST" class="flex flex-wrap items-center gap-2 m-0">
+                                                                    @csrf @method('PUT')
+                                                                    <select name="kelas_id" class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
+                                                                        @foreach (\App\Models\Kelas::all() as $k)
+                                                                            <option value="{{ $k->id }}" {{ $histori->kelas_id == $k->id ? 'selected' : '' }}>
+                                                                                {{ $k->nama_kelas }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                    <select name="tahun_ajaran_id" class="text-xs border-gray-300 rounded shadow-sm py-1 px-2">
+                                                                        @foreach ($semuaTahunAjaran as $ta)
+                                                                            <option value="{{ $ta->id }}" {{ $histori->tahun_ajaran_id == $ta->id ? 'selected' : '' }}>
+                                                                                {{ $ta->tahun_ajaran }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                    <button type="submit" class="p-1 px-2 bg-green-500 text-white rounded text-xs font-bold hover:bg-green-600 transition shadow-sm">Simpan</button>
+                                                                    <button type="button" @click="editing = false" class="p-1 px-2 bg-gray-400 text-white rounded text-xs font-bold hover:bg-gray-500 transition shadow-sm">Batal</button>
+                                                                </form>
+
+                                                                {{-- Tombol Hapus Histori --}}
+                                                                <form action="{{ route('histori_siswa.destroy', $histori->id) }}" method="POST" class="m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus histori semester ini secara permanen?')">
+                                                                    @csrf @method('DELETE')
+                                                                    <button type="submit" class="p-1 px-2 bg-red-500 text-white rounded text-xs font-bold hover:bg-red-600 transition shadow-sm">Hapus</button>
+                                                                </form>
+                                                            </div>
                                                         </td>
 
                                                         {{-- 2. Kiri Atas: Hadir --}}
@@ -154,7 +159,7 @@
                                                         <td class="order-7 col-span-2 block md:table-cell py-2 md:py-3 px-4 text-center whitespace-nowrap mb-1 md:mb-0">
                                                             <div class="flex flex-col md:flex-row justify-start md:justify-center items-center gap-2 w-full" x-show="!editing">
                                                                 
-                                                                {{-- Tombol Lihat Rincian (Disamakan dgn pengajar) --}}
+                                                                {{-- Tombol Lihat Rincian --}}
                                                                 <button type="button" @click="detailBuka = !detailBuka"
                                                                     class="text-indigo-500 hover:text-indigo-800 transition bg-indigo-100 px-3 py-2 md:py-1.5 rounded-full inline-flex items-center gap-1 w-full md:w-auto justify-center">
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -164,13 +169,29 @@
                                                                     <span class="text-xs font-bold">Lihat Rincian</span>
                                                                 </button>
                                                                 
-                                                                {{-- Tombol Edit (Dikomentari Dulu) --}}
-                                                                {{-- 
+                                                                {{-- Tombol Edit --}}
                                                                 <button type="button" @click="editing = true"
-                                                                    class="text-blue-500 hover:text-blue-700 transition px-3 py-2 md:py-1.5 bg-blue-50 md:bg-transparent rounded-full w-full md:w-auto font-bold text-xs" title="Edit">
-                                                                    Edit Histori
-                                                                </button> 
-                                                                --}}
+                                                                    class="text-amber-600 hover:text-amber-800 transition px-3 py-2 md:py-1.5 bg-amber-100 rounded-full inline-flex items-center gap-1 w-full md:w-auto justify-center" title="Edit Histori">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                                                        <path d="m15 5 4 4"/>
+                                                                    </svg>
+                                                                    <span class="text-xs font-bold">Edit Histori</span>
+                                                                </button>
+
+                                                                {{-- Tombol Hapus (Luar Edit Mode) --}}
+                                                                <form action="{{ route('histori_siswa.destroy', $histori->id) }}" method="POST" class="m-0 w-full md:w-auto" onsubmit="return confirm('Apakah Anda yakin ingin menghapus histori semester ini secara permanen?')">
+                                                                    @csrf @method('DELETE')
+                                                                    <button type="submit" class="text-red-600 hover:text-red-800 transition px-3 py-2 md:py-1.5 bg-red-100 hover:bg-red-200 rounded-full inline-flex items-center gap-1 w-full md:w-auto justify-center" title="Hapus Histori">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                            <path d="M3 6h18"></path>
+                                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                                                        </svg>
+                                                                        <span class="text-xs font-bold">Hapus</span>
+                                                                    </button>
+                                                                </form>
+                                                                
                                                             </div>
                                                         </td>
                                                     </tr>

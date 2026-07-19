@@ -79,7 +79,7 @@
                             </div>
 
                             {{-- KOLOM PENANGGUNG JAWAB --}}
-                            <div class="border-t border-gray-200 pt-6">
+                            {{-- <div class="border-t border-gray-200 pt-6">
                                 <div class="flex justify-between items-center mb-2">
                                     <label class="block font-bold text-lg text-gray-800">Penanggung Jawab
                                         Absensi</label>
@@ -116,7 +116,7 @@
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
 
                         <div class="flex items-center justify-end mt-8 border-t border-gray-200 pt-6">

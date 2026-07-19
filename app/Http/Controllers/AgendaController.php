@@ -217,29 +217,34 @@ class AgendaController extends Controller
     }
 
     public function updatePic(Request $request, $tanggal)
-    {
-        $request->validate([
-            'nama_kegiatan' => 'required|string|max:100',
-            'is_public' => 'required|boolean',
-            'is_libur' => 'required|boolean', // TAMBAHAN
-            'penanggung_jawab_id' => 'nullable|array',
-            'penanggung_jawab_id.*' => 'exists:pengajars,id'
-        ]);
-        
-        $agendas = Agenda::where('tanggal', $tanggal)->get();
-        $picIds = $request->penanggung_jawab_id ?? [];
-        
-        foreach ($agendas as $agenda) {
-            $agenda->update([
-                'nama_kegiatan' => $request->nama_kegiatan,
-                'is_public' => $request->is_public,
-                'is_libur' => $request->is_libur // TAMBAHAN
-            ]);
-            $agenda->penanggungJawab()->sync($picIds);
-        }
-        
-        return back()->with('success', 'Detail agenda dan Penanggung Jawab berhasil diperbarui!');
+{
+    $request->validate([
+        'tanggal_baru' => 'required|date',
+        'nama_kegiatan' => 'required|string|max:100',
+        'is_libur' => 'required|boolean',
+        'is_public' => 'required|boolean',
+    ]);
+
+    // Cari agenda berdasarkan tanggal lama
+    $agenda = \App\Models\Agenda::where('tanggal', $tanggal)->first();
+
+    if (!$agenda) {
+        return back()->with('error', 'Data agenda tidak ditemukan!');
     }
+
+    // Update data dengan yang baru (termasuk tanggal barunya)
+    $agenda->update([
+        'tanggal' => $request->tanggal_baru, // Ganti dengan tanggal yang di-input
+        'nama_kegiatan' => $request->nama_kegiatan,
+        'is_libur' => $request->is_libur,
+        'is_public' => $request->is_public
+    ]);
+
+    // Opsional: Hapus atau komen kode sinkronisasi penanggung jawab (sync) 
+    // karena fiturnya sudah dihapus dari sistem.
+
+    return redirect()->route('agenda.index')->with('success', 'Agenda berhasil diperbarui!');
+}
 
     public function create()
     {
