@@ -31,7 +31,7 @@ class PendaftaranController extends Controller
             'kelas_id' => 'required|exists:kelas,id',
             'tempat_lahir' => 'required|string',
             'tanggal_lahir' => 'required|date',
-            'asal_sekolah' => 'nullable|string',
+            'asal_sekolah' => 'required|string',
             'nomor_hp_siswa' => 'nullable|string',
             'nama_orang_tua' => 'required|string',
             'email_orang_tua' => 'nullable|email',

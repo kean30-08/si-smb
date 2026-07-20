@@ -68,7 +68,7 @@
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Izin</th>
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Alpa</th>
                                                     <th class="py-3 px-4 text-center whitespace-nowrap">Total Poin</th>
-                                                    <th class="py-3 px-4 text-center whitespace-nowrap">Aksi</th>
+                                                    {{-- <th class="py-3 px-4 text-center whitespace-nowrap">Aksi</th> --}}
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-100 block md:table-row-group" x-data="{ detailBuka: false }">
