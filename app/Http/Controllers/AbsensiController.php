@@ -78,12 +78,19 @@ class AbsensiController extends Controller
                 
                 $absensis = $agenda_id ? Absensi::where('agenda_id', $agenda_id)->get() : collect();
 
-                // 3. Kalkulasi Angka Ringkasan Absensi Berdasarkan Filter Saat Ini
                 $absensiValid = $absensis->whereIn('siswa_id', $validSiswaIds->toArray());
-                $summary['hadir'] = $absensiValid->where('status_kehadiran', 'hadir')->count();
-                $summary['izin'] = $absensiValid->where('status_kehadiran', 'izin')->count();
-                $summary['sakit'] = $absensiValid->where('status_kehadiran', 'sakit')->count();
-                $summary['alpa'] = $summary['total'] - ($summary['hadir'] + $summary['izin'] + $summary['sakit']);
+                
+                if ($isLibur) {
+                    $summary['hadir'] = 0;
+                    $summary['izin'] = 0;
+                    $summary['sakit'] = 0;
+                    $summary['alpa'] = 0; // Jika hari libur, Alpa dipastikan 0
+                } else {
+                    $summary['hadir'] = $absensiValid->where('status_kehadiran', 'hadir')->count();
+                    $summary['izin'] = $absensiValid->where('status_kehadiran', 'izin')->count();
+                    $summary['sakit'] = $absensiValid->where('status_kehadiran', 'sakit')->count();
+                    $summary['alpa'] = $summary['total'] - ($summary['hadir'] + $summary['izin'] + $summary['sakit']);
+                }
 
             } else {
                 // Jika tidak ada jadwal/agenda di tanggal tersebut, kembalikan paginasi kosong
@@ -110,15 +117,24 @@ class AbsensiController extends Controller
                 ->appends(['tanggal' => $tanggal, 'type' => 'pengajar', 'search' => $search]);
                 
             // Kalkulasi Angka Ringkasan untuk Pengajar
+            // Kalkulasi Angka Ringkasan untuk Pengajar
             $summary['nama_kelas'] = 'Semua Pengajar / Pengurus';
             
             // Hitung total dari pengajar aktif + pengajar tidak aktif yang hari ini terdata
             $summary['total'] = Pengajar::where('status', 'aktif')->orWhereIn('id', $pengajarYgSudahAbsen)->count(); 
             
-            $summary['hadir'] = $absensiPengajars->where('status_kehadiran', 'hadir')->count();
-            $summary['izin'] = $absensiPengajars->where('status_kehadiran', 'izin')->count();
-            $summary['sakit'] = $absensiPengajars->where('status_kehadiran', 'sakit')->count();
-            $summary['alpa'] = $summary['total'] - ($summary['hadir'] + $summary['izin'] + $summary['sakit']);
+            // TAMBAHKAN LOGIKA IF LIBUR DISINI
+            if ($isLibur) {
+                $summary['hadir'] = 0;
+                $summary['izin'] = 0;
+                $summary['sakit'] = 0;
+                $summary['alpa'] = 0; // Jika hari libur, Alpa dipastikan 0
+            } else {
+                $summary['hadir'] = $absensiPengajars->where('status_kehadiran', 'hadir')->count();
+                $summary['izin'] = $absensiPengajars->where('status_kehadiran', 'izin')->count();
+                $summary['sakit'] = $absensiPengajars->where('status_kehadiran', 'sakit')->count();
+                $summary['alpa'] = $summary['total'] - ($summary['hadir'] + $summary['izin'] + $summary['sakit']);
+            }
             
             return view('absensi.index', compact('tanggal', 'kelas', 'kelas_id', 'agenda_id', 'selectedAgenda', 'pengajars', 'absensiPengajars', 'type', 'search', 'penanggungJawab', 'isPic', 'isLibur', 'summary'));
         }
