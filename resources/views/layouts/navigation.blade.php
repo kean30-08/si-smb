@@ -67,9 +67,9 @@
                             @endif
                         </x-nav-link>
 
-                        <x-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
+                        {{-- <x-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
                             {{ __('Absensi') }}
-                        </x-nav-link>
+                        </x-nav-link> --}}
 
                         <x-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
                             {{ __('Pengajar') }}
@@ -224,9 +224,9 @@
                     @endif
                 </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
+                {{-- <x-responsive-nav-link :href="route('absensi.index')" :active="request()->routeIs('absensi.*')">
                     {{ __('Absensi') }}
-                </x-responsive-nav-link>
+                </x-responsive-nav-link> --}}
 
                 <x-responsive-nav-link :href="route('pengajar.index')" :active="request()->routeIs('pengajar.*')">
                     {{ __('Pengajar') }}

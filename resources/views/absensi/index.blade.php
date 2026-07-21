@@ -167,10 +167,15 @@
                         <input type="hidden" name="agenda_id" value="{{ $agenda_id }}">
 
                         <div class="w-full lg:w-auto">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Tanggal</label>
-                            <input type="date" name="tanggal" value="{{ $tanggal }}"
-                                class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                onchange="this.form.submit()">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                            
+                            {{-- Tampilan Visual (Tidak bisa diubah) --}}
+                            <div class="w-full bg-gray-100 border border-gray-200 text-gray-600 rounded-md shadow-sm px-3 py-2 font-medium cursor-not-allowed">
+                                {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
+                            </div>
+
+                            {{-- Input Hidden (Agar tanggal tetap terbawa saat pencarian / filter kelas) --}}
+                            <input type="hidden" name="tanggal" value="{{ $tanggal }}">
                         </div>
 
                         @if ($type == 'siswa')
