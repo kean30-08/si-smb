@@ -31,7 +31,7 @@ class PendaftaranController extends Controller
             'kelas_id' => 'required|exists:kelas,id',
             'tempat_lahir' => 'required|string',
             'tanggal_lahir' => 'required|date',
-            'asal_sekolah' => 'required|string',
+            'asal_sekolah' => 'nullable|string',
             'nomor_hp_siswa' => 'nullable|string',
             'nama_orang_tua' => 'required|string',
             'email_orang_tua' => 'nullable|email',
@@ -43,31 +43,39 @@ class PendaftaranController extends Controller
         // VALIDASI ANTI SPAM / DATA GANDA
         // ==========================================
         
-        // Ubah input nama menjadi huruf kecil semua dan hapus spasi berlebih
-        $namaInput = strtolower(trim($request->nama_lengkap));
+        // Bersihkan spasi berlebih di awal, akhir, maupun di tengah kata (contoh: "Metta   Mona " -> "Metta Mona")
+        $namaInput = preg_replace('/\s+/', ' ', trim($request->nama_lengkap));
+        $namaOrtuInput = preg_replace('/\s+/', ' ', trim($request->nama_orang_tua));
 
-        // 1. Cek apakah nama & tanggal lahir yang sama sedang "menunggu" antrean
-        $sedangMenunggu = Pendaftaran::whereRaw('LOWER(nama_lengkap) = ?', [$namaInput])
-            ->where('tanggal_lahir', $request->tanggal_lahir)
+        // 1. Cek apakah nama yang sama (dengan Tgl Lahir ATAU Nama Ortu yg sama) sedang "menunggu" antrean
+        $sedangMenunggu = Pendaftaran::where('nama_lengkap', 'LIKE', $namaInput)
+            ->where(function($q) use ($request, $namaOrtuInput) {
+                $q->where('tanggal_lahir', $request->tanggal_lahir)
+                  ->orWhere('nama_orang_tua', 'LIKE', $namaOrtuInput);
+            })
             ->where('status', 'menunggu')
             ->exists();
 
         if ($sedangMenunggu) {
             return back()->withInput()->withErrors([
-                'nama_lengkap' => 'Pendaftaran ditolak: Anak dengan nama dan tanggal lahir ini sudah mendaftar dan sedang dalam proses konfirmasi Admin.'
+                'nama_lengkap' => 'Pendaftaran ditolak: Anak dengan nama ini sudah mendaftar dan sedang menunggu konfirmasi Admin.'
             ]);
         }
 
         // 2. Cek apakah anak tersebut memang sudah resmi menjadi siswa aktif di sistem
-        $sudahJadiSiswa = Siswa::whereRaw('LOWER(nama_lengkap) = ?', [$namaInput])
-            ->where('tanggal_lahir', $request->tanggal_lahir)
+        $sudahJadiSiswa = Siswa::where('nama_lengkap', 'LIKE', $namaInput)
+            ->where(function($q) use ($request, $namaOrtuInput) {
+                $q->where('tanggal_lahir', $request->tanggal_lahir)
+                  ->orWhere('nama_orang_tua', 'LIKE', $namaOrtuInput);
+            })
             ->exists();
 
         if ($sudahJadiSiswa) {
             return back()->withInput()->withErrors([
-                'nama_lengkap' => 'Pendaftaran ditolak: Anak dengan nama dan tanggal lahir ini sudah terdaftar secara resmi sebagai siswa SMB.'
+                'nama_lengkap' => 'Pendaftaran ditolak: Anak dengan nama ini sudah terdaftar secara resmi sebagai siswa SMB.'
             ]);
         }
+        
         Pendaftaran::create($data);
         return back()->with('success', 'Pendaftaran berhasil dikirim! Silakan tunggu konfirmasi dari pihak sekolah minggu.');
     }
