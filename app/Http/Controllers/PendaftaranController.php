@@ -42,12 +42,26 @@ class PendaftaranController extends Controller
         // ==========================================
         // VALIDASI ANTI SPAM / DATA GANDA
         // ==========================================
-        
-        // Bersihkan spasi berlebih di awal, akhir, maupun di tengah kata (contoh: "Metta   Mona " -> "Metta Mona")
+
+        // 1. CEK BERDASARKAN NIK (Jika NIK diisi oleh orang tua)
+        if (!empty($request->nis)) {
+            $nikSedangMenunggu = Pendaftaran::where('nis', $request->nis)
+                ->where('status', 'menunggu')
+                ->exists();
+                
+            if ($nikSedangMenunggu) {
+                return back()->withInput()->withErrors([
+                    'nis' => 'Pendaftaran ditolak: NIK ini sedang dalam antrean konfirmasi Admin. Mohon jangan mendaftar dua kali.'
+                ]);
+            }
+            // Catatan: Pengecekan NIK di tabel 'Siswa' sudah tertangani otomatis oleh rule 'unique:siswas,nis' di atas.
+        }
+
+        // 2. CEK BERDASARKAN NAMA (Sebagai jaring pengaman jika NIK dikosongkan)
+        // Bersihkan spasi berlebih di awal, akhir, maupun di tengah kata
         $namaInput = preg_replace('/\s+/', ' ', trim($request->nama_lengkap));
         $namaOrtuInput = preg_replace('/\s+/', ' ', trim($request->nama_orang_tua));
 
-        // 1. Cek apakah nama yang sama (dengan Tgl Lahir ATAU Nama Ortu yg sama) sedang "menunggu" antrean
         $sedangMenunggu = Pendaftaran::where('nama_lengkap', 'LIKE', $namaInput)
             ->where(function($q) use ($request, $namaOrtuInput) {
                 $q->where('tanggal_lahir', $request->tanggal_lahir)
@@ -62,7 +76,6 @@ class PendaftaranController extends Controller
             ]);
         }
 
-        // 2. Cek apakah anak tersebut memang sudah resmi menjadi siswa aktif di sistem
         $sudahJadiSiswa = Siswa::where('nama_lengkap', 'LIKE', $namaInput)
             ->where(function($q) use ($request, $namaOrtuInput) {
                 $q->where('tanggal_lahir', $request->tanggal_lahir)
@@ -75,6 +88,8 @@ class PendaftaranController extends Controller
                 'nama_lengkap' => 'Pendaftaran ditolak: Anak dengan nama ini sudah terdaftar secara resmi sebagai siswa SMB.'
             ]);
         }
+        
+        // ==========================================
         
         Pendaftaran::create($data);
         return back()->with('success', 'Pendaftaran berhasil dikirim! Silakan tunggu konfirmasi dari pihak sekolah minggu.');
