@@ -212,6 +212,40 @@
                                                                         Belum ada data absensi yang tercatat untuk tahun ajaran ini.
                                                                     </p>
                                                                 @else
+                                                                {{-- ================= TAMBAHAN RINGKASAN TOTAL 1 SEMESTER ================= --}}
+                                                            @php
+                                                                $totalLiburSiswa = 0;
+                                                                foreach ($histori->detail_absensi as $bulan => $absensiBulan) {
+                                                                    foreach ($absensiBulan as $absen) {
+                                                                        if ($absen->agenda->is_libur) {
+                                                                            $totalLiburSiswa++;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            @endphp
+                                                            <div class="flex flex-wrap gap-2 mb-5">
+                                                                <div class="bg-green-50 border border-green-200 px-4 py-2 rounded-md shadow-sm min-w-[80px] text-center">
+                                                                    <span class="text-[10px] text-green-600 font-bold uppercase block tracking-wider">Hadir</span>
+                                                                    <span class="text-xl font-black text-green-800">{{ $histori->hadir }}</span>
+                                                                </div>
+                                                                <div class="bg-blue-50 border border-blue-200 px-4 py-2 rounded-md shadow-sm min-w-[80px] text-center">
+                                                                    <span class="text-[10px] text-blue-600 font-bold uppercase block tracking-wider">Izin</span>
+                                                                    <span class="text-xl font-black text-blue-800">{{ $histori->izin }}</span>
+                                                                </div>
+                                                                <div class="bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-md shadow-sm min-w-[80px] text-center">
+                                                                    <span class="text-[10px] text-yellow-600 font-bold uppercase block tracking-wider">Sakit</span>
+                                                                    <span class="text-xl font-black text-yellow-800">{{ $histori->sakit }}</span>
+                                                                </div>
+                                                                <div class="bg-red-50 border border-red-200 px-4 py-2 rounded-md shadow-sm min-w-[80px] text-center">
+                                                                    <span class="text-[10px] text-red-600 font-bold uppercase block tracking-wider">Alpa</span>
+                                                                    <span class="text-xl font-black text-red-800">{{ $histori->alpa }}</span>
+                                                                </div>
+                                                                <div class="bg-gray-100 border border-gray-300 px-4 py-2 rounded-md shadow-sm min-w-[80px] text-center">
+                                                                    <span class="text-[10px] text-gray-500 font-bold uppercase block tracking-wider">Libur</span>
+                                                                    <span class="text-xl font-black text-gray-700">{{ $totalLiburSiswa }}</span>
+                                                                </div>
+                                                            </div>
+                                                            {{-- ========================================================================= --}}
                                                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                                         @foreach ($histori->detail_absensi as $bulan => $absensiBulan)
                                                                             <div class="bg-white p-3 rounded shadow-sm border border-gray-200">
