@@ -90,14 +90,16 @@
                         <tbody class="bg-white divide-y divide-gray-200">
 
                             @php
-                                // Menghitung total siswa untuk kebutuhan logika reverse ranking
-                                $totalSiswa = count($peringkat);
+                                // Menyesuaikan perhitungan total untuk paginasi
+                                $isPaginated = method_exists($peringkat, 'total');
+                                $totalSiswa = $isPaginated ? $peringkat->total() : count($peringkat);
+                                $startIndex = $isPaginated ? ($peringkat->currentPage() - 1) * $peringkat->perPage() : 0;
                             @endphp
 
                             @forelse ($peringkat as $index => $siswa)
                                 @php
-                                    // Logika Peringkat: Jika 'asc' maka hitung mundur, jika 'desc' hitung maju
-                                    $rank = $sort == 'asc' ? $totalSiswa - $index : $index + 1;
+                                    // Logika Peringkat Berkelanjutan: Jika 'asc' maka hitung mundur, jika 'desc' hitung maju
+                                    $rank = $sort == 'asc' ? $totalSiswa - $startIndex - $index : $startIndex + $index + 1;
                                 @endphp
 
                                 <tr class="hover:bg-gray-50 transition">
@@ -185,6 +187,13 @@
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Menampilkan Tombol Paginasi jika data menggunakan fitur Paginasi --}}
+                @if(method_exists($peringkat, 'links'))
+                    <div class="p-4 border-t border-gray-200">
+                        {{ $peringkat->appends(request()->query())->links() }}
+                    </div>
+                @endif
             </div>
 
         </div>

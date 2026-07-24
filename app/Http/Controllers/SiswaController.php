@@ -444,49 +444,61 @@ class SiswaController extends Controller
 
     public function ulangTahun()
     {
-        // Mengambil siswa aktif dan diurutkan berdasarkan Bulan, lalu berdasarkan Hari
-        $siswas = \App\Models\Siswa::where('status', 'aktif')
+        // 1. Ambil Semua Siswa Aktif, urutkan berdasarkan bulan dan hari
+        $siswasData = \App\Models\Siswa::where('status', 'aktif')
             ->orderByRaw('MONTH(tanggal_lahir) ASC')
             ->orderByRaw('DAY(tanggal_lahir) ASC')
-            ->get()
-            ->groupBy(function($siswa) {
-                // Mengelompokkan hasil query ke dalam nama bulan (Januari, Februari, dll)
-                return \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('F');
-            });
-
-        return view('siswa.ulang_tahun', compact('siswas'));
-    }
-
-    public function cetakBarcodeBaru()
-    {
-        $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
-
-        if (!$tahunAktif) {
-            return back()->with('error', 'Cetak gagal: Tidak ada Tahun Ajaran yang sedang aktif saat ini.');
-        }
-
-        // 1. Kumpulkan ID murid yang punya riwayat di Tahun Ajaran LAIN (Berarti mereka Murid Lama)
-        $idMuridLama = \App\Models\HistoriSiswa::where('tahun_ajaran_id', '!=', $tahunAktif->id)
-            ->pluck('siswa_id')
-            ->toArray();
-
-        // 2. Kumpulkan ID murid yang punya riwayat di Tahun Ajaran AKTIF
-        $idMuridDiTaAktif = \App\Models\HistoriSiswa::where('tahun_ajaran_id', $tahunAktif->id)
-            ->pluck('siswa_id')
-            ->toArray();
-
-        // 3. FILTER FINAL: Ambil siswa yang ADA di TA Aktif, tapi BUKAN Murid Lama
-        // Perhatikan variabel yang digunakan adalah $siswas (pakai s) agar sesuai dengan view cetak_barcode_massal
-        $siswas = \App\Models\Siswa::where('status', 'aktif')
-            ->whereIn('id', $idMuridDiTaAktif)
-            ->whereNotIn('id', $idMuridLama)
-            ->orderBy('nama_lengkap', 'asc')
             ->get();
 
-        if ($siswas->isEmpty()) {
-            return back()->with('error', "Tidak ada murid baru (pendaftar murni) pada Tahun Ajaran {$tahunAktif->tahun_ajaran}.");
-        }
+        // 2. Kelompokkan berdasarkan Nama Bulan
+        $groupedSiswas = $siswasData->groupBy(function($siswa) {
+            return \Carbon\Carbon::parse($siswa->tanggal_lahir)->translatedFormat('F');
+        });
 
-        return view('siswa.partials.cetak_barcode_massal', compact('siswas'));
+        // 3. LOGIKA REORDER: Pindahkan bulan saat ini (dan seterusnya) ke paling atas
+        $bulanSekarangInt = (int) \Carbon\Carbon::now()->format('n'); // 1 s.d 12
+        $sortedGroup = collect();
+
+        // Urutkan mulai dari bulan sekarang sampai Desember
+        for ($i = $bulanSekarangInt; $i <= 12; $i++) {
+            $namaBulan = \Carbon\Carbon::create()->month($i)->translatedFormat('F');
+            if ($groupedSiswas->has($namaBulan)) {
+                $sortedGroup->put($namaBulan, $groupedSiswas->get($namaBulan));
+            }
+        }
+        
+        // Lanjutkan dari Januari sampai bulan sebelum bulan sekarang
+        for ($i = 1; $i < $bulanSekarangInt; $i++) {
+            $namaBulan = \Carbon\Carbon::create()->month($i)->translatedFormat('F');
+            if ($groupedSiswas->has($namaBulan)) {
+                $sortedGroup->put($namaBulan, $groupedSiswas->get($namaBulan));
+            }
+        }
+        
+        $siswas = $sortedGroup;
+
+        // 4. LOGIKA REMINDER NOTIFIKASI: Cari siswa yang ulang tahun 7 hari ke depan
+        $hariIni = \Carbon\Carbon::now()->startOfDay();
+        $batasReminder = \Carbon\Carbon::now()->addDays(7)->endOfDay();
+        
+        $siswaMendekatiUltah = $siswasData->filter(function($siswa) use ($hariIni, $batasReminder) {
+            $tglLahir = \Carbon\Carbon::parse($siswa->tanggal_lahir);
+            // Jadikan ulang tahunnya di tahun ini
+            $ultahTahunIni = $tglLahir->copy()->year($hariIni->year);
+            
+            // Jika ultah tahun ini sudah lewat, cek ultah tahun depan
+            if ($ultahTahunIni->isPast() && !$ultahTahunIni->isToday()) {
+                $ultahTahunIni->addYear();
+            }
+            
+            return $ultahTahunIni->between($hariIni, $batasReminder);
+        })->sortBy(function($siswa) use ($hariIni) {
+            $tglLahir = \Carbon\Carbon::parse($siswa->tanggal_lahir);
+            $ultahTahunIni = $tglLahir->copy()->year($hariIni->year);
+            if ($ultahTahunIni->isPast() && !$ultahTahunIni->isToday()) $ultahTahunIni->addYear();
+            return $ultahTahunIni;
+        });
+
+        return view('siswa.ulang_tahun', compact('siswas', 'siswaMendekatiUltah'));
     }
 }
