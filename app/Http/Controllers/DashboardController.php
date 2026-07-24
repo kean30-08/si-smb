@@ -197,61 +197,90 @@ class DashboardController extends Controller
         $endDate = $request->input('end_date');
         $sort = $request->input('sort', 'desc'); // default: 'desc' (tertinggi)
 
-        // Ambil data siswa dengan relasi kelas
-        $query = \App\Models\Siswa::with('historiAktif.kelas');
+        // =========================================================================
+        // QUERY BUILDER: Hitung poin langsung di database agar bisa di-paginate
+        // =========================================================================
+        $query = \App\Models\Siswa::with('historiAktif.kelas')
+            ->where('status', 'aktif'); // Opsional: Hanya tampilkan siswa yang aktif
 
         if ($search) {
-            $query->where('nama_lengkap', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
                   ->orWhere('nis', 'like', "%{$search}%");
+            });
         }
 
-        $siswas = $query->get();
+        // Sub-query untuk filter tanggal dan filter BUKAN hari libur
+        $absensiFilter = function ($q) use ($startDate, $endDate) {
+            $q->whereHas('agenda', function ($agendaQuery) use ($startDate, $endDate) {
+                // Syarat mutlak: Bukan hari libur
+                $agendaQuery->where('is_libur', false);
 
-        // Hitung poin dan kehadiran berdasarkan rentang tanggal
-        $peringkat = $siswas->map(function ($siswa) use ($startDate, $endDate) {
-            $absensiQuery = \App\Models\Absensi::where('siswa_id', $siswa->id);
-
-            // Filter rentang waktu jika diisi
-            if ($startDate && $endDate) {
-                $absensiQuery->whereHas('agenda', function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('tanggal', [$startDate, $endDate]);
-                });
-            }
-
-            $absensi = $absensiQuery->get();
-
-            // TAMBAHAN: Filter membuang status libur agar tidak masuk dalam perhitungan
-            $absensiValid = $absensi->filter(function($absen) {
-                return $absen->agenda && !$absen->agenda->is_libur;
+                // Tambahan: Filter rentang tanggal jika diisi
+                if ($startDate && $endDate) {
+                    $agendaQuery->whereBetween('tanggal', [$startDate, $endDate]);
+                }
             });
+        };
 
-            // GANTI $absensi menjadi $absensiValid
-            $hadir = $absensiValid->where('status_kehadiran', 'hadir')->count();
-            $izin = $absensiValid->where('status_kehadiran', 'izin')->count();
-            $sakit = $absensiValid->where('status_kehadiran', 'sakit')->count();
-            $alpa = $absensiValid->where('status_kehadiran', 'alpa')->count();
+        // Hitung masing-masing status kehadiran
+        $query->withCount([
+            'absensi as total_hadir' => function ($q) use ($absensiFilter) {
+                $absensiFilter($q);
+                $q->where('status_kehadiran', 'hadir');
+            },
+            'absensi as total_izin' => function ($q) use ($absensiFilter) {
+                $absensiFilter($q);
+                $q->where('status_kehadiran', 'izin');
+            },
+            'absensi as total_sakit' => function ($q) use ($absensiFilter) {
+                $absensiFilter($q);
+                $q->where('status_kehadiran', 'sakit');
+            },
+            'absensi as total_alpa' => function ($q) use ($absensiFilter) {
+                $absensiFilter($q);
+                $q->where('status_kehadiran', 'alpa');
+            }
+        ]);
 
-            $total = $hadir + $izin + $sakit + $alpa;
-            $persentase = $total > 0 ? round(($hadir / $total) * 100) : 0;
-            
-            // Rumus Poin (Sesuai dengan yang Anda buat sebelumnya)
-            $poin = ($hadir * 5) + ($izin * 1) + ($sakit * 1); 
+        // Kalkulasi poin utama langsung di database (Hadir*5 + Sakit*1 + Izin*1)
+        // (Rumus ini dibuat mentah (raw) agar bisa digunakan untuk sorting)
+        $poinRawQuery = "
+            (SELECT COALESCE(SUM(
+                CASE 
+                    WHEN status_kehadiran = 'hadir' THEN 5
+                    WHEN status_kehadiran = 'izin' THEN 1
+                    WHEN status_kehadiran = 'sakit' THEN 1
+                    ELSE 0
+                END
+            ), 0)
+            FROM absensis 
+            INNER JOIN agendas ON absensis.agenda_id = agendas.id
+            WHERE absensis.siswa_id = siswas.id AND agendas.is_libur = 0
+        ";
 
-            $siswa->total_hadir = $hadir;
-            $siswa->total_izin = $izin;
-            $siswa->total_sakit = $sakit;
-            $siswa->total_alpa = $alpa;
-            $siswa->persentase = $persentase;
-            $siswa->poin_keaktifan = $poin;
+        if ($startDate && $endDate) {
+            $poinRawQuery .= " AND agendas.tanggal BETWEEN '$startDate' AND '$endDate'";
+        }
+        $poinRawQuery .= ")";
 
-            return $siswa;
-        });
+        // Tambahkan atribut poin_keaktifan ke query
+        $query->select('siswas.*', \Illuminate\Support\Facades\DB::raw("$poinRawQuery as poin_keaktifan"));
 
-        // Urutkan berdasarkan filter
+        // Lakukan pengurutan (Sorting)
         if ($sort === 'asc') {
-            $peringkat = $peringkat->sortBy('poin_keaktifan')->values();
+            $query->orderBy('poin_keaktifan', 'asc');
         } else {
-            $peringkat = $peringkat->sortByDesc('poin_keaktifan')->values();
+            $query->orderBy('poin_keaktifan', 'desc');
+        }
+
+        // Terapkan Paginasi!
+        $peringkat = $query->paginate(15)->appends($request->query());
+
+        // Hitung persentase kehadiran (Setelah data ditarik/paginate)
+        foreach ($peringkat as $siswa) {
+            $total = $siswa->total_hadir + $siswa->total_izin + $siswa->total_sakit + $siswa->total_alpa;
+            $siswa->persentase = $total > 0 ? round(($siswa->total_hadir / $total) * 100) : 0;
         }
 
         return view('dashboard.peringkat', compact('peringkat', 'search', 'startDate', 'endDate', 'sort'));
