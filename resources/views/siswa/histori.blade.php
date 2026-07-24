@@ -118,10 +118,10 @@
                                                                 </form>
 
                                                                 {{-- Tombol Hapus Histori --}}
-                                                                <form action="{{ route('histori_siswa.destroy', $histori->id) }}" method="POST" class="m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus histori semester ini secara permanen?')">
+                                                                {{-- <form action="{{ route('histori_siswa.destroy', $histori->id) }}" method="POST" class="m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus histori semester ini secara permanen?')">
                                                                     @csrf @method('DELETE')
                                                                     <button type="submit" class="p-1 px-2 bg-red-500 text-white rounded text-xs font-bold hover:bg-red-600 transition shadow-sm">Hapus</button>
-                                                                </form>
+                                                                </form> --}}
                                                             </div>
                                                         </td>
 
@@ -180,7 +180,7 @@
                                                                 </button>
 
                                                                 {{-- Tombol Hapus (Luar Edit Mode) --}}
-                                                                <form action="{{ route('histori_siswa.destroy', $histori->id) }}" method="POST" class="m-0 w-full md:w-auto" onsubmit="return confirm('Apakah Anda yakin ingin menghapus histori semester ini secara permanen?')">
+                                                                {{-- <form action="{{ route('histori_siswa.destroy', $histori->id) }}" method="POST" class="m-0 w-full md:w-auto" onsubmit="return confirm('Apakah Anda yakin ingin menghapus histori semester ini secara permanen?')">
                                                                     @csrf @method('DELETE')
                                                                     <button type="submit" class="text-red-600 hover:text-red-800 transition px-3 py-2 md:py-1.5 bg-red-100 hover:bg-red-200 rounded-full inline-flex items-center gap-1 w-full md:w-auto justify-center" title="Hapus Histori">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -190,7 +190,7 @@
                                                                         </svg>
                                                                         <span class="text-xs font-bold">Hapus</span>
                                                                     </button>
-                                                                </form>
+                                                                </form> --}}
                                                                 
                                                             </div>
                                                         </td>
