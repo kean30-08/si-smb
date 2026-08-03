@@ -81,12 +81,26 @@ class LaporanInsentifController extends Controller
             $siswa->absen_map = $map;
         }
 
+        // =========================================================================
+        // TAMBAHAN: Filter membuang siswa dengan tingkatan SMP dan SMA
+        // =========================================================================
+        $siswas = $siswas->filter(function($siswa) {
+            $kelas = strtoupper($siswa->kelas_laporan);
+            // Jika nama kelas mengandung kata 'SMP' atau 'SMA', maka JANGAN dimasukkan
+            if (str_contains($kelas, 'SMP') || str_contains($kelas, 'SMA')) {
+                return false; 
+            }
+            return true; // Selain itu (PG, TK, SD, dsb) tetap dipertahankan
+        });
+        // =========================================================================
+
         $urutanKelas = ['Kelas PG' => 1, 'Kelas TK A' => 2, 'Kelas TK B' => 3, 'Kelas 1 SD' => 4, 'Kelas 2 SD' => 5, 'Kelas 3 SD' => 6, 'Kelas 4 SD' => 7, 'Kelas 5 SD' => 8, 'Kelas 6 SD' => 9, 'Kelas 1 SMP' => 10, 'Kelas 2 SMP' => 11, 'Kelas 3 SMP' => 12, 'Kelas 1 SMA' => 13, 'Kelas 2 SMA' => 14, 'Kelas 3 SMA' => 15];
+        
         $siswas = $siswas->sortBy(function($s) use ($urutanKelas) {
             $namaKls = $s->kelas_laporan;
             return str_pad($urutanKelas[$namaKls] ?? 99, 2, '0', STR_PAD_LEFT) . '-' . $s->nama_lengkap;
         })->values();
-
+        
         // 5. Tarik Data Absensi Guru (Hanya untuk Penyusun Laporan)
         $absenPengajars = \App\Models\AbsensiPengajar::where('pengajar_id', $pengajar->id)
             ->whereIn('agenda_id', $agendas->pluck('id'))
@@ -137,14 +151,22 @@ class LaporanInsentifController extends Controller
         if ($request->hasFile('ttd_pengajar')) {
             $ttdFile = $request->file('ttd_pengajar');
             $ttdExt = $ttdFile->getClientOriginalExtension();
+            // Perbaikan kecil: format base64
             $base64TtdPengajar = 'data:image/' . $ttdExt . ';base64,' . base64_encode(file_get_contents($ttdFile->getRealPath()));
         }
 
         // B. TTD Kepala Sekolah (Statis dari public folder)
-        $pathTtdKepsek = public_path('img/ttd_kepsek.jpg');
+        $pathTtdKepsekJPG = public_path('img/ttd_kepsek.jpg');
+        $pathTtdKepsekPNG = public_path('img/ttd_kepsek.png');
         $base64TtdKepsek = '';
-        if (file_exists($pathTtdKepsek)) {
-            $base64TtdKepsek = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($pathTtdKepsek));
+        
+        // Cek apakah file JPG nya ada
+        if (file_exists($pathTtdKepsekJPG)) {
+            $base64TtdKepsek = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($pathTtdKepsekJPG));
+        } 
+        // Jika JPG tidak ada, coba cek barangkali file aslinya adalah PNG
+        elseif (file_exists($pathTtdKepsekPNG)) {
+            $base64TtdKepsek = 'data:image/png;base64,' . base64_encode(file_get_contents($pathTtdKepsekPNG));
         }
 
         // 7. Generate PDF
