@@ -30,6 +30,14 @@
                             <p class="text-xs text-gray-500 mt-2">Pilih bulan dan tahun kegiatan yang ingin direkap.</p>
                         </div>
 
+{{-- TAMBAHAN BARU: INPUT TANGGAL CETAK LAPORAN --}}
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Tanggal Cetak Laporan *</label>
+                            <input type="date" name="tanggal_cetak" value="{{ date('Y-m-d') }}" required
+                                class="w-full md:w-1/2 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-2">Tanggal ini akan muncul di atas tanda tangan Anda pada laporan PDF.</p>
+                        </div>
+
                         {{-- TAMBAHAN: FIELD UPLOAD TTD PENGAJAR --}}
                         <div class="mb-6">
                             <label class="block text-sm font-bold text-gray-700 mb-2">2. Upload TTD Pengajar (Digital) *</label>

@@ -34,7 +34,8 @@ class LaporanInsentifController extends Controller
 
         $request->validate([
             'bulan' => 'required',
-            'ttd_pengajar' => 'required|image|mimes:jpeg,png,jpg|max:2048', // TAMBAHAN: Validasi maksimal 2MB
+            'tanggal_cetak' => 'required|date', // TAMBAHAN
+            'ttd_pengajar' => 'required|image|mimes:jpeg,png,jpg|max:2048', 
             'dokumentasi.*' => 'required|image|mimes:jpeg,png,jpg|max:5120' 
         ]);
 
@@ -169,9 +170,11 @@ class LaporanInsentifController extends Controller
             $base64TtdKepsek = 'data:image/png;base64,' . base64_encode(file_get_contents($pathTtdKepsekPNG));
         }
 
-        // 7. Generate PDF
+        $tanggalCetakLaporan = Carbon::parse($request->tanggal_cetak)->translatedFormat('d F Y');
+
+        // 7. Generate PDF (Jangan lupa tambahkan 'tanggalCetakLaporan' di fungsi compact)
         $pdf = Pdf::loadView('laporan_insentif.pdf_template', compact(
-            'namaBulan', 'year', 'pengajar', 'agendas', 'siswas', 'nama_ta', 'absenPengajars', 'base64Images', 'agendaStatusMap', 'namaKepalaSekolah', 'base64TtdPengajar', 'base64TtdKepsek'
+            'namaBulan', 'year', 'pengajar', 'agendas', 'siswas', 'nama_ta', 'absenPengajars', 'base64Images', 'agendaStatusMap', 'namaKepalaSekolah', 'base64TtdPengajar', 'base64TtdKepsek', 'tanggalCetakLaporan'
         ));
         $pdf->setPaper('A4', 'portrait');
         

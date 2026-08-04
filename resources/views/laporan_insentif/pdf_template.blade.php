@@ -307,7 +307,7 @@
             ( {{ $namaKepalaSekolah }} )
         </div>
         <div class="ttd-right">
-            Tabanan, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+            Tabanan, {{ $tanggalCetakLaporan }}<br>
             Pengajar<br>
             {{-- Render TTD Pengajar jika ada --}}
             @if ($base64TtdPengajar)
@@ -505,7 +505,7 @@
                     ( {{ $namaKepalaSekolah }} )
                 </div>
                 <div class="ttd-right">
-                    Tabanan, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+                    Tabanan, {{ $tanggalCetakLaporan }}<br>
                     Pengajar<br>
                     @if ($base64TtdPengajar)
                         <img src="{{ $base64TtdPengajar }}" class="ttd-img" alt="TTD Pengajar"><br>
@@ -596,7 +596,7 @@
             ( {{ $namaKepalaSekolah }} )
         </div>
         <div class="ttd-right">
-            Tabanan, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
+            Tabanan, {{ $tanggalCetakLaporan }}<br>
             Pengajar<br>
             @if ($base64TtdPengajar)
                 <img src="{{ $base64TtdPengajar }}" class="ttd-img" alt="TTD Pengajar"><br>
