@@ -31,9 +31,9 @@ Jika ingin menjalankan proyek ini secara lokal, ikuti langkah-langkah berikut:
     ```bash
     php artisan key:generate
 
-5. Jalankan migrasi database:
+5. Jalankan migrasi database dan seeder:
     ```bash
-    php artisan migrate
+    php artisan migrate --seed
 
 6. Jalankan server lokal dan kompilasi aset frontend (Tailwind CSS). Buka dua tab terminal yang berbeda:
 -  Terminal 1:
