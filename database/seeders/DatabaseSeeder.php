@@ -27,10 +27,10 @@ class DatabaseSeeder extends Seeder
 
         // 2. SEEDER AKUN ADMIN MASTER
         User::firstOrCreate(
-            ['email' => 'admin.smb.vdc@gmail.com'],
+            ['email' => 'admin@smbvdc.ac.id'],
             [
                 'name' => 'Admin',
-                'password' => Hash::make('admin81238'), 
+                'password' => Hash::make('admin123'), 
                 'email_verified_at' => now(),
             ]
         );
