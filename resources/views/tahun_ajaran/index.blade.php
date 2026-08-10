@@ -37,15 +37,36 @@
     <div class="py-12" x-data="{ showModalAktif: false, activeFormId: '', confirmInput: '', showModalDelete: false, deleteFormId: '', deleteTaName: '', deleteAgendaCount: 0, confirmDeleteInput: '' }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            {{-- ======================================================== --}}
+            {{-- NOTIFIKASI PENGINGAT MENGAKTIFKAN TAHUN AJARAN BARU      --}}
+            {{-- ======================================================== --}}
+            @php
+                $latestTa = $tahun_ajarans->first();
+                $isNewestInactive = $latestTa && $latestTa->status !== 'aktif';
+            @endphp
+
+            @if ($isNewestInactive && auth()->user()->isAdmin())
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md shadow-sm mb-6 flex items-start animate-pulse" style="animation-iteration-count: 3;">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-bold text-blue-800 uppercase tracking-wider">Informasi Penting</h3>
+                        <div class="mt-1 text-sm text-blue-700">
+                            <p>Tahun Ajaran terbaru (<strong>{{ $latestTa->tahun_ajaran }}</strong>) saat ini belum aktif. Jangan lupa untuk klik tombol <span class="font-bold text-green-600">Set Aktif</span> pada tabel di bawah agar sistem mulai menggunakan tahun ajaran tersebut!</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+            {{-- ======================================================== --}}
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
                 <div class="p-4 md:p-6 text-gray-900">
 
                     <div class="mb-6 flex justify-between items-center">
                         <h3 class="text-lg font-bold text-gray-800">Daftar Tahun Ajaran</h3>
-
-                        {{-- TOMBOL TAMBAH DATA HANYA UNTUK ADMIN --}}
-                        
-                            
                     </div>
 
                     <div class="w-full">

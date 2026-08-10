@@ -76,9 +76,8 @@
                                     </td>
 
                                     <td class="block md:table-cell py-2 md:py-4 md:px-6 md:text-center text-gray-500">
-                                        <span class="md:hidden font-bold text-gray-400 text-xs uppercase mr-2">Tanggal
-                                            Dibuat:</span>
-                                        {{ $lap->created_at->translatedFormat('d M Y, H:i') }}
+                                        <span class="md:hidden font-bold text-gray-400 text-xs uppercase mr-2">Tanggal Cetak:</span>
+                                        {{ $lap->tanggal_cetak ? \Carbon\Carbon::parse($lap->tanggal_cetak)->translatedFormat('d M Y') : $lap->created_at->translatedFormat('d M Y') }}
                                     </td>
 
                                     <td class="block md:table-cell py-3 md:py-4 md:px-6 text-center">
