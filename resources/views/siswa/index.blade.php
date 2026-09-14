@@ -1,67 +1,100 @@
 <x-app-layout>
     <x-slot name="header">
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div class="w-full lg:w-auto">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        
+        <!-- Kiri: Title & Info TA -->
+        <div>
+            <h2 class="font-bold text-2xl text-gray-800 leading-tight">
                 {{ __('Daftar Siswa') }}
             </h2>
-            {{-- INFO TAHUN AJARAN AKTIF --}}
             @php
                 $tahunAktif = \App\Models\TahunAjaran::where('status', 'aktif')->first();
             @endphp
-            <p class="text-sm text-indigo-600 font-bold mt-1 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <p class="text-sm text-gray-500 font-medium mt-1 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                TA Aktif Saat Ini: {{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA Aktif' }}
+                TA Aktif: <strong class="text-indigo-600 ml-1">{{ $tahunAktif ? $tahunAktif->tahun_ajaran : 'Belum Ada TA' }}</strong>
             </p>
         </div>
 
-        {{-- KUMPULAN TOMBOL: Kolom penuh di HP, baris di layar besar --}}
-        {{-- KUMPULAN TOMBOL: Kolom penuh di HP, baris di layar besar --}}
-        <div class="w-full lg:w-auto flex flex-col sm:flex-row flex-wrap items-center gap-2 mt-2 lg:mt-0">
+        <!-- Kanan: Grouped Action Buttons -->
+        <div class="w-full lg:w-auto flex flex-wrap items-center gap-2">
             
+            <!-- 1. Button Ulang Tahun (Secondary Action) -->
             <a href="{{ route('siswa.ulangTahun') }}"
-                class="w-full sm:w-auto text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+               class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 transition">
                 🎂 Ulang Tahun
             </a>
 
-            <a href="{{ route('siswa.export') }}" 
-            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded shadow-sm text-sm inline-flex items-center mb-2 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Excel
-            </a>
+            <!-- 2. Dropdown Cetak & Export (Alpine.js) -->
+            <div x-data="{ open: false }" class="relative inline-block text-left" @click.outside="open = false">
+                <button @click="open = !open" 
+                        type="button" 
+                        class="inline-flex items-center justify-between px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 transition focus:outline-none">
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        📄 Cetak & Export
+                    </span>
+                    <svg class="w-4 h-4 ml-2 text-gray-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
 
-            <a href="{{ route('siswa.cetakKartuBaru') }}" target="_blank"
-                class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                Cetak Kartu (Murid Baru)
-            </a>
+                <!-- Isi Dropdown Menu -->
+                <div x-show="open" 
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="transform opacity-0 scale-95"
+                     x-transition:enter-end="transform opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="transform opacity-100 scale-100"
+                     x-transition:leave-end="transform opacity-0 scale-95"
+                     class="origin-top-right absolute right-0 mt-2 w-60 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50"
+                     style="display: none;">
+                    
+                    <!-- Export Group -->
+                    <div class="py-1">
+                        <a href="{{ route('siswa.export') }}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                            <svg class="mr-3 h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Export Excel
+                        </a>
+                    </div>
 
-            {{-- TOMBOL BARU: CETAK BARCODE (MURID BARU) --}}
-            <a href="{{ route('siswa.cetakBarcodeBaru') }}" target="_blank"
-                class="w-full sm:w-auto text-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                Cetak Barcode (Murid Baru)
-            </a>
+                    <!-- Cetak Kartu Group -->
+                    <div class="py-1">
+                        <a href="{{ route('siswa.cetakKartuBaru') }}" target="_blank" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                            <span class="mr-3">🪪</span> Cetak Kartu (Murid Baru)
+                        </a>
+                        <a href="{{ route('siswa.cetakMassal') }}" target="_blank" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                            <span class="mr-3">🪪</span> Cetak Semua Kartu
+                        </a>
+                    </div>
 
-            <a href="{{ route('siswa.cetakBarcodeMassal') }}" target="_blank"
-                class="w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                Cetak Semua Barcode
-            </a>
+                    <!-- Cetak Barcode Group -->
+                    <div class="py-1">
+                        <a href="{{ route('siswa.cetakBarcodeBaru') }}" target="_blank" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                            <span class="mr-3">📊</span> Cetak Barcode (Murid Baru)
+                        </a>
+                        <a href="{{ route('siswa.cetakBarcodeMassal') }}" target="_blank" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                            <span class="mr-3">📊</span> Cetak Semua Barcode
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-            <a href="{{ route('siswa.cetakMassal') }}" target="_blank"
-                class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-sm transition">
-                Cetak Semua Kartu
-            </a>
-            
+            <!-- 3. Primary Action (+ Tambah Siswa) -->
             <a href="{{ route('siswa.create') }}"
-                class="w-full sm:w-auto text-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-sm transition">
+               class="inline-flex items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg shadow-sm transition">
                 + Tambah Siswa
             </a>
+
         </div>
     </div>
-</x-slot>
+    </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
