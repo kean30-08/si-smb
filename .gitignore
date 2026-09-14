@@ -26,3 +26,5 @@ Thumbs.db
 cloudflared.exe
 cloudflared.yml
 struktur.txt
+/app/database/seeder/DatabaseSeeder.php
+README.md

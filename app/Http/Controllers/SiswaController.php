@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Siswa;
 use App\Models\Kelas;
@@ -501,4 +502,75 @@ class SiswaController extends Controller
 
         return view('siswa.ulang_tahun', compact('siswas', 'siswaMendekatiUltah'));
     }
+    
+    public function exportExcel()
+{
+    $tahunAktif = TahunAjaran::where('status', 'aktif')->first();
+    $siswas = Siswa::all();
+
+    $fileName = 'Data_Siswa_' . date('Y-m-d') . '.csv';
+
+    $headers = [
+        "Content-type"        => "text/csv",
+        "Content-Disposition" => "attachment; filename=$fileName",
+        "Pragma"              => "no-cache",
+        "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+        "Expires"             => "0"
+    ];
+
+    $columns = [
+        'ID', 'Nama Lengkap', 'Nama Panggilan', 'NIS', 'Jenis Kelamin',
+        'Tempat Lahir', 'Tanggal Lahir', 'Asal Sekolah', 'No HP',
+        'Nama Orang Tua', 'Email Orang Tua', 'No HP Orang Tua',
+        'Alamat', 'Status', 'Kelas Saat Ini'
+    ];
+
+    $callback = function() use($siswas, $columns, $tahunAktif) {
+        $file = fopen('php://output', 'w');
+        
+        // Tambahkan BOM agar karakter khusus terbaca rapi di Excel
+        fputs($file, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+        fputcsv($file, $columns);
+
+        foreach ($siswas as $siswa) {
+            $namaKelas = 'Belum Ada Kelas';
+
+            // Mengambil kelas berdasarkan histori di tahun ajaran aktif
+            // (Sesuaikan "HistoriKelas" dengan nama model histori Anda jika berbeda)
+            if ($tahunAktif) {
+                $histori = HistoriKelas::where('siswa_id', $siswa->id)
+                            ->where('tahun_ajaran_id', $tahunAktif->id)
+                            ->first();
+
+                if ($histori && $histori->kelas) {
+                    $namaKelas = $histori->kelas->nama_kelas;
+                }
+            }
+
+            $row = [
+                $siswa->id,
+                $siswa->nama_lengkap,
+                $siswa->nama_panggilan,
+                "'" . $siswa->nis, // Tanda petik mencegah format 5,1E+15
+                $siswa->jenis_kelamin,
+                $siswa->tempat_lahir,
+                $siswa->tanggal_lahir,
+                $siswa->asal_sekolah,
+                "'" . $siswa->nomor_hp, // Tanda petik untuk No HP
+                $siswa->nama_orangtua,
+                $siswa->email_orangtua,
+                "'" . $siswa->nomor_hp_orangtua, // Tanda petik untuk No HP
+                $siswa->alamat,
+                $siswa->status,
+                $namaKelas // Ini akan menampilkan kelas yang sesuai
+            ];
+
+            fputcsv($file, $row);
+        }
+        fclose($file);
+    };
+
+    return Response::stream($callback, 200, $headers);
 }
+}
+
