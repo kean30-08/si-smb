@@ -142,9 +142,10 @@ Route::get('/laporan_insentif/{id}/download', [App\Http\Controllers\LaporanInsen
     Route::get('/siswa/cetak-barcode-massal', [\App\Http\Controllers\SiswaController::class, 'cetakBarcodeMassal'])->name('siswa.cetakBarcodeMassal');
     Route::get('/siswa/{siswa}/cetak-barcode', [\App\Http\Controllers\SiswaController::class, 'cetakBarcode'])->name('siswa.cetakBarcode');
     Route::get('/siswa/cetak-kartu-baru', [\App\Http\Controllers\SiswaController::class, 'cetakKartuBaru'])->name('siswa.cetakKartuBaru');
-    Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
     Route::get('/siswa/export', [App\Http\Controllers\SiswaController::class, 'exportExcel'])->name('siswa.export');
-    
+    Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
+   
+
     // rute pendaftaran
     Route::get('/kelola-pendaftaran', [\App\Http\Controllers\PendaftaranController::class, 'index'])->name('kelola_pendaftaran.index');
 Route::post('/kelola-pendaftaran/{id}/terima', [\App\Http\Controllers\PendaftaranController::class, 'terima'])->name('kelola_pendaftaran.terima');
